@@ -1,0 +1,97 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <div class="card bg-dark shadow">
+                <div class="card-header">
+                    <h3 class="mb-0"><i class="fas fa-trophy me-2"></i>Create Competition</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('admin.create_competition') }}">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            <label for="title" class="form-label">{{ form.title.label }}</label>
+                            {{ form.title(class="form-control", placeholder="Enter competition title") }}
+                            {% if form.title.errors %}
+                                <div class="alert alert-danger mt-2">
+                                    {% for error in form.title.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">{{ form.description.label }}</label>
+                            {{ form.description(class="form-control", rows=5, placeholder="Enter competition description") }}
+                            {% if form.description.errors %}
+                                <div class="alert alert-danger mt-2">
+                                    {% for error in form.description.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="start_time" class="form-label">{{ form.start_time.label }}</label>
+                                {{ form.start_time(class="form-control", type="datetime-local") }}
+                                {% if form.start_time.errors %}
+                                    <div class="alert alert-danger mt-2">
+                                        {% for error in form.start_time.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="end_time" class="form-label">{{ form.end_time.label }}</label>
+                                {{ form.end_time(class="form-control", type="datetime-local") }}
+                                {% if form.end_time.errors %}
+                                    <div class="alert alert-danger mt-2">
+                                        {% for error in form.end_time.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="max_participants" class="form-label">{{ form.max_participants.label }}</label>
+                            {{ form.max_participants(class="form-control", placeholder="Leave empty for unlimited") }}
+                            {% if form.max_participants.errors %}
+                                <div class="alert alert-danger mt-2">
+                                    {% for error in form.max_participants.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">
+                                Leave empty for unlimited participants.
+                            </small>
+                        </div>
+                        
+                        <div class="mb-4 form-check">
+                            {{ form.is_public(class="form-check-input") }}
+                            <label class="form-check-label" for="is_public">{{ form.is_public.label }}</label>
+                            <small class="form-text text-muted d-block">
+                                Public competitions are visible to all users. Private competitions require direct invitation.
+                            </small>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('admin.competitions') }}" class="btn btn-secondary">Cancel</a>
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

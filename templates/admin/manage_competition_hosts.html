@@ -1,0 +1,116 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-users-cog me-2"></i>Manage Competition Hosts</h1>
+        <a href="{{ url_for('admin.competitions') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Back to Competitions
+        </a>
+    </div>
+
+    <div class="card bg-dark mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Competition: {{ competition.title }}</h5>
+        </div>
+        <div class="card-body">
+            <p><strong>Primary Host:</strong> {{ competition.host.username }}</p>
+            <p><strong>Description:</strong> {{ competition.description }}</p>
+            <p>
+                <strong>Status:</strong>
+                <span class="badge bg-{{ 'success' if competition.status.value == 'active' else ('warning' if competition.status.value == 'upcoming' else 'secondary') }}">
+                    {{ competition.status.value }}
+                </span>
+            </p>
+            <p><strong>Start Time:</strong> {{ competition.start_time.strftime('%Y-%m-%d %H:%M') }}</p>
+            <p><strong>End Time:</strong> {{ competition.end_time.strftime('%Y-%m-%d %H:%M') }}</p>
+            <p>
+                <strong>Visibility:</strong>
+                {% if competition.is_public %}
+                <span class="badge bg-success">Public</span>
+                {% else %}
+                <span class="badge bg-info">Private</span>
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card bg-dark mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Current Additional Hosts</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for host in current_hosts %}
+                                <tr>
+                                    <td>{{ host.username }}</td>
+                                    <td>{{ host.email }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'danger' if host.role.value == 'owner' else 'info' }}">
+                                            {{ host.role.value }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <form action="{{ url_for('admin.remove_competition_host', competition_id=competition.id, host_id=host.id) }}" method="POST" class="d-inline">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to remove this host?')">
+                                                <i class="fas fa-user-minus"></i> Remove
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center">No additional hosts assigned to this competition</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card bg-dark mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Assign New Host</h5>
+                </div>
+                <div class="card-body">
+                    {% if form.host_id.choices|length > 1 or (form.host_id.choices|length == 1 and form.host_id.choices[0][0] != -1) %}
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        <div class="mb-3">
+                            {{ form.host_id.label(class="form-label") }}
+                            {{ form.host_id(class="form-select") }}
+                            {% for error in form.host_id.errors %}
+                            <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div>
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i> No available hosts to assign. Create more users with host or owner role.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

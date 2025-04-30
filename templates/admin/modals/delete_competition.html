@@ -1,0 +1,33 @@
+{% set modal_id = 'deleteModal' ~ competition.id %}
+{% set item_type = 'competition' %}
+{% set item_name = competition.title %}
+{% set delete_url = url_for('admin.delete_competition', competition_id=competition.id) %}
+{% set challenge_action_required = True %}
+
+{% set additional_fields %}
+<label class="form-label">What do you want to do with this competition's challenges?</label>
+<div class="form-check p-3 mb-2 bg-dark border border-secondary rounded">
+    <input class="form-check-input" type="radio" 
+           name="challenge_action_{{ competition.id }}" 
+           id="deleteChallenges{{ competition.id }}" 
+           value="delete" checked 
+           style="position: relative; z-index: 2100;">
+    <label class="form-check-label" for="deleteChallenges{{ competition.id }}" 
+           style="position: relative; z-index: 2099;">
+        Delete all associated challenges
+    </label>
+</div>
+<div class="form-check p-3 bg-dark border border-secondary rounded">
+    <input class="form-check-input" type="radio" 
+           name="challenge_action_{{ competition.id }}" 
+           id="makePublicChallenges{{ competition.id }}" 
+           value="make_public" 
+           style="position: relative; z-index: 2100;">
+    <label class="form-check-label" for="makePublicChallenges{{ competition.id }}" 
+           style="position: relative; z-index: 2099;">
+        Make challenges public
+    </label>
+</div>
+{% endset %}
+
+{% include 'shared/delete_modal.html' with context %}

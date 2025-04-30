@@ -1,0 +1,51 @@
+{% extends 'layout.html' %}
+
+{% block title %}Too Many Requests{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <h1 class="display-1 fw-bold text-warning">429</h1>
+            <h2 class="mb-4">Too Many Requests</h2>
+            <p class="lead mb-5">You've made too many requests in a short period of time.</p>
+            <p class="mb-5">Please wait a few minutes before trying again.</p>
+            <div class="d-flex justify-content-center">
+                <a href="{{ url_for('main.index') }}" class="btn btn-primary me-2">Go Home</a>
+                <button onclick="window.location.reload()" class="btn btn-outline-secondary">Try Again</button>
+            </div>
+            <div class="mt-4">
+                <div class="progress" style="height: 5px;">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%;" id="cooldown-progress"></div>
+                </div>
+                <small class="text-muted" id="cooldown-text">Cooling down...</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Simple cooldown animation (purely visual - actual rate limits are server-side)
+    document.addEventListener('DOMContentLoaded', function() {
+        const progressBar = document.getElementById('cooldown-progress');
+        const cooldownText = document.getElementById('cooldown-text');
+        const cooldownTime = 60; // seconds
+        let elapsed = 0;
+        
+        const interval = setInterval(function() {
+            elapsed++;
+            const percent = (elapsed / cooldownTime) * 100;
+            progressBar.style.width = percent + '%';
+            
+            if (elapsed >= cooldownTime) {
+                clearInterval(interval);
+                cooldownText.textContent = 'Ready to try again';
+                progressBar.classList.remove('progress-bar-animated');
+            } else {
+                const remaining = cooldownTime - elapsed;
+                cooldownText.textContent = `Cooling down (${remaining}s remaining)...`;
+            }
+        }, 1000);
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,193 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-tachometer-alt me-2"></i>Host Dashboard</h1>
+    </div>
+    
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="card stats-card bg-dark text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="stats-number">{{ total_hosted }}</div>
+                            <div class="stats-title">Primary Hosted</div>
+                        </div>
+                        <div class="stats-icon">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-top">
+                    <a href="{{ url_for('host.competitions') }}" class="text-decoration-none">
+                        <small>View All Competitions <i class="fas fa-arrow-right ms-1"></i></small>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card stats-card bg-dark text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="stats-number">{{ total_additional }}</div>
+                            <div class="stats-title">Co-Hosted</div>
+                        </div>
+                        <div class="stats-icon">
+                            <i class="fas fa-users-cog"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-top">
+                    <a href="{{ url_for('host.competitions') }}" class="text-decoration-none">
+                        <small>View Assigned Competitions <i class="fas fa-arrow-right ms-1"></i></small>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card stats-card bg-dark text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="stats-number">{{ total_participants }}</div>
+                            <div class="stats-title">Total Participants</div>
+                        </div>
+                        <div class="stats-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-top">
+                    <a href="{{ url_for('host.competitions') }}" class="text-decoration-none">
+                        <small>View Competition Details <i class="fas fa-arrow-right ms-1"></i></small>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card bg-dark mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('host.challenges') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-puzzle-piece me-2"></i>View Available Challenges
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Your Primary Hosted Competitions -->
+    <div class="card bg-dark mb-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-trophy me-2"></i>Your Primary Hosted Competitions</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Status</th>
+                            <th>Start Time</th>
+                            <th>End Time</th>
+                            <th>Participants</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for competition in primary_hosted %}
+                        <tr>
+                            <td>{{ competition.title }}</td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if competition.status.value == 'active' else ('warning' if competition.status.value == 'upcoming' else 'secondary') }}">
+                                    {{ competition.status.value }}
+                                </span>
+                            </td>
+                            <td>{{ competition.start_time.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>{{ competition.end_time.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>{{ competition.participants|length }}</td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{{ url_for('host.manage_competition', competition_id=competition.id) }}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-cog me-1"></i> Manage
+                                    </a>
+                                    <a href="{{ url_for('host.edit_competition', competition_id=competition.id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center">You haven't created any competitions yet.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Your Co-Hosted Competitions -->
+    {% if additional_hosted %}
+    <div class="card bg-dark mb-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-users-cog me-2"></i>Competitions You're Assigned To</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Status</th>
+                            <th>Primary Host</th>
+                            <th>Start Time</th>
+                            <th>End Time</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for competition in additional_hosted %}
+                        <tr>
+                            <td>{{ competition.title }}</td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if competition.status.value == 'active' else ('warning' if competition.status.value == 'upcoming' else 'secondary') }}">
+                                    {{ competition.status.value }}
+                                </span>
+                            </td>
+                            <td>{{ competition.host.username }}</td>
+                            <td>{{ competition.start_time.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>{{ competition.end_time.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{{ url_for('host.manage_competition', competition_id=competition.id) }}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-cog me-1"></i> Manage
+                                    </a>
+                                    <a href="{{ url_for('host.edit_competition', competition_id=competition.id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

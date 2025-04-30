@@ -1,0 +1,84 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-puzzle-piece me-2"></i>Manage Challenges</h1>
+    </div>
+
+    {% if competitions %}
+    <div class="mb-4">
+        <h5 class="mb-2">Create Challenge in a Competition:</h5>
+        {% for comp in competitions %}
+        <a href="{{ url_for('host.create_challenge', competition_id=comp.id) }}" class="btn btn-sm btn-primary me-2 mb-2">
+            <i class="fas fa-plus me-1"></i> {{ comp.title }}
+        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if challenges %}
+    <div class="row">
+        {% for challenge in challenges %}
+        <div class="col-md-4 mb-4">
+            <div class="card challenge-card bg-dark h-100">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">{{ challenge.title }}</h5>
+                        <span class="badge badge-difficulty-{{ challenge.difficulty }}">{{ challenge.type.value }}</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex mb-2">
+                            <span class="me-2">Difficulty:</span>
+                            <div>
+                                {% for i in range(challenge.difficulty) %}
+                                <i class="fas fa-star text-warning"></i>
+                                {% endfor %}
+                                {% for i in range(5 - challenge.difficulty) %}
+                                <i class="far fa-star text-muted"></i>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <span class="me-2">Points:</span>
+                            <span class="badge bg-primary">{{ challenge.points }}</span>
+                        </div>
+                        {% if challenge.is_lab %}
+                        <div>
+                            <span class="badge bg-info">Lab Challenge</span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <p class="card-text small">{{ challenge.description|truncate(100) }}</p>
+
+                    <!-- Optional: Display related competitions -->
+                    <p class="text-muted small mt-3 mb-0">
+                        <i class="fas fa-trophy me-1"></i>Used in:
+                        {% set related = challenge.competitions | map(attribute='competition.title') | list %}
+                        {{ related | join(', ') }}
+                    </p>
+                </div>
+                <div class="card-footer bg-transparent text-end">
+                    <a href="{{ url_for('host.edit_challenge', challenge_id=challenge.id) }}" class="btn btn-sm btn-outline-secondary me-2">
+                        <i class="fas fa-edit me-1"></i>Edit
+                    </a>
+                    <form method="POST" action="{{ url_for('host.delete_challenge', challenge_id=challenge.id) }}" style="display:inline;">
+                        <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this challenge?')">
+                            <i class="fas fa-trash-alt me-1"></i>Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info text-center">
+        <i class="fas fa-info-circle me-2"></i>No challenges available. Create a new challenge to get started!
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

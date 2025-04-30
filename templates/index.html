@@ -1,0 +1,421 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-7 mb-5 mb-lg-0 text-lg-start text-center">
+                <h1>Welcome to <span class="terminal-effect-two">Drishti कोण</span></h1>
+                <div class="code-block my-4">
+                    <span style="color: var(--primary-color)">$</span> ./ctf-init<br>
+                    <span style="color: var(--primary-color)">></span> Initializing environment...<br>
+                    <span style="color: var(--primary-color)">></span> Loading challenges...<br>
+                    <span style="color: var(--primary-color)">></span> CTF environment ready!<br>
+                    <span style="color: var(--primary-color)">$</span> <span class="terminal-effect">_</span>
+                </div>
+                <p class="mb-4">Test your cybersecurity skills, compete against others, and climb the leaderboards in our cutting-edge Capture The Flag competitions.</p>
+                {% if not current_user.is_authenticated %}
+                <div class="mt-4 d-flex gap-3 justify-content-lg-start justify-content-center">
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Get Started</a>
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary">Login</a>
+                </div>
+                {% else %}
+                <div class="mt-4 d-flex gap-3 justify-content-lg-start justify-content-center">
+                    <a href="{{ url_for('competitions.list_competitions') }}" class="btn btn-primary">Explore Competitions</a>
+                    <a href="{{ url_for('challenges.list_challenges') }}" class="btn btn-outline-primary">View Challenges</a>
+                </div>
+                {% endif %}
+            </div>
+            <div class="col-lg-5 d-none d-lg-block">
+                <div class="text-end">
+                    <pre class="code-block" style="font-size: 0.8rem; text-align: left; margin: 0; padding: 1.5rem; background-color: rgba(0,0,0,0.3);">
+<span style="color: #838383;"># Sample CTF Challenge</span>
+<span style="color: var(--primary-color);">def</span> <span style="color: #8be9fd;">decrypt_flag</span>(cipher, key):
+    result = <span style="color: #f1fa8c;">""</span>
+    <span style="color: var(--primary-color);">for</span> i <span style="color: var(--primary-color);">in</span> <span style="color: var(--primary-color);">range</span>(<span style="color: var(--primary-color);">len</span>(cipher)):
+        c = cipher[i]
+        k = key[i % <span style="color: var(--primary-color);">len</span>(key)]
+        result += <span style="color: var(--primary-color);">chr</span>(<span style="color: var(--primary-color);">ord</span>(c) ^ <span style="color: var(--primary-color);">ord</span>(k))
+    <span style="color: var(--primary-color);">return</span> result
+
+<span style="color: var(--primary-color);">if</span> __name__ == <span style="color: #f1fa8c;">"__main__"</span>:
+    <span style="color: #838383;"># Can you find the key?</span>
+    cipher = <span style="color: #f1fa8c;">"5&amp;c3g%!h@9f"</span>
+    key = <span style="color: #f1fa8c;">"???"</span>
+                    </pre>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Single Horizontal Ad for Home Page -->
+    <div class="container mt-4">
+        <div class="ad-container ad-banner home-ad" data-location="home_horizontal">
+            <div class="ad-header">
+                <span class="ad-label">SPONSORED</span>
+                <span>Security Tools & Services</span>
+            </div>
+            <ins class="adsbygoogle"
+                 style="display:block; min-height:90px; width:100%;"
+                 data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+                 data-ad-slot="XXXXXXXXXX"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="mb-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="stats-card">
+                    <div class="stats-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stats-number">{{ total_users }}</div>
+                    <div class="stats-title">HACKERS ONLINE</div>
+                    <div class="small text-muted mt-2">Active community members</div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="stats-card">
+                    <div class="stats-icon">
+                        <i class="fas fa-puzzle-piece"></i>
+                    </div>
+                    <div class="stats-number">{{ total_challenges }}</div>
+                    <div class="stats-title">SECURITY CHALLENGES</div>
+                    <div class="small text-muted mt-2">Across multiple categories</div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="stats-card">
+                    <div class="stats-icon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <div class="stats-number">{{ total_competitions }}</div>
+                    <div class="stats-title">LIVE COMPETITIONS</div>
+                    <div class="small text-muted mt-2">With competitive leaderboards</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Active Competitions Section -->
+<section class="mb-5">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex align-items-center">
+                <h2 class="mb-0">Active Competitions</h2>
+                <div class="ms-3 small badge badge-success py-1 px-2 d-inline-block" style="margin-top: 2px;">LIVE</div>
+            </div>
+            <a href="{{ url_for('competitions.list_competitions') }}" class="btn btn-sm btn-outline-primary">
+                <i class="fas fa-list-ul me-1"></i> View All
+            </a>
+        </div>
+        
+        {% if active_competitions %}
+        <div class="row">
+            {% for competition in active_competitions %}
+            <div class="col-md-4 mb-4">
+                <div class="card competition-card competition-active h-100">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">{{ competition.title }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">{{ competition.description|truncate(100) }}</p>
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <span class="badge badge-success">Active</span>
+                            <div class="text-end">
+                                <div class="small text-secondary mb-1">Ends in:</div>
+                                <div class="countdown-display">
+                                    <div class="countdown-item">
+                                        <div class="countdown-value" id="competition-days-{{ competition.id }}">--</div>
+                                        <div class="countdown-label">days</div>
+                                    </div>
+                                    <div class="countdown-item">
+                                        <div class="countdown-value" id="competition-hours-{{ competition.id }}">--</div>
+                                        <div class="countdown-label">hours</div>
+                                    </div>
+                                    <div class="countdown-item">
+                                        <div class="countdown-value" id="competition-mins-{{ competition.id }}">--</div>
+                                        <div class="countdown-label">mins</div>
+                                    </div>
+                                </div>
+                                <script>
+                                    document.addEventListener('DOMContentLoaded', function() {
+                                        const endTime = new Date("{{ competition.end_time.isoformat() }}").getTime();
+                                        
+                                        function updateCountdown() {
+                                            const now = new Date().getTime();
+                                            const distance = endTime - now;
+                                            
+                                            if (distance <= 0) {
+                                                document.getElementById("competition-days-{{ competition.id }}").innerHTML = "0";
+                                                document.getElementById("competition-hours-{{ competition.id }}").innerHTML = "0";
+                                                document.getElementById("competition-mins-{{ competition.id }}").innerHTML = "0";
+                                                return;
+                                            }
+                                            
+                                            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                                            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                                            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                                            
+                                            document.getElementById("competition-days-{{ competition.id }}").innerHTML = days;
+                                            document.getElementById("competition-hours-{{ competition.id }}").innerHTML = hours;
+                                            document.getElementById("competition-mins-{{ competition.id }}").innerHTML = minutes;
+                                        }
+                                        
+                                        updateCountdown();
+                                        setInterval(updateCountdown, 60000); // Update every minute
+                                    });
+                                </script>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{{ url_for('competitions.view_competition', competition_id=competition.id) }}" class="btn btn-primary w-100">View Details</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>No active competitions at the moment. Check back soon!
+        </div>
+        {% endif %}
+    </div>
+    
+
+</section>
+
+<!-- Upcoming Competitions Section -->
+<section class="mb-5">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex align-items-center">
+                <h2 class="mb-0">Upcoming Competitions</h2>
+                <div class="ms-3 small badge badge-warning py-1 px-2 d-inline-block" style="margin-top: 2px;">SCHEDULED</div>
+            </div>
+        </div>
+        
+        {% if upcoming_competitions %}
+        <div class="row">
+            {% for competition in upcoming_competitions %}
+            <div class="col-md-4 mb-4">
+                <div class="card competition-card competition-upcoming h-100">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">{{ competition.title }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">{{ competition.description|truncate(100) }}</p>
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <span class="badge badge-warning">Upcoming</span>
+                            <div class="text-end">
+                                <div class="small text-secondary mb-1">Starts:</div>
+                                <div class="fw-bold">{{ competition.start_time.strftime('%b %d, %Y') }}</div>
+                                <div class="small text-muted">{{ competition.start_time.strftime('%H:%M') }} UTC</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{{ url_for('competitions.view_competition', competition_id=competition.id) }}" class="btn btn-primary w-100">View Details</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>No upcoming competitions at the moment. Check back soon!
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Top Players Section -->
+<section class="mb-5">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex align-items-center">
+                <h2 class="mb-0">Top Hackers</h2>
+                <div class="ms-3 small code-block py-1 px-2 d-inline-block" style="margin-top: 2px;">
+                    <span style="color: var(--primary-color)">$</span> cat /leaderboard/global.txt
+                </div>
+            </div>
+            <a href="{{ url_for('competitions.global_leaderboard') }}" class="btn btn-sm btn-outline-primary">
+                <i class="fas fa-list-ol me-1"></i> View Full Leaderboard
+            </a>
+        </div>
+        
+        {% if top_players %}
+        <div class="card">
+            <div class="table-responsive">
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th width="10%">Rank</th>
+                            <th width="60%">Player</th>
+                            <th width="30%">Score</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for player in top_players %}
+                        <tr>
+                            <td>
+                                {% if loop.index == 1 %}
+                                <div class="d-flex align-items-center">
+                                    <span class="fa-stack" style="font-size: 0.6rem;">
+                                        <i class="fas fa-circle fa-stack-2x text-warning"></i>
+                                        <i class="fas fa-trophy fa-stack-1x fa-inverse"></i>
+                                    </span>
+                                    <span class="ms-2">{{ loop.index }}</span>
+                                </div>
+                                {% elif loop.index == 2 %}
+                                <div class="d-flex align-items-center">
+                                    <span class="fa-stack" style="font-size: 0.6rem;">
+                                        <i class="fas fa-circle fa-stack-2x text-secondary"></i>
+                                        <i class="fas fa-trophy fa-stack-1x fa-inverse"></i>
+                                    </span>
+                                    <span class="ms-2">{{ loop.index }}</span>
+                                </div>
+                                {% elif loop.index == 3 %}
+                                <div class="d-flex align-items-center">
+                                    <span class="fa-stack" style="font-size: 0.6rem;">
+                                        <i class="fas fa-circle fa-stack-2x" style="color: #cd7f32;"></i>
+                                        <i class="fas fa-trophy fa-stack-1x fa-inverse"></i>
+                                    </span>
+                                    <span class="ms-2">{{ loop.index }}</span>
+                                </div>
+                                {% else %}
+                                <span class="ms-4">{{ loop.index }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="ms-2">
+                                        <div class="fw-bold">{{ player.username }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge badge-primary">{{ player.score }} pts</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>No player data available yet.
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Platform Features -->
+<section class="mb-5">
+    <div class="container">
+        <div class="d-flex align-items-center mb-4">
+            <h2 class="mb-0">Platform Features</h2>
+            <div class="ms-3 small code-block py-1 px-2 d-inline-block" style="margin-top: 5px;">
+                <span style="color: var(--primary-color)">$</span> ls -la /features
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-lg-9">
+                <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <h4>CTF Competitions</h4>
+                    <p>Participate in time-bound competitions with different challenges and earn points by solving flags.</p>
+                    <div class="small text-muted text-start mt-3 border-top pt-2">
+                        <span style="color: var(--primary-color)">$</span> cat /features/competitions.txt
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-puzzle-piece"></i>
+                    </div>
+                    <h4>Diverse Challenges</h4>
+                    <p>Tackle challenges across various categories including web, crypto, forensics, reverse engineering, and more.</p>
+                    <div class="small text-muted text-start mt-3 border-top pt-2">
+                        <span style="color: var(--primary-color)">$</span> cat /features/challenges.txt
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-flask"></i>
+                    </div>
+                    <h4>Hands-on Labs</h4>
+                    <p>Practice with our lab challenges to improve your skills in a non-competitive environment.</p>
+                    <div class="small text-muted text-start mt-3 border-top pt-2">
+                        <span style="color: var(--primary-color)">$</span> cat /features/labs.txt
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h4>Stats & Analytics</h4>
+                    <p>Track your progress with detailed statistics and performance analytics to measure your improvement.</p>
+                    <div class="small text-muted text-start mt-3 border-top pt-2">
+                        <span style="color: var(--primary-color)">$</span> cat /features/analytics.txt
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-medal"></i>
+                    </div>
+                    <h4>Badges & Ranks</h4>
+                    <p>Earn badges and achievements as you solve challenges and climb the global ranks.</p>
+                    <div class="small text-muted text-start mt-3 border-top pt-2">
+                        <span style="color: var(--primary-color)">$</span> cat /features/badges.txt
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h4>Hacker Community</h4>
+                    <p>Connect with other security enthusiasts and build your reputation in the growing community.</p>
+                    <div class="small text-muted text-start mt-3 border-top pt-2">
+                        <span style="color: var(--primary-color)">$</span> cat /features/community.txt
+                    </div>
+                </div>
+            </div>
+            </div>
+            
+            <!-- No sidebar ad container -->
+        </div>
+    </div>
+</section>
+
+<!-- No bottom ad banner -->
+{% endblock %}
+
+{% block scripts %}
+{% endblock %}

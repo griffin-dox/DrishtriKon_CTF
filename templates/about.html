@@ -1,0 +1,126 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-info-circle me-2"></i>About Us</h1>
+    </div>
+
+    <div class="card bg-dark mb-4">
+        <div class="card-body">
+            <h3 class="mb-4">Welcome to Drishti कोण</h3>
+            <p>Drishti कोण is a comprehensive CTF Platform solution for hosting and participating in Capture The Flag competitions. Our platform provides a secure, scalable, and feature-rich environment for cybersecurity enthusiasts, professionals, and students to test their skills and learn in a hands-on way.</p>
+            
+            <h4 class="mt-4 mb-3">Our Mission</h4>
+            <p>Our mission is to advance cybersecurity education and skills development through practical, engaging challenges. We believe that hands-on experience is the best way to learn and improve security skills, and our platform is designed to facilitate this learning process.</p>
+            
+            <h4 class="mt-4 mb-3">What is Capture The Flag?</h4>
+            <p>Capture The Flag (CTF) is a special kind of cybersecurity competition designed to challenge participants to solve computer security problems and/or capture and defend computer systems. These competitions typically involve:</p>
+            <ul>
+                <li>Finding hidden "flags" (specific strings) through solving challenges</li>
+                <li>Competing against other players or teams</li>
+                <li>Learning and applying various cybersecurity skills</li>
+                <li>Exploring different categories like web exploitation, cryptography, reverse engineering, and more</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card bg-dark h-100">
+                <div class="card-header">
+                    <h4 class="mb-0">Platform Features</h4>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        <li class="mb-2"><strong>Multiple Roles:</strong> Support for Owners, Hosts, and Players</li>
+                        <li class="mb-2"><strong>Competitions:</strong> Create and join time-bound competitions</li>
+                        <li class="mb-2"><strong>Challenges:</strong> Diverse set of cybersecurity challenges across multiple categories</li>
+                        <li class="mb-2"><strong>Labs:</strong> Practice challenges available to all users at any time</li>
+                        <li class="mb-2"><strong>Leaderboards:</strong> Track progress and compete with others</li>
+                        <li class="mb-2"><strong>Badges:</strong> Earn achievements for your accomplishments</li>
+                        <li class="mb-2"><strong>Statistics:</strong> Detailed analytics of your performance</li>
+                        <li class="mb-2"><strong>Responsive Design:</strong> Works on desktop and mobile devices</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card bg-dark h-100">
+                <div class="card-header">
+                    <h4 class="mb-0">Who We Serve</h4>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h5><i class="fas fa-graduation-cap me-2"></i>Students</h5>
+                        <p>Learn cybersecurity concepts through practical application in a safe, legal environment.</p>
+                    </div>
+                    <div class="mb-3">
+                        <h5><i class="fas fa-briefcase me-2"></i>Professionals</h5>
+                        <p>Sharpen your skills and stay current with evolving cybersecurity threats and techniques.</p>
+                    </div>
+                    <div class="mb-3">
+                        <h5><i class="fas fa-building me-2"></i>Organizations</h5>
+                        <p>Host private competitions for team building, training, or recruitment purposes.</p>
+                    </div>
+                    <div>
+                        <h5><i class="fas fa-users me-2"></i>Communities</h5>
+                        <p>Build and strengthen cybersecurity communities through collaborative learning and friendly competition.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card bg-dark mb-4">
+        <div class="card-header">
+            <h4 class="mb-0">Challenge Categories</h4>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <h5><i class="fas fa-globe me-2"></i>Web</h5>
+                    <p>Challenges focusing on web application vulnerabilities, including XSS, CSRF, SQL injection, and authentication bypasses.</p>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <h5><i class="fas fa-lock me-2"></i>Cryptography</h5>
+                    <p>Challenges involving encryption, decryption, hashing, and breaking or implementing cryptographic algorithms.</p>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <h5><i class="fas fa-search me-2"></i>Forensics</h5>
+                    <p>Challenges involving file analysis, steganography, memory analysis, and network packet inspection.</p>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <h5><i class="fas fa-microchip me-2"></i>Reverse Engineering</h5>
+                    <p>Challenges requiring analysis of binaries, understanding program behavior without source code.</p>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <h5><i class="fas fa-bug me-2"></i>Pwnable</h5>
+                    <p>Challenges focusing on binary exploitation, such as buffer overflows, use-after-free, and format string vulnerabilities.</p>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <h5><i class="fas fa-random me-2"></i>Miscellaneous</h5>
+                    <p>Variety of challenges that don't fit in other categories, often involving general problem-solving skills.</p>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <h5><i class="fas fa-eye me-2"></i>OSINT</h5>
+                    <p>Open Source Intelligence challenges that involve gathering information from publicly available sources.</p>
+                </div>
+                <div class="col-md-6">
+                    <h5><i class="fas fa-flask me-2"></i>Lab Challenges</h5>
+                    <p>Practice challenges available at any time, designed for learning and skill development outside of competitions.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card bg-dark">
+        <div class="card-header">
+            <h4 class="mb-0">What were we thinking While Building this Platform</h4>
+        </div>
+        <div class="card-body">
+            <p class="mt-3">Our platform is designed with security in mind, implementing best practices for authentication, authorization, and data protection. We regularly update our codebase to address potential vulnerabilities and ensure a safe environment for all users.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,250 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <a href="{{ url_for('teams.list_teams') }}" class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Teams
+                </a>
+                
+                {% if is_member %}
+                <div class="d-flex">
+                    {% if is_captain %}
+                    <a href="{{ url_for('teams.edit_team', team_id=team.id) }}" class="btn btn-sm btn-primary me-2">
+                        <i class="fas fa-edit me-1"></i>Edit Team
+                    </a>
+                    <a href="{{ url_for('teams.invite_member', team_id=team.id) }}" class="btn btn-sm btn-success me-2">
+                        <i class="fas fa-user-plus me-1"></i>Invite Member
+                    </a>
+                    {% endif %}
+                    <a href="{{ url_for('teams.leave_team', team_id=team.id) }}" class="btn btn-sm btn-danger">
+                        <i class="fas fa-sign-out-alt me-1"></i>Leave Team
+                    </a>
+                </div>
+                {% elif current_user.is_authenticated %}
+                <form action="{{ url_for('teams.join_team', team_id=team.id) }}" method="post">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <button type="submit" class="btn btn-primary" {% if team.is_full() %}disabled{% endif %}>
+                        <i class="fas fa-user-plus me-1"></i>Join Team
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card terminal-card h-100">
+                <div class="card-header">
+                    <div class="d-flex align-items-center">
+                        <div class="terminal-dots me-2">
+                            <span class="dot dot-red"></span>
+                            <span class="dot dot-yellow"></span>
+                            <span class="dot dot-green"></span>
+                        </div>
+                        <h5 class="card-title mb-0">Team Profile</h5>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        {% if team.avatar %}
+                        <img src="{{ team.avatar }}" alt="{{ team.name }}" class="img-fluid rounded mb-3 team-avatar">
+                        {% else %}
+                        <div class="team-avatar-placeholder mb-3 d-flex align-items-center justify-content-center">
+                            <i class="fas fa-users fa-4x"></i>
+                        </div>
+                        {% endif %}
+                        <h3 class="mb-0">{{ team.name }}</h3>
+                        <p class="text-muted">
+                            <i class="fas fa-users me-1"></i>{{ team.member_count() }} / 5 members
+                        </p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6 class="text-primary">Description</h6>
+                        {% if team.description %}
+                        <p>{{ team.description }}</p>
+                        {% else %}
+                        <p class="text-muted fst-italic">No description provided</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6 class="text-primary">Status</h6>
+                        <span class="badge {% if team.status == 'active' %}bg-success{% else %}bg-secondary{% endif %}">
+                            {{ team.status.capitalize() }}
+                        </span>
+                    </div>
+                    
+                    <div>
+                        <h6 class="text-primary">Created</h6>
+                        <p>{{ team.created_at.strftime('%Y-%m-%d') }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card terminal-card mb-4">
+                <div class="card-header">
+                    <div class="d-flex align-items-center">
+                        <div class="terminal-dots me-2">
+                            <span class="dot dot-red"></span>
+                            <span class="dot dot-yellow"></span>
+                            <span class="dot dot-green"></span>
+                        </div>
+                        <h5 class="card-title mb-0">Team Members</h5>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Role</th>
+                                    <th>Joined</th>
+                                    {% if is_captain %}
+                                    <th>Actions</th>
+                                    {% endif %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for member, user in members %}
+                                <tr>
+                                    <td>
+                                        {% if user.avatar %}
+                                        <img src="{{ user.avatar }}" alt="{{ user.username }}" class="avatar-sm me-2">
+                                        {% endif %}
+                                        {{ user.username }}
+                                    </td>
+                                    <td>
+                                        {% if member.role == 'captain' %}
+                                        <span class="badge bg-primary">Captain</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Member</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ member.joined_at.strftime('%Y-%m-%d') }}</td>
+                                    {% if is_captain and member.user_id != current_user.id %}
+                                    <td>
+                                        <form action="{{ url_for('teams.kick_member', team_id=team.id, member_id=member.id) }}" method="post">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to remove this member?')">
+                                                <i class="fas fa-user-minus"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                    {% elif is_captain %}
+                                    <td>
+                                        <button class="btn btn-sm btn-secondary" disabled>
+                                            <i class="fas fa-crown" title="Team Captain"></i>
+                                        </button>
+                                    </td>
+                                    {% endif %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer bg-dark text-center">
+                    <small class="text-muted">
+                        {% if team.is_full() %}
+                        <i class="fas fa-exclamation-circle me-1"></i>Team is full (5/5 members)
+                        {% elif not team.has_minimum_members() %}
+                        <i class="fas fa-exclamation-triangle me-1"></i>Team needs at least 2 members to participate in competitions
+                        {% else %}
+                        <i class="fas fa-info-circle me-1"></i>Team has {{ team.member_count() }}/5 members
+                        {% endif %}
+                    </small>
+                </div>
+            </div>
+            
+            {% if competitions %}
+            <div class="card terminal-card">
+                <div class="card-header">
+                    <div class="d-flex align-items-center">
+                        <div class="terminal-dots me-2">
+                            <span class="dot dot-red"></span>
+                            <span class="dot dot-yellow"></span>
+                            <span class="dot dot-green"></span>
+                        </div>
+                        <h5 class="card-title mb-0">Team Competitions</h5>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Competition</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Score</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for competition in competitions %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ url_for('competitions.view_competition', competition_id=competition.id) }}">
+                                            {{ competition.title }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if competition.status == 'ACTIVE' %}bg-success{% elif competition.status == 'UPCOMING' %}bg-primary{% else %}bg-secondary{% endif %}">
+                                            {{ competition.status }}
+                                        </span>
+                                    </td>
+                                    <td>{{ competition.start_time.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        {% set team_competition = competition.teams|selectattr('team_id', 'equalto', team.id)|first %}
+                                        {{ team_competition.score if team_competition else 0 }}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .team-avatar {
+        max-height: 150px;
+        object-fit: contain;
+        margin: 0 auto;
+    }
+
+    .team-avatar-placeholder {
+        height: 150px;
+        width: 150px;
+        background-color: var(--bg-dark);
+        border-radius: 4px;
+        color: var(--text-color);
+        margin: 0 auto;
+    }
+
+    .avatar-sm {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    .badge {
+        padding: 0.35em 0.65em;
+    }
+</style>
+{% endblock %}

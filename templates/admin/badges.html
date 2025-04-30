@@ -1,0 +1,85 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-medal me-2"></i>Badge Management</h1>
+        <a href="{{ url_for('admin.create_badge') }}" class="btn btn-primary">
+            <i class="fas fa-plus-circle me-1"></i> Create Badge
+        </a>
+    </div>
+
+    <div class="card bg-dark mb-4">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Icon</th>
+                            <th>Name</th>
+                            <th>Description</th>
+                            <th>Criteria</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for badge in badges %}
+                        <tr>
+                            <td>{{ badge.id }}</td>
+                            <td>
+                                {% if badge.icon %}
+                                <i class="{{ badge.icon }} fa-lg"></i>
+                                {% else %}
+                                <i class="fas fa-medal fa-lg"></i>
+                                {% endif %}
+                            </td>
+                            <td>{{ badge.name }}</td>
+                            <td>{{ badge.description|truncate(50) }}</td>
+                            <td>{{ badge.criteria|truncate(50) }}</td>
+                            <td>{{ badge.created_at.strftime('%Y-%m-%d') }}</td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{{ url_for('admin.edit_badge', badge_id=badge.id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-danger btn-delete" data-bs-toggle="modal" data-bs-target="#deleteModal{{ badge.id }}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Delete Confirmation Modal -->
+                                <div class="modal fade" id="deleteModal{{ badge.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ badge.id }}" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content bg-dark">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="deleteModalLabel{{ badge.id }}">Confirm Deletion</h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                Are you sure you want to delete the badge <strong>{{ badge.name }}</strong>? This action cannot be undone.
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                <form action="{{ url_for('admin.delete_badge', badge_id=badge.id) }}" method="POST">
+                                                    <button type="submit" class="btn btn-danger">Delete</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center">No badges found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

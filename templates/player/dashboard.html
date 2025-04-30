@@ -1,0 +1,266 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <!-- Main Content Column -->
+        <div class="col-12">
+            <div class="container">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h1><i class="fas fa-tachometer-alt me-2"></i>Player Dashboard</h1>
+                    <a href="{{ url_for('player.profile') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-user me-1"></i> View Profile
+                    </a>
+                </div>
+                
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card bg-dark text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="stats-number">{{ current_user.score }}</div>
+                            <div class="stats-title">Total Score</div>
+                        </div>
+                        <div class="stats-icon">
+                            <i class="fas fa-star"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card bg-dark text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="stats-number">{{ registered_competitions|length }}</div>
+                            <div class="stats-title">Competitions</div>
+                        </div>
+                        <div class="stats-icon">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card bg-dark text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="stats-number">{{ recent_submissions|selectattr('is_correct', 'eq', True)|list|length }}</div>
+                            <div class="stats-title">Solved Challenges</div>
+                        </div>
+                        <div class="stats-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card bg-dark text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="stats-number">{{ user_badges|length }}</div>
+                            <div class="stats-title">Badges Earned</div>
+                        </div>
+                        <div class="stats-icon">
+                            <i class="fas fa-medal"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card bg-dark mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-2">
+                            <a href="{{ url_for('competitions.list_competitions') }}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-trophy me-2"></i>Find Competitions
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{{ url_for('challenges.list_challenges') }}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-puzzle-piece me-2"></i>Solve Challenges
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{{ url_for('challenges.labs') }}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-flask me-2"></i>Practice Labs
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{{ url_for('competitions.global_leaderboard') }}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-crown me-2"></i>Leaderboard
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{{ url_for('teams.list_teams') }}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-users me-2"></i>Teams
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Active Competitions -->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card bg-dark mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-trophy me-2"></i>My Competitions</h5>
+                    <a href="{{ url_for('player.my_competitions') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    {% if registered_competitions %}
+                    <div class="list-group list-group-flush">
+                        {% for competition in registered_competitions %}
+                        <a href="{{ url_for('competitions.view_competition', competition_id=competition.id) }}" class="list-group-item list-group-item-action bg-dark">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ competition.title }}</h6>
+                                    <small>{{ competition.start_time.strftime('%Y-%m-%d %H:%M') }} to {{ competition.end_time.strftime('%Y-%m-%d %H:%M') }}</small>
+                                </div>
+                                <span class="badge bg-{{ 'success' if competition.status.value == 'active' else ('warning' if competition.status.value == 'upcoming' else 'secondary') }}">
+                                    {{ competition.status.value }}
+                                </span>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="p-4 text-center">
+                        <p class="mb-3">You haven't registered for any competitions yet.</p>
+                        <a href="{{ url_for('competitions.list_competitions') }}" class="btn btn-primary">
+                            <i class="fas fa-trophy me-1"></i> Browse Competitions
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Recent Submissions -->
+            <div class="card bg-dark mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Submissions</h5>
+                    <a href="{{ url_for('player.my_submissions') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    {% if recent_submissions %}
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Challenge</th>
+                                    <th>Result</th>
+                                    <th>Points</th>
+                                    <th>Submitted</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for submission in recent_submissions %}
+                                <tr>
+                                    <td>{{ submission.challenge.title }}</td>
+                                    <td>
+                                        {% if submission.is_correct %}
+                                        <span class="badge bg-success">Correct</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">Incorrect</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ submission.points_awarded }}</td>
+                                    <td>{{ submission.submitted_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="p-4 text-center">
+                        <p class="mb-0">No submissions yet. Start solving challenges!</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <!-- Badges -->
+            <div class="card bg-dark mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-medal me-2"></i>My Badges</h5>
+                    <a href="{{ url_for('player.my_badges') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if user_badges %}
+                    <div class="row text-center">
+                        {% for user_badge in user_badges %}
+                        <div class="col-6 mb-3">
+                            <div class="badge-icon">
+                                {% if user_badge.badge.icon %}
+                                <i class="{{ user_badge.badge.icon }}"></i>
+                                {% else %}
+                                <i class="fas fa-medal"></i>
+                                {% endif %}
+                            </div>
+                            <h6 class="mb-0">{{ user_badge.badge.name }}</h6>
+                            <small class="text-muted">{{ user_badge.awarded_at.strftime('%Y-%m-%d') }}</small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center p-3">
+                        <p class="mb-0">No badges earned yet. Keep participating to earn badges!</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Progress Stats -->
+            <div class="card bg-dark">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Skills Progress</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="challengeTypesChart" height="200" data-types='{
+                        {% set types = {'web': 0, 'crypto': 0, 'forensics': 0, 'reverse': 0, 'pwnable': 0, 'misc': 0, 'osint': 0} %}
+                        {% for submission in recent_submissions if submission.is_correct %}
+                            {% if submission.challenge.type.value in types %}
+                                {% set _ = types.update({submission.challenge.type.value: types[submission.challenge.type.value] + 1}) %}
+                            {% endif %}
+                        {% endfor %}
+                        {% for type, count in types.items() %}
+                            "{{ type }}": {{ count }}{% if not loop.last %},{% endif %}
+                        {% endfor %}
+                    }'></canvas>
+                </div>
+            </div>
+            
+            <!-- Skills Progress Chart Bottom Margin -->
+            <div class="mb-4"></div>
+                
+            </div>
+        </div>
+        
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+<script src="{{ url_for('static', filename='js/ads.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,172 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="profile-header">
+        <div class="row align-items-center">
+            <div class="col-md-2 text-center">
+                {% if current_user.avatar %}
+                <img src="{{ current_user.avatar }}" alt="{{ current_user.username }}" class="profile-image">
+                {% else %}
+                <div class="profile-image d-flex align-items-center justify-content-center bg-dark">
+                    <i class="fas fa-user fa-2x"></i>
+                </div>
+                {% endif %}
+            </div>
+            <div class="col-md-6">
+                <h2>{{ current_user.username }}</h2>
+                <p class="text-muted">{{ current_user.email }}</p>
+                <div class="d-flex">
+                    <span class="badge bg-{{ 'danger' if current_user.role.value == 'owner' else ('info' if current_user.role.value == 'host' else 'secondary') }} me-2">
+                        {{ current_user.role.value|capitalize }}
+                    </span>
+                    <span class="badge bg-success">{{ total_points }} Points</span>
+                </div>
+            </div>
+            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                <a href="{{ url_for('player.settings') }}" class="btn btn-outline-light">
+                    <i class="fas fa-cog me-1"></i> Settings
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card bg-dark mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-user me-2"></i>Profile Information</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('player.profile') }}">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            <label for="username" class="form-label">{{ form.username.label }}</label>
+                            {{ form.username(class="form-control", placeholder="Enter username") }}
+                            {% if form.username.errors %}
+                                <div class="alert alert-danger mt-2">
+                                    {% for error in form.username.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">{{ form.email.label }}</label>
+                            {{ form.email(class="form-control", placeholder="Enter email") }}
+                            {% if form.email.errors %}
+                                <div class="alert alert-danger mt-2">
+                                    {% for error in form.email.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="bio" class="form-label">{{ form.bio.label }}</label>
+                            {{ form.bio(class="form-control", rows=4, placeholder="Tell us about yourself") }}
+                            {% if form.bio.errors %}
+                                <div class="alert alert-danger mt-2">
+                                    {% for error in form.bio.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="avatar" class="form-label">{{ form.avatar.label }}</label>
+                            {{ form.avatar(class="form-control", placeholder="Enter avatar URL") }}
+                            {% if form.avatar.errors %}
+                                <div class="alert alert-danger mt-2">
+                                    {% for error in form.avatar.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">
+                                Enter a URL to an avatar image.
+                            </small>
+                        </div>
+                        
+                        <div class="d-grid">
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <!-- Stats Card -->
+            <div class="card bg-dark mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>Total Points:</span>
+                        <strong>{{ total_points }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>Competitions:</span>
+                        <strong>{{ total_competitions }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>Total Submissions:</span>
+                        <strong>{{ total_submissions }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>Correct Submissions:</span>
+                        <strong>{{ correct_submissions }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Success Rate:</span>
+                        <strong>{{ (correct_submissions / total_submissions * 100)|round|int if total_submissions > 0 else 0 }}%</strong>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between">
+                        <span>Account Created:</span>
+                        <strong>{{ current_user.created_at.strftime('%Y-%m-%d') }}</strong>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Badges Card -->
+            <div class="card bg-dark">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-medal me-2"></i>Badges</h5>
+                    <a href="{{ url_for('player.my_badges') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if user_badges %}
+                    <div class="row text-center">
+                        {% for user_badge in user_badges %}
+                        <div class="col-4 mb-3">
+                            <div class="badge-icon">
+                                {% if user_badge.badge.icon %}
+                                <i class="{{ user_badge.badge.icon }}"></i>
+                                {% else %}
+                                <i class="fas fa-medal"></i>
+                                {% endif %}
+                            </div>
+                            <small>{{ user_badge.badge.name }}</small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center p-3">
+                        <p class="mb-0">No badges earned yet.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

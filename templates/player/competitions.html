@@ -1,0 +1,69 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-trophy me-2"></i>My Competitions</h1>
+        <a href="{{ url_for('competitions.list_competitions') }}" class="btn btn-primary">
+            <i class="fas fa-search me-1"></i> Find Competitions
+        </a>
+    </div>
+
+    {% if competitions %}
+    <div class="row">
+        {% for competition in competitions %}
+        <div class="col-md-6 mb-4">
+            <div class="card h-100 competition-card {{ competition.status.value }}">
+                <div class="card-header bg-dark d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">{{ competition.title }}</h5>
+                    <span class="badge bg-{{ 'success' if competition.status.value == 'active' else ('warning' if competition.status.value == 'upcoming' else 'secondary') }}">
+                        {{ competition.status.value|capitalize }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">{{ competition.description|truncate(150) }}</p>
+                    
+                    <div class="row mt-3 small">
+                        <div class="col-md-6">
+                            <p><i class="far fa-calendar-alt me-1"></i> <strong>Start:</strong> {{ competition.start_time.strftime('%Y-%m-%d %H:%M') }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><i class="far fa-calendar-check me-1"></i> <strong>End:</strong> {{ competition.end_time.strftime('%Y-%m-%d %H:%M') }}</p>
+                        </div>
+                    </div>
+                    
+                    {% if competition.status.value == 'active' %}
+                    <div class="alert alert-info mt-2 mb-0 small">
+                        <i class="fas fa-clock me-1"></i> <strong>Time remaining:</strong> 
+                        <span class="competition-countdown" data-end-time="{{ competition.end_time.isoformat() }}">
+                            Loading...
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-transparent text-end">
+                    <a href="{{ url_for('competitions.view_competition', competition_id=competition.id) }}" class="btn btn-primary">
+                        <i class="fas fa-gamepad me-1"></i> {{ 'Play' if competition.status.value == 'active' else 'View' }}
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>You haven't registered for any competitions yet.
+    </div>
+    
+    <div class="card bg-dark">
+        <div class="card-body text-center py-5">
+            <h4 class="mb-4">Ready to test your skills?</h4>
+            <p class="mb-4">Join a competition to solve challenges and earn points!</p>
+            <a href="{{ url_for('competitions.list_competitions') }}" class="btn btn-lg btn-primary">
+                <i class="fas fa-search me-1"></i> Browse Competitions
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

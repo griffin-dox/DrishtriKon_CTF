@@ -1,0 +1,210 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>{{ challenge.title }}</h1>
+        <div>
+            <a href="{{ url_for('challenges.list_challenges') }}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left me-1"></i> Back to Challenges
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Challenge Details Card -->
+            <div class="card bg-dark mb-4">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Challenge Details</h5>
+                        <div>
+                            <span class="badge badge-difficulty-{{ challenge.difficulty }} me-2">{{ challenge.type.value }}</span>
+                            <span class="badge bg-primary">{{ challenge.points }} points</span>
+                            {% if already_solved %}
+                            <span class="badge bg-success ms-2">Solved</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h6>Description:</h6>
+                        <div class="challenge-description">
+                            {{ challenge.description|safe }}
+                        </div>
+                    </div>
+
+                    <!-- Download File Section -->
+                    {% if challenge.file_name %}
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-download me-2"></i>Download File:</h6>
+                        <p>
+                            <a href="{{ url_for('player.download_file', challenge_id=challenge.id) }}" class="btn btn-outline-success">
+                                {{ challenge.file_name }}
+                            </a>
+                        </p>
+                    </div>
+                    {% endif %}
+
+                    {% if challenge.hint and (already_solved or previous_submissions|length >= 3) %}
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-lightbulb me-2"></i>Hint:</h6>
+                        <p class="mb-0">{{ challenge.hint }}</p>
+                    </div>
+                    {% elif challenge.hint and not already_solved %}
+                    <div class="alert alert-secondary">
+                        <i class="fas fa-lightbulb me-2"></i>A hint is available after 3 failed attempts.
+                    </div>
+                    {% endif %}
+
+                    {% if already_solved %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>Congratulations! You've solved this challenge!
+                    </div>
+                    {% else %}
+                    <div class="mt-4">
+                        <h6>Submit Flag:</h6>
+                        <form method="POST" action="{{ url_for('challenges.view_challenge', challenge_id=challenge.id) }}" class="flag-form">
+                            {{ form.hidden_tag() }}
+                            <div class="input-group">
+                                {{ form.flag(class="form-control flag-input", placeholder="Enter flag here (e.g. flag{...})") }}
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-paper-plane me-1"></i> Submit
+                                </button>
+                            </div>
+                            {% if form.flag.errors %}
+                            <div class="alert alert-danger mt-2 mb-0">
+                                {% for error in form.flag.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Previous Submissions -->
+            {% if previous_submissions %}
+            <div class="card bg-dark">
+                <div class="card-header">
+                    <h5 class="mb-0">Your Submissions</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Flag Submitted</th>
+                                    <th>Result</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for submission in previous_submissions %}
+                                <tr>
+                                    <td>{{ submission.submitted_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                    <td>
+                                        {% if submission.is_correct %}
+                                        {{ submission.flag_submitted }}
+                                        {% else %}
+                                        {{ submission.flag_submitted|truncate(10, True) }}
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if submission.is_correct %}
+                                        <span class="badge bg-success">Correct</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">Incorrect</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Challenge Info Card -->
+            <div class="card bg-dark mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Challenge Info</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>Category:</span>
+                        <span class="badge badge-difficulty-{{ challenge.difficulty }}">{{ challenge.type.value }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>Difficulty:</span>
+                        <div>
+                            {% for i in range(challenge.difficulty) %}
+                            <i class="fas fa-star text-warning"></i>
+                            {% endfor %}
+                            {% for i in range(5 - challenge.difficulty) %}
+                            <i class="far fa-star text-muted"></i>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>Points:</span>
+                        <span class="badge bg-primary">{{ challenge.points }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>Type:</span>
+                        <span>{% if challenge.is_lab %}Lab Challenge{% else %}Competition Challenge{% endif %}</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Creator:</span>
+                        <span>{{ challenge.creator.username }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tips Card -->
+            <div class="card bg-dark">
+                <div class="card-header">
+                    <h5 class="mb-0">Tips</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        <li class="mb-2">Read the challenge description carefully for clues.</li>
+                        <li class="mb-2">Consider all information provided as potentially useful.</li>
+                        <li class="mb-2">Try multiple approaches if you're stuck.</li>
+                        <li class="mb-2">Flags are typically in the format <code>flag{...}</code>.</li>
+                        <li class="mb-2">Don't overthink it - sometimes the solution is simpler than you expect.</li>
+                        {% if challenge.type.value == 'web' %}
+                        <li class="mb-2">Check the page source, network requests, and cookies.</li>
+                        <li>Try common web vulnerabilities like XSS, CSRF, and SQL injection.</li>
+                        {% elif challenge.type.value == 'crypto' %}
+                        <li class="mb-2">Identify the encryption algorithm being used.</li>
+                        <li>Look for weaknesses in implementation or key management.</li>
+                        {% elif challenge.type.value == 'forensics' %}
+                        <li class="mb-2">Examine file metadata and hidden information.</li>
+                        <li>Use appropriate tools for file analysis.</li>
+                        {% elif challenge.type.value == 'reverse' %}
+                        <li class="mb-2">Use a disassembler or decompiler to analyze the code.</li>
+                        <li>Look for key string comparisons and logic patterns.</li>
+                        {% elif challenge.type.value == 'pwnable' %}
+                        <li class="mb-2">Check for buffer overflows and memory corruption.</li>
+                        <li>Understand the program's memory layout and protections.</li>
+                        {% elif challenge.type.value == 'misc' %}
+                        <li class="mb-2">Think outside the box!</li>
+                        <li>Try various tools and techniques as these challenges can be quite diverse.</li>
+                        {% elif challenge.type.value == 'osint' %}
+                        <li class="mb-2">Search for information from publicly available sources.</li>
+                        <li>Use search engines, social media, and public databases effectively.</li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,149 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <div class="card bg-dark shadow">
+                <div class="card-header">
+                    <h3 class="mb-0">
+                        <i class="fas {{ 'fa-edit' if edit_mode else 'fa-plus-circle' }} me-2"></i>
+                        {{ 'Edit Challenge' if edit_mode else 'Create Challenge for ' ~ competition.title }}
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" 
+                          action="{{
+                            url_for('host.edit_challenge', challenge_id=challenge.id)
+                            if edit_mode else
+                            url_for('host.create_challenge', competition_id=competition.id)
+                          }}"
+                          enctype="multipart/form-data">
+                        {{ form.hidden_tag() }}
+
+                        <!-- Challenge Title -->
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.title.label }}</label>
+                            {{ form.title(class="form-control", placeholder="Enter challenge title") }}
+                            {% if form.title.errors %}
+                                <div class="alert alert-danger mt-2">
+                                    {% for error in form.title.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.description.label }}</label>
+                            {{ form.description(class="form-control", rows=5, placeholder="Enter challenge description") }}
+                            {% if form.description.errors %}
+                                <div class="alert alert-danger mt-2">
+                                    {% for error in form.description.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">Markdown supported. Provide clear challenge instructions.</small>
+                        </div>
+
+                        <!-- File Upload -->
+                        <div class="mb-3">
+                            <label for="file" class="form-label">Attach File (optional)</label>
+                            <input class="form-control" type="file" name="file" id="file">
+                            <small class="form-text text-muted">
+                                Upload any file needed to solve the challenge.
+                            </small>
+                        </div>
+
+                        <!-- Flag -->
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.flag.label }}</label>
+                            {{ form.flag(class="form-control", placeholder="flag{example_flag}") }}
+                            {% if form.flag.errors %}
+                                <div class="alert alert-danger mt-2">
+                                    {% for error in form.flag.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Points + Difficulty -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">{{ form.points.label }}</label>
+                                {{ form.points(class="form-control") }}
+                                {% if form.points.errors %}
+                                    <div class="alert alert-danger mt-2">
+                                        {% for error in form.points.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">{{ form.difficulty.label }}</label>
+                                {{ form.difficulty(class="form-select") }}
+                                {% if form.difficulty.errors %}
+                                    <div class="alert alert-danger mt-2">
+                                        {% for error in form.difficulty.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Type -->
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.type.label }}</label>
+                            {{ form.type(class="form-select") }}
+                            {% if form.type.errors %}
+                                <div class="alert alert-danger mt-2">
+                                    {% for error in form.type.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Hint -->
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.hint.label }}</label>
+                            {{ form.hint(class="form-control", rows=3) }}
+                            {% if form.hint.errors %}
+                                <div class="alert alert-danger mt-2">
+                                    {% for error in form.hint.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Lab + Public Toggles -->
+                        <div class="form-check mb-3">
+                            {{ form.is_lab(class="form-check-input") }}
+                            <label class="form-check-label">{{ form.is_lab.label }}</label>
+                        </div>
+
+                        <div class="form-check mb-3">
+                            {{ form.is_public(class="form-check-input") }}
+                            <label class="form-check-label">{{ form.is_public.label }}</label>
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('host.challenges') }}" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">
+                                {{ 'Update Challenge' if edit_mode else 'Create Challenge' }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

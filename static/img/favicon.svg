@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="32px" height="32px" viewBox="0 0 32 32" version="1.1" xmlns="http://www.w3.org/2000/svg">
+    <title>CTF Platform Favicon</title>
+    <defs>
+        <linearGradient x1="0%" y1="0%" x2="100%" y2="100%" id="linearGradient">
+            <stop stop-color="#6a11cb" offset="0%"></stop>
+            <stop stop-color="#2575fc" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <rect fill="#121212" x="0" y="0" width="32" height="32" rx="6"></rect>
+        <path d="M25.5,8 C26.3284271,8 27,8.67157288 27,9.5 L27,9.5 L27,22.5 C27,23.3284271 26.3284271,24 25.5,24 L25.5,24 L17,24 L17,27 L20,27 C20.5522847,27 21,27.4477153 21,28 C21,28.5522847 20.5522847,29 20,29 L20,29 L12,29 C11.4477153,29 11,28.5522847 11,28 C11,27.4477153 11.4477153,27 12,27 L12,27 L15,27 L15,24 L6.5,24 C5.67157288,24 5,23.3284271 5,22.5 L5,22.5 L5,9.5 C5,8.67157288 5.67157288,8 6.5,8 L6.5,8 Z M25,10 L7,10 L7,22 L25,22 L25,10 Z M18.5,13 C19.3284271,13 20,13.6715729 20,14.5 L20,14.5 L20,17.5 C20,18.3284271 19.3284271,19 18.5,19 L18.5,19 L13.5,19 C12.6715729,19 12,18.3284271 12,17.5 L12,17.5 L12,14.5 C12,13.6715729 12.6715729,13 13.5,13 L13.5,13 Z M18,15 L14,15 L14,17 L18,17 L18,15 Z" fill="url(#linearGradient)" fill-rule="nonzero"></path>
+    </g>
+</svg>

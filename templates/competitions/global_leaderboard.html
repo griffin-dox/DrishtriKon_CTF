@@ -1,0 +1,96 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <!-- Main Content Column -->
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1><i class="fas fa-crown me-2"></i>Global Leaderboard</h1>
+            </div>
+            
+            <div class="card bg-dark mb-4">
+                <div class="card-body">
+                    <p>The global leaderboard shows the top players across all competitions and challenges on the platform.</p>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-8">
+                    {% if leaderboard %}
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover leaderboard-table">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Player</th>
+                                    <th>Score</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for entry in leaderboard %}
+                                <tr{% if current_user.is_authenticated and entry.username == current_user.username %} class="table-primary"{% endif %}>
+                                    <td>{{ entry.rank }}</td>
+                                    <td>{{ entry.username }}</td>
+                                    <td>{{ entry.score }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>No leaderboard data available yet.
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="card bg-dark mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-trophy me-2"></i>Top 10 Players</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="leaderboardChart" height="300" data-leaderboard='{{ leaderboard[:10]|tojson if leaderboard else "[]" }}'></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="card bg-dark">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Leaderboard Info</h5>
+                        </div>
+                        <div class="card-body">
+                            <p><i class="fas fa-star me-2"></i><strong>Scoring:</strong> Points are earned by solving challenges.</p>
+                            <p><i class="fas fa-trophy me-2"></i><strong>Competitions:</strong> Participating in competitions can significantly boost your ranking.</p>
+                            <p><i class="fas fa-medal me-2"></i><strong>Badges:</strong> Earn special badges for outstanding achievements.</p>
+                            <p><i class="fas fa-sync-alt me-2"></i><strong>Updates:</strong> The leaderboard is updated in real-time as users solve challenges.</p>
+                            
+                            {% if current_user.is_authenticated %}
+                                {% set current_user_rank = None %}
+                                {% for entry in leaderboard %}
+                                    {% if entry.username == current_user.username %}
+                                        {% set current_user_rank = entry.rank %}
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                <div class="alert alert-info mt-3 mb-0">
+                                    <strong>Your Rank:</strong> 
+                                    {% if current_user_rank %}
+                                        #{{ current_user_rank }} with {{ current_user.score }} points
+                                    {% else %}
+                                        Not ranked yet. Start solving challenges to earn points!
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+{% endblock %}

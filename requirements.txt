@@ -1,0 +1,17 @@
+alembic
+python-dotenv
+flask
+flask-login
+flask-mail
+flask-migrate
+flask-sqlalchemy
+flask-wtf
+pyotp
+sqlalchemy
+werkzeug
+wtforms
+psycopg2
+gunicorn
+email_validator
+python-dotenv
+python-magic

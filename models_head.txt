@@ -1,0 +1,150 @@
+import enum
+from datetime import datetime
+from app import db
+from flask_login import UserMixin
+from sqlalchemy import case, func, cast
+from sqlalchemy.ext.hybrid import hybrid_property
+from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy.dialects.postgresql import ENUM as PGEnum
+
+# User Roles Enum
+class UserRole(enum.Enum):
+    OWNER = "owner"
+    HOST = "host"
+    PLAYER = "player"
+
+# User Status Enum
+class UserStatus(enum.Enum):
+    ACTIVE = "active"
+    RESTRICTED = "restricted"
+    SUSPENDED = "suspended"
+    BANNED = "banned"
+
+# Challenge Types Enum
+class ChallengeType(enum.Enum):
+    WEB = "web"
+    CRYPTO = "crypto"
+    FORENSICS = "forensics"
+    REVERSE = "reverse"
+    PWNABLE = "pwnable"
+    MISC = "misc"
+    OSINT = "osint"
+    LAB = "lab"
+
+# Competition Status Enum
+class CompetitionStatus(enum.Enum):
+    UPCOMING = "UPCOMING"
+    ACTIVE = "ACTIVE"
+    ENDED = "ENDED"
+
+# User Model
+class User(UserMixin, db.Model):
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(64), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(256), nullable=False)
+    role = db.Column(db.Enum(UserRole), default=UserRole.PLAYER, nullable=False)
+    status = db.Column(
+        db.Enum(UserStatus, name="userstatus", native_enum=False), 
+        default=UserStatus.ACTIVE
+    )
+    score = db.Column(db.Integer, default=0)
+    bio = db.Column(db.Text, nullable=True)
+    avatar = db.Column(db.String(255), nullable=True)
+    is_verified = db.Column(db.Boolean, default=False)
+    otp_secret = db.Column(db.String(32), nullable=True)
+    otp_valid_until = db.Column(db.DateTime, nullable=True)
+    email_verified = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    hosted_competitions = db.relationship('Competition', back_populates='host', lazy=True)
+    submissions = db.relationship('Submission', back_populates='user', lazy=True, cascade="all, delete-orphan")
+    badges = db.relationship('UserBadge', back_populates='user', lazy=True, cascade="all, delete-orphan")
+    competitions = db.relationship('UserCompetition', back_populates='user', lazy=True, cascade="all, delete-orphan")
+    team_memberships = db.relationship('TeamMember', 
+                                       foreign_keys="TeamMember.user_id",
+                                       primaryjoin="User.id == TeamMember.user_id",
+                                       backref=db.backref('user_account', lazy=True),
+                                       lazy=True, 
+                                       cascade="all, delete-orphan")
+    
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+        
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+    
+    def is_admin(self):
+        return self.role == UserRole.OWNER
+        
+    def is_host(self):
+        return self.role == UserRole.HOST or self.role == UserRole.OWNER
+    
+    def is_active_user(self):
+        return self.status == UserStatus.ACTIVE
+    
+    def get_otp_expiry(self):
+        """Returns OTP expiry time in minutes"""
+        if not self.otp_valid_until:
+            return 0
+        
+        now = datetime.utcnow()
+        if now > self.otp_valid_until:
+            return 0
+            
+        delta = self.otp_valid_until - now
+        return int(delta.total_seconds() // 60) + 1  # Return remaining minutes, rounded up
+
+# Competition Model
+class Competition(db.Model):
+    __tablename__ = 'competitions'
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(255), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    start_time = db.Column(db.DateTime, nullable=False)
+    end_time = db.Column(db.DateTime, nullable=False)
+    status = db.Column(db.Enum(UserStatus), default=UserStatus.ACTIVE, nullable=False)
+    manual_status_override = db.Column(db.Enum(CompetitionStatus), nullable=True)
+    max_participants = db.Column(db.Integer, nullable=True)
+    host_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    is_public = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    show_leaderboard = db.Column(db.Boolean, default=True)
+
+    # Define the 'host' relationship
+    host = db.relationship('User', back_populates='hosted_competitions')
+
+    # Other relationships
+    participants = db.relationship('UserCompetition', back_populates='competition', lazy=True)
+    challenges = db.relationship('CompetitionChallenge', back_populates='competition', lazy=True)
+
+    @hybrid_property
+    def status(self):
+        if self.manual_status_override is not None:
+            return self.manual_status_override
+        now = datetime.utcnow()
+        if self.start_time > now:
+            return CompetitionStatus.UPCOMING
+        elif self.end_time < now:
+            return CompetitionStatus.ENDED
+        return CompetitionStatus.ACTIVE
+
+    @status.expression
+    def status(cls):
+        return case(
+            (cls.manual_status_override != None, cls.manual_status_override),
+            (cls.start_time > func.now(), cast('UPCOMING', PGEnum(CompetitionStatus))),
+            (cls.end_time < func.now(), cast('ENDED', PGEnum(CompetitionStatus))),
+            else_=cast('ACTIVE', PGEnum(CompetitionStatus))
+        )
+
+# Challenge Model
+class Challenge(db.Model):
+    __tablename__ = 'challenges'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(255), nullable=False)

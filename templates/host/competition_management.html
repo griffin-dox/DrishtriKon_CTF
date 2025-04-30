@@ -1,0 +1,264 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-cog me-2"></i>Manage Competition</h1>
+        <div>
+            <a href="{{ url_for('host.edit_competition', competition_id=competition.id) }}" class="btn btn-outline-primary me-2">
+                <i class="fas fa-edit me-1"></i> Edit Details
+            </a>
+            <a href="{{ url_for('competitions.view_competition', competition_id=competition.id) }}" class="btn btn-primary">
+                <i class="fas fa-eye me-1"></i> View Public Page
+            </a>
+        </div>
+    </div>
+
+    <!-- Competition Info Card -->
+    <div class="card bg-dark mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="d-flex align-items-center mb-2">
+                        <h3 class="mb-0 me-2">{{ competition.title }}</h3>
+                        {% if is_primary_host %}
+                            <span class="badge bg-info text-dark"><i class="fas fa-crown me-1"></i>Primary Host</span>
+                        {% else %}
+                            <span class="badge bg-secondary"><i class="fas fa-users-cog me-1"></i>Co-Host</span>
+                        {% endif %}
+                    </div>
+                    <p>{{ competition.description }}</p>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-dark mb-3">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span><i class="fas fa-clock me-1"></i> Status:</span>
+                                <span class="badge bg-{{ 'success' if competition.status.value == 'active' else ('warning' if competition.status.value == 'upcoming' else 'secondary') }}">
+                                    {{ competition.status.value|capitalize }}
+                                </span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span><i class="far fa-calendar-alt me-1"></i> Start:</span>
+                                <span>{{ competition.start_time.strftime('%Y-%m-%d %H:%M') }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span><i class="far fa-calendar-check me-1"></i> End:</span>
+                                <span>{{ competition.end_time.strftime('%Y-%m-%d %H:%M') }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span><i class="fas fa-users me-1"></i> Participants:</span>
+                                <span>{{ participants|length }}{% if competition.max_participants %}/{{ competition.max_participants }}{% endif %}</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span><i class="fas fa-puzzle-piece me-1"></i> Challenges:</span>
+                                <span>{{ competition_challenges|length }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manual Controls (Leaderboard + Status) -->
+    <div class="card bg-dark mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-tools me-2"></i>Manual Controls</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <!-- Leaderboard Toggle -->
+                <div class="col-md-6">
+                    <form method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="show_leaderboard" id="showLeaderboardSwitch" {% if competition.show_leaderboard %}checked{% endif %}>
+                            <label class="form-check-label" for="showLeaderboardSwitch">Show Leaderboard</label>
+                        </div>
+                        <button type="submit" class="btn btn-outline-primary mt-2">
+                            <i class="fas fa-eye me-1"></i> Update Leaderboard Visibility
+                        </button>
+                    </form>
+                </div>
+            
+                <!-- Manual Status Dropdown -->
+                <div class="col-md-6">
+                    <form method="POST">
+                        {{ status_form.hidden_tag() }}
+                        <div class="mb-2">
+                            {{ status_form.status.label(class="form-label") }}
+                            {{ status_form.status(class="form-select") }}
+                        </div>
+                        {{ status_form.submit(class="btn btn-outline-warning") }}
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Host Stats Section -->
+    <div class="card bg-dark mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-chart-line me-2"></i> Competition Stats</h5>
+        </div>
+        <div class="card-body">
+            <div class="row text-center">
+                <div class="col-md-3 mb-3">
+                    <h4>{{ total_participants }}</h4>
+                    <p class="text-muted mb-0">Participants</p>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <h4>{{ total_submissions }}</h4>
+                    <p class="text-muted mb-0">Total Submissions</p>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <h4>{{ correct_submissions }}</h4>
+                    <p class="text-muted mb-0">Correct Submissions</p>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <h4>{{ avg_score }}</h4>
+                    <p class="text-muted mb-0">Average Score</p>
+                </div>
+            </div>
+
+            {% if challenge_solve_distribution %}
+            <h6 class="mt-4">Challenge Solve Distribution</h6>
+            <ul class="list-group list-group-flush">
+                {% for title, count in challenge_solve_distribution %}
+                <li class="list-group-item bg-dark d-flex justify-content-between align-items-center text-white">
+                    {{ title }}
+                    <span class="badge bg-primary">{{ count }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="text-muted">No challenges solved yet.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Tabs for Management -->
+    <ul class="nav nav-tabs mb-4" id="managementTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="challenges-tab" data-bs-toggle="tab" data-bs-target="#challenges-content" type="button" role="tab" aria-controls="challenges-content" aria-selected="true">
+                <i class="fas fa-puzzle-piece me-1"></i> Challenges
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="participants-tab" data-bs-toggle="tab" data-bs-target="#participants-content" type="button" role="tab" aria-controls="participants-content" aria-selected="false">
+                <i class="fas fa-users me-1"></i> Participants
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="managementTabsContent">
+        <!-- Challenges Tab -->
+        <div class="tab-pane fade show active" id="challenges-content" role="tabpanel" aria-labelledby="challenges-tab">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0">Competition Challenges</h4>
+                <a href="{{ url_for('host.create_challenge', competition_id=competition.id) }}" class="btn btn-success">
+                    <i class="fas fa-plus me-1"></i> Create Challenge
+                </a>
+            </div>
+
+            {% if competition_challenges %}
+            <div class="table-responsive">
+                <table class="table table-dark table-hover">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Type</th>
+                            <th>Difficulty</th>
+                            <th>Points</th>
+                            <th>Release Time</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cc in competition_challenges %}
+                        <tr>
+                            <td>{{ cc.challenge.title }}</td>
+                            <td>
+                                <span class="badge badge-difficulty-{{ cc.challenge.difficulty }}">
+                                    {{ cc.challenge.type.value }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="d-flex">
+                                    {% for i in range(cc.challenge.difficulty) %}
+                                    <i class="fas fa-star text-warning"></i>
+                                    {% endfor %}
+                                    {% for i in range(5 - cc.challenge.difficulty) %}
+                                    <i class="far fa-star text-muted"></i>
+                                    {% endfor %}
+                                </div>
+                            </td>
+                            <td>{{ cc.challenge.points }}</td>
+                            <td>{{ cc.release_time.strftime('%Y-%m-%d %H:%M') if cc.release_time else 'Immediately' }}</td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if cc.is_active else 'secondary' }}">
+                                    {{ 'Active' if cc.is_active else 'Inactive' }}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('host.edit_challenge', challenge_id=cc.challenge.id) }}" class="btn btn-sm btn-warning me-2">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+
+                                <form action="{{ url_for('host.delete_challenge', challenge_id=cc.challenge.id) }}" method="POST" style="display:inline;">
+                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this challenge?')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>No challenges have been added to this competition yet. Click the "Create Challenge" button to add challenges.
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Participants Tab -->
+        <div class="tab-pane fade" id="participants-content" role="tabpanel" aria-labelledby="participants-tab">
+            <h4 class="mb-3">Registered Participants</h4>
+
+            {% if participants %}
+            <div class="table-responsive">
+                <table class="table table-dark table-hover">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Username</th>
+                            <th>Score</th>
+                            <th>Joined</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set participants_sorted = participants|sort(attribute='score', reverse=True) %}
+                        {% for participant in participants_sorted %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>{{ participant.user.username }}</td>
+                            <td>{{ participant.score }}</td>
+                            <td>{{ participant.joined_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>No participants have registered for this competition yet.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

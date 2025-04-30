@@ -1,0 +1,87 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-chart-bar me-2"></i>Platform Statistics</h1>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="row mb-4">
+        {% for label, value, icon in [
+            ('Total Users', total_users, 'fa-users'),
+            ('Players', total_players, 'fa-user'),
+            ('Hosts', total_hosts, 'fa-users-cog'),
+            ('Admins', total_admins, 'fa-shield-alt'),
+            ('Challenges', total_challenges, 'fa-puzzle-piece'),
+            ('Public Challenges', public_challenges, 'fa-globe'),
+            ('Lab Challenges', lab_challenges, 'fa-flask'),
+            ('Competitions', total_competitions, 'fa-trophy'),
+            ('Badges', total_badges, 'fa-medal'),
+            ('Submissions', total_submissions, 'fa-file-alt'),
+        ] %}
+        <div class="col-md-4 mb-3">
+            <div class="card bg-dark text-white">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="stats-number">{{ value }}</div>
+                        <div class="stats-title">{{ label }}</div>
+                    </div>
+                    <div class="stats-icon"><i class="fas {{ icon }}"></i></div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Submission Breakdown Chart -->
+    <div class="card bg-dark text-white mb-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Submission Accuracy</h5>
+        </div>
+        <div class="card-body">
+            <canvas id="submissionChart" data-correct="{{ correct_submissions }}" data-incorrect="{{ incorrect_submissions }}"></canvas>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Use JS-safe assignments by inserting Jinja variables into data attributes and parsing them in JS
+    const correct = Number(document.getElementById('submissionChart').dataset.correct);
+    const incorrect = Number(document.getElementById('submissionChart').dataset.incorrect);
+
+    const submissionChartData = {
+        labels: ['Correct', 'Incorrect'],
+        datasets: [{
+            label: 'Submissions',
+            data: [correct, incorrect],
+            backgroundColor: ['#28a745', '#dc3545'],
+            borderColor: ['#28a745', '#dc3545'],
+            borderWidth: 1
+        }]
+    };
+
+    const submissionChartConfig = {
+        type: 'doughnut',
+        data: submissionChartData,
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        color: '#fff'
+                    }
+                }
+            }
+        }
+    };
+
+    new Chart(
+        document.getElementById('submissionChart'),
+        submissionChartConfig
+    );
+</script>
+{% endblock %}

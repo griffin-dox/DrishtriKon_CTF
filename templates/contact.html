@@ -1,0 +1,123 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-envelope me-2"></i>Contact Us</h1>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-7 mb-4">
+            <div class="card bg-dark">
+                <div class="card-header">
+                    <h4 class="mb-0">Get in Touch</h4>
+                </div>
+                <div class="card-body">
+                    <p class="mb-4">Have questions, feedback, or need assistance? We'd love to hear from you! Fill out the form below and we'll get back to you as soon as possible.</p>
+                    
+                    <form action="{{ form_action }}" method="post">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Your Name</label>
+                            <input type="text" class="form-control" id="name" name="name" placeholder="Enter your name">
+                        </div>
+                    
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="email" name="email" placeholder="Enter your email">
+                        </div>
+                    
+                        <div class="mb-3">
+                            <label for="subject" class="form-label">Subject</label>
+                            <select class="form-select" id="subject" name="subject">
+                                <option selected disabled>Select a subject</option>
+                                <option value="General Inquiry">General Inquiry</option>
+                                <option value="Technical Support">Technical Support</option>
+                                <option value="Feature Request">Feature Request</option>
+                                <option value="Bug Report">Bug Report</option>
+                                <option value="Business Inquiry">Business Inquiry</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    
+                        <div class="mb-4">
+                            <label for="message" class="form-label">Message</label>
+                            <textarea class="form-control" id="message" name="message" rows="5" placeholder="Enter your message"></textarea>
+                        </div>
+                    
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane me-1"></i> Send Message
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-5">
+            <div class="card bg-dark mb-4">
+                <div class="card-header">
+                    <h4 class="mb-0">Contact Information</h4>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="me-3">
+                            <i class="fas fa-envelope fa-2x text-primary"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-1">Email</h5>
+                            <p class="mb-0">codeitishant@gmail.com</p>
+                            <p class="mb-0">kadamkaran6053@gmail.com</p>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="me-3">
+                            <i class="fas fa-map-marker-alt fa-2x text-primary"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-1">Location</h5>
+                            <p class="mb-0">Cyber Security District<br>Digital City, Cyberspace</p>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <i class="fas fa-clock fa-2x text-primary"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-1">Support Hours</h5>
+                            <p class="mb-0">Monday - Friday: 9:00 AM - 6:00 PM<br>Weekend: Closed</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card bg-dark mb-4">
+                <div class="card-header">
+                    <h4 class="mb-0">Connect With Us</h4>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-around fs-2">
+                        <a href="#" class="text-primary"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-primary"><i class="fab fa-github"></i></a>
+                        <a href="#" class="text-primary"><i class="fab fa-discord"></i></a>
+                        <a href="#" class="text-primary"><i class="fab fa-linkedin"></i></a>
+                        <a href="#" class="text-primary"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card bg-dark">
+                <div class="card-header">
+                    <h4 class="mb-0">FAQ</h4>
+                </div>
+                <div class="card-body">
+                    <p>Have a question? Check our <a href="{{ url_for('main.faq') }}">FAQ page</a> for quick answers to common questions.</p>
+                    <a href="{{ url_for('main.faq') }}" class="btn btn-outline-primary w-100">
+                        <i class="fas fa-question-circle me-1"></i> View FAQ
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

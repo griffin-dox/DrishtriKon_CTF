@@ -1,0 +1,133 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <div class="card bg-dark shadow">
+                <div class="card-header">
+                    <h3 class="mb-0"><i class="fas fa-plus-circle me-2"></i>Create Challenge</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('admin.create_challenge') }}" enctype="multipart/form-data">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            <label for="title" class="form-label">{{ form.title.label }}</label>
+                            {{ form.title(class="form-control", placeholder="Enter challenge title") }}
+                            {% if form.title.errors %}
+                                <div class="alert alert-danger mt-2">
+                                    {% for error in form.title.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">{{ form.description.label }}</label>
+                            {{ form.description(class="form-control", rows=5, placeholder="Enter challenge description") }}
+                            {% if form.description.errors %}
+                                <div class="alert alert-danger mt-2">
+                                    {% for error in form.description.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">
+                                Markdown is supported. Include clear instructions on how to approach the challenge.
+                            </small>
+                        </div>
+
+                        <!-- File Upload -->
+                        <div class="mb-3">
+                            <label for="file" class="form-label">Attach File (optional)</label>
+                            <input class="form-control" type="file" name="file" id="file">
+                            <small class="form-text text-muted">
+                                Upload a file if the challenge includes downloadable materials.
+                            </small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="flag" class="form-label">{{ form.flag.label }}</label>
+                            {{ form.flag(class="form-control", placeholder="Enter flag value (e.g., flag{this_is_the_flag})") }}
+                            {% if form.flag.errors %}
+                                <div class="alert alert-danger mt-2">
+                                    {% for error in form.flag.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="points" class="form-label">{{ form.points.label }}</label>
+                                {{ form.points(class="form-control", placeholder="Points value") }}
+                                {% if form.points.errors %}
+                                    <div class="alert alert-danger mt-2">
+                                        {% for error in form.points.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="difficulty" class="form-label">{{ form.difficulty.label }}</label>
+                                {{ form.difficulty(class="form-select") }}
+                                {% if form.difficulty.errors %}
+                                    <div class="alert alert-danger mt-2">
+                                        {% for error in form.difficulty.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="type" class="form-label">{{ form.type.label }}</label>
+                            {{ form.type(class="form-select") }}
+                            {% if form.type.errors %}
+                                <div class="alert alert-danger mt-2">
+                                    {% for error in form.type.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="hint" class="form-label">{{ form.hint.label }}</label>
+                            {{ form.hint(class="form-control", rows=3, placeholder="Enter optional hint") }}
+                            {% if form.hint.errors %}
+                                <div class="alert alert-danger mt-2">
+                                    {% for error in form.hint.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Lab + Public Toggles -->
+                        <div class="form-check mb-3">
+                            {{ form.is_lab(class="form-check-input") }}
+                            <label class="form-check-label">{{ form.is_lab.label }}</label>
+                        </div>
+
+                        <div class="form-check mb-3">
+                            {{ form.is_public(class="form-check-input") }}
+                            <label class="form-check-label">{{ form.is_public.label }}</label>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('admin.challenges') }}" class="btn btn-secondary">Cancel</a>
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

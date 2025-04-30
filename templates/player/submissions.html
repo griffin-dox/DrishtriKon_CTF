@@ -1,0 +1,226 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-history me-2"></i>My Submissions</h1>
+        <a href="{{ url_for('player.dashboard') }}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+        </a>
+    </div>
+
+    {% if submissions %}
+    <div class="card bg-dark mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Submission History</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Challenge</th>
+                            <th>Type</th>
+                            <th>Competition</th>
+                            <th>Flag Submitted</th>
+                            <th>Result</th>
+                            <th>Points</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for submission in submissions %}
+                        <tr>
+                            <td>{{ submission.submitted_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>
+                                <a href="{{ url_for('challenges.view_challenge', challenge_id=submission.challenge_id) }}" class="text-decoration-none">
+                                    {{ submission.challenge.title }}
+                                </a>
+                            </td>
+                            <td>
+                                <span class="badge badge-difficulty-{{ submission.challenge.difficulty }}">
+                                    {{ submission.challenge.type.value }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if submission.competition %}
+                                <a href="{{ url_for('competitions.view_competition', competition_id=submission.competition_id) }}" class="text-decoration-none">
+                                    {{ submission.competition.title }}
+                                </a>
+                                {% else %}
+                                <span class="badge bg-info">Lab Challenge</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if submission.is_correct %}
+                                {{ submission.flag_submitted }}
+                                {% else %}
+                                {{ submission.flag_submitted|truncate(10, True) }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if submission.is_correct %}
+                                <span class="badge bg-success">Correct</span>
+                                {% else %}
+                                <span class="badge bg-danger">Incorrect</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ submission.points_awarded }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card bg-dark mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Submission Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="submissionsChart" height="250" data-submissions='{
+                        {% set submission_stats = {} %}
+                        {% for submission in submissions %}
+                            {% if submission.challenge.type.value not in submission_stats %}
+                                {% set _ = submission_stats.update({submission.challenge.type.value: {"correct": 0, "incorrect": 0}}) %}
+                            {% endif %}
+                            {% if submission.is_correct %}
+                                {% set _ = submission_stats[submission.challenge.type.value].update({"correct": submission_stats[submission.challenge.type.value]["correct"] + 1}) %}
+                            {% else %}
+                                {% set _ = submission_stats[submission.challenge.type.value].update({"incorrect": submission_stats[submission.challenge.type.value]["incorrect"] + 1}) %}
+                            {% endif %}
+                        {% endfor %}
+                        {% for type, stats in submission_stats.items() %}
+                            "{{ type }}": {{ stats|tojson }}{% if not loop.last %},{% endif %}
+                        {% endfor %}
+                    }'></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card bg-dark mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-star me-2"></i>Score Progress</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="scoreChart" height="250" data-scores='[
+                        {% set score_data = [] %}
+                        {% set total_score = 0 %}
+                        {% for submission in submissions if submission.is_correct %}
+                            {% set total_score = total_score + submission.points_awarded %}
+                            {% set entry = {"date": submission.submitted_at.strftime("%Y-%m-%d"), "score": total_score} %}
+                            {% set _ = score_data.append(entry) %}
+                        {% endfor %}
+                        {% for entry in score_data %}
+                            {{ entry|tojson }}{% if not loop.last %},{% endif %}
+                        {% endfor %}
+                    ]'></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card bg-dark">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Submission Summary</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <div class="card stats-card bg-dark text-white h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="stats-number">{{ submissions|length }}</div>
+                                    <div class="stats-title">Total Submissions</div>
+                                </div>
+                                <div class="stats-icon">
+                                    <i class="fas fa-clipboard-list"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card stats-card bg-dark text-white h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="stats-number">{{ submissions|selectattr('is_correct', 'eq', True)|list|length }}</div>
+                                    <div class="stats-title">Correct Submissions</div>
+                                </div>
+                                <div class="stats-icon">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card stats-card bg-dark text-white h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="stats-number">
+                                        {% set correct = submissions|selectattr('is_correct', 'eq', True)|list|length %}
+                                        {% set total = submissions|length %}
+                                        {{ ((correct / total) * 100)|round|int if total > 0 else 0 }}%
+                                    </div>
+                                    <div class="stats-title">Success Rate</div>
+                                </div>
+                                <div class="stats-icon">
+                                    <i class="fas fa-percentage"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card stats-card bg-dark text-white h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="stats-number">{{ submissions|selectattr('is_correct', 'eq', True)|sum(attribute='points_awarded') }}</div>
+                                    <div class="stats-title">Total Points</div>
+                                </div>
+                                <div class="stats-icon">
+                                    <i class="fas fa-star"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>You haven't submitted any flags yet. Solve challenges to see your submission history!
+    </div>
+    
+    <div class="card bg-dark">
+        <div class="card-body text-center py-5">
+            <h4 class="mb-4">Ready to start solving challenges?</h4>
+            <p class="mb-4">Check out our challenges and start submitting flags!</p>
+            <div class="d-flex justify-content-center gap-3">
+                <a href="{{ url_for('challenges.list_challenges') }}" class="btn btn-primary">
+                    <i class="fas fa-puzzle-piece me-1"></i> View Challenges
+                </a>
+                <a href="{{ url_for('challenges.labs') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-flask me-1"></i> Practice Labs
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+{% endblock %}

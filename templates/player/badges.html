@@ -1,0 +1,186 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-medal me-2"></i>My Badges</h1>
+        <a href="{{ url_for('player.dashboard') }}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+        </a>
+    </div>
+
+    {% if user_badges %}
+    <div class="row">
+        {% for user_badge in user_badges %}
+        <div class="col-md-4 col-lg-3 mb-4">
+            <div class="card bg-dark h-100">
+                <div class="card-body text-center">
+                    <div class="badge-icon mb-3">
+                        {% if user_badge.badge.icon %}
+                        <i class="{{ user_badge.badge.icon }}"></i>
+                        {% else %}
+                        <i class="fas fa-medal"></i>
+                        {% endif %}
+                    </div>
+                    <h5 class="card-title">{{ user_badge.badge.name }}</h5>
+                    <p class="card-text small">{{ user_badge.badge.description }}</p>
+                    <div class="mt-3">
+                        <span class="badge bg-info">
+                            <i class="fas fa-calendar-alt me-1"></i> Awarded on {{ user_badge.awarded_at.strftime('%Y-%m-%d') }}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <small class="text-muted">
+                        <i class="fas fa-certificate me-1"></i> Criteria: {{ user_badge.badge.criteria }}
+                    </small>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>You haven't earned any badges yet. Complete challenges and participate in competitions to earn badges!
+    </div>
+    
+    <div class="card bg-dark">
+        <div class="card-body">
+            <h4 class="mb-4 text-center">How to Earn Badges</h4>
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <div class="card bg-dark h-100">
+                        <div class="card-body text-center">
+                            <div class="badge-icon mb-3">
+                                <i class="fas fa-flag"></i>
+                            </div>
+                            <h5>Solve Challenges</h5>
+                            <p>Complete challenges to earn badges based on your skills and expertise.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card bg-dark h-100">
+                        <div class="card-body text-center">
+                            <div class="badge-icon mb-3">
+                                <i class="fas fa-trophy"></i>
+                            </div>
+                            <h5>Participate in Competitions</h5>
+                            <p>Join competitions and rank high on the leaderboard to earn special badges.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card bg-dark h-100">
+                        <div class="card-body text-center">
+                            <div class="badge-icon mb-3">
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <h5>Achieve Milestones</h5>
+                            <p>Reach specific milestones such as point thresholds or consecutive challenge completions.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Available Badges -->
+    <h3 class="mt-5 mb-4">Available Badges</h3>
+    <div class="card bg-dark">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3 mb-4">
+                    <div class="card bg-dark h-100">
+                        <div class="card-body text-center">
+                            <div class="badge-icon mb-3">
+                                <i class="fas fa-graduation-cap"></i>
+                            </div>
+                            <h5>First Blood</h5>
+                            <p>Be the first to solve a challenge in a competition.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <div class="card bg-dark h-100">
+                        <div class="card-body text-center">
+                            <div class="badge-icon mb-3">
+                                <i class="fas fa-crown"></i>
+                            </div>
+                            <h5>Champion</h5>
+                            <p>Win a competition by finishing first on the leaderboard.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <div class="card bg-dark h-100">
+                        <div class="card-body text-center">
+                            <div class="badge-icon mb-3">
+                                <i class="fas fa-rocket"></i>
+                            </div>
+                            <h5>Fast Learner</h5>
+                            <p>Solve 5 challenges within 24 hours of joining.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <div class="card bg-dark h-100">
+                        <div class="card-body text-center">
+                            <div class="badge-icon mb-3">
+                                <i class="fas fa-certificate"></i>
+                            </div>
+                            <h5>1000 Points</h5>
+                            <p>Accumulate 1000 points total on your profile.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <div class="card bg-dark h-100">
+                        <div class="card-body text-center">
+                            <div class="badge-icon mb-3">
+                                <i class="fas fa-puzzle-piece"></i>
+                            </div>
+                            <h5>Diversified</h5>
+                            <p>Solve at least one challenge in each category.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <div class="card bg-dark h-100">
+                        <div class="card-body text-center">
+                            <div class="badge-icon mb-3">
+                                <i class="fas fa-fire"></i>
+                            </div>
+                            <h5>Streak</h5>
+                            <p>Solve at least one challenge every day for a week.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <div class="card bg-dark h-100">
+                        <div class="card-body text-center">
+                            <div class="badge-icon mb-3">
+                                <i class="fas fa-skull"></i>
+                            </div>
+                            <h5>Hardcore</h5>
+                            <p>Solve a 5-star difficulty challenge without using hints.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <div class="card bg-dark h-100">
+                        <div class="card-body text-center">
+                            <div class="badge-icon mb-3">
+                                <i class="fas fa-globe"></i>
+                            </div>
+                            <h5>Global Elite</h5>
+                            <p>Reach the top 10 on the global leaderboard.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,221 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-flask me-2"></i>Lab Challenges</h1>
+        <a href="{{ url_for('challenges.list_challenges') }}" class="btn btn-primary">
+            <i class="fas fa-puzzle-piece me-1"></i> Competition Challenges
+        </a>
+    </div>
+
+    <div class="alert alert-info mb-4">
+        <i class="fas fa-info-circle me-2"></i>
+        Lab challenges are always available to all users and are designed for practice and learning. They don't affect competition scores but still contribute to your global rank.
+    </div>
+    
+    <!-- Challenge Type Filter -->
+    <div class="card bg-dark mb-4">
+        <div class="card-body">
+            <h5 class="mb-3">Filter by Category</h5>
+            <div class="d-flex flex-wrap gap-2">
+                <button class="btn btn-sm btn-outline-primary filter-btn active" data-filter="all">All</button>
+                <button class="btn btn-sm btn-outline-primary filter-btn" data-filter="web">Web</button>
+                <button class="btn btn-sm btn-outline-primary filter-btn" data-filter="crypto">Crypto</button>
+                <button class="btn btn-sm btn-outline-primary filter-btn" data-filter="forensics">Forensics</button>
+                <button class="btn btn-sm btn-outline-primary filter-btn" data-filter="reverse">Reverse</button>
+                <button class="btn btn-sm btn-outline-primary filter-btn" data-filter="pwnable">Pwnable</button>
+                <button class="btn btn-sm btn-outline-primary filter-btn" data-filter="misc">Misc</button>
+                <button class="btn btn-sm btn-outline-primary filter-btn" data-filter="osint">OSINT</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Difficulty Filter -->
+    <div class="card bg-dark mb-4">
+        <div class="card-body">
+            <h5 class="mb-3">Filter by Difficulty</h5>
+            <div class="d-flex flex-wrap gap-2">
+                <button class="btn btn-sm btn-outline-primary difficulty-btn active" data-difficulty="all">All</button>
+                <button class="btn btn-sm btn-outline-success difficulty-btn" data-difficulty="1">★</button>
+                <button class="btn btn-sm btn-outline-info difficulty-btn" data-difficulty="2">★★</button>
+                <button class="btn btn-sm btn-outline-warning difficulty-btn" data-difficulty="3">★★★</button>
+                <button class="btn btn-sm btn-outline-orange difficulty-btn" data-difficulty="4">★★★★</button>
+                <button class="btn btn-sm btn-outline-danger difficulty-btn" data-difficulty="5">★★★★★</button>
+            </div>
+        </div>
+    </div>
+
+    {% if challenges %}
+    <div class="row" id="challenges-container">
+        {% for challenge in challenges %}
+        <div class="col-md-4 mb-4 lab-challenge-item" data-category="{{ challenge.type.value }}" data-difficulty="{{ challenge.difficulty }}">
+            <div class="card challenge-card bg-dark h-100 {% if challenge.id in solved_challenge_ids %}solved{% endif %}">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">{{ challenge.title }}</h5>
+                        <span class="badge badge-difficulty-{{ challenge.difficulty }}">{{ challenge.type.value }}</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex mb-2">
+                            <span class="me-2">Difficulty:</span>
+                            <div>
+                                {% for i in range(challenge.difficulty) %}
+                                <i class="fas fa-star text-warning"></i>
+                                {% endfor %}
+                                {% for i in range(5 - challenge.difficulty) %}
+                                <i class="far fa-star text-muted"></i>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div>
+                            <span class="me-2">Points:</span>
+                            <span class="badge bg-primary">{{ challenge.points }}</span>
+                        </div>
+                    </div>
+                    
+                    <p class="card-text small">{{ challenge.description|truncate(100) }}</p>
+                    
+                    {% if challenge.id in solved_challenge_ids %}
+                    <div class="mt-2">
+                        <span class="badge bg-success">
+                            <i class="fas fa-check-circle me-1"></i> Solved
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a href="{{ url_for('challenges.view_challenge', challenge_id=challenge.id) }}" class="btn btn-primary w-100">
+                        {% if challenge.id in solved_challenge_ids %}
+                        <i class="fas fa-eye me-1"></i> View Solution
+                        {% else %}
+                        <i class="fas fa-flag me-1"></i> Solve Challenge
+                        {% endif %}
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <div id="no-results" class="alert alert-warning d-none">
+        <i class="fas fa-exclamation-triangle me-2"></i>No challenges match your selected filters. Try adjusting your criteria.
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>No lab challenges are available yet. Check back soon!
+    </div>
+    {% endif %}
+
+    <!-- Learning Resources -->
+    <div class="card bg-dark mt-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-book me-2"></i>Learning Resources</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <h6>Web Security</h6>
+                    <ul class="mb-0">
+                        <li>OWASP Top 10</li>
+                        <li>Web Security Academy</li>
+                        <li>PortSwigger Web Academy</li>
+                    </ul>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <h6>Cryptography</h6>
+                    <ul class="mb-0">
+                        <li>Cryptopals Challenges</li>
+                        <li>CryptoHack</li>
+                        <li>Introduction to Modern Cryptography</li>
+                    </ul>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <h6>Forensics</h6>
+                    <ul class="mb-0">
+                        <li>Digital Forensics Framework</li>
+                        <li>Autopsy</li>
+                        <li>SANS Digital Forensics Resources</li>
+                    </ul>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <h6>Reverse Engineering</h6>
+                    <ul class="mb-0">
+                        <li>Ghidra</li>
+                        <li>IDA Pro</li>
+                        <li>Practical Reverse Engineering</li>
+                    </ul>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <h6>Binary Exploitation</h6>
+                    <ul class="mb-0">
+                        <li>PWN College</li>
+                        <li>LiveOverflow YouTube</li>
+                        <li>Exploit Exercises</li>
+                    </ul>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <h6>OSINT</h6>
+                    <ul class="mb-0">
+                        <li>OSINT Framework</li>
+                        <li>Bellingcat's Online Investigation Toolkit</li>
+                        <li>SANS OSINT Resources</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        const difficultyButtons = document.querySelectorAll('.difficulty-btn');
+        const challengeItems = document.querySelectorAll('.lab-challenge-item');
+        const noResultsDiv = document.getElementById('no-results');
+        
+        function updateVisibility() {
+            const activeCategory = document.querySelector('.filter-btn.active').getAttribute('data-filter');
+            const activeDifficulty = document.querySelector('.difficulty-btn.active').getAttribute('data-difficulty');
+            
+            let visibleCount = 0;
+            
+            challengeItems.forEach(item => {
+                const categoryMatch = activeCategory === 'all' || item.getAttribute('data-category') === activeCategory;
+                const difficultyMatch = activeDifficulty === 'all' || item.getAttribute('data-difficulty') === activeDifficulty;
+                
+                if (categoryMatch && difficultyMatch) {
+                    item.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+            
+            if (visibleCount === 0 && challengeItems.length > 0) {
+                noResultsDiv.classList.remove('d-none');
+            } else {
+                noResultsDiv.classList.add('d-none');
+            }
+        }
+        
+        filterButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                updateVisibility();
+            });
+        });
+        
+        difficultyButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                difficultyButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                updateVisibility();
+            });
+        });
+    });
+</script>
+{% endblock %}

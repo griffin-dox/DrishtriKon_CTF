@@ -1,0 +1,48 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-5 col-md-7">
+            <div class="card bg-dark shadow">
+                <div class="card-header text-center border-bottom-0 bg-transparent py-4">
+                    <h3><i class="fas fa-key me-2"></i>OTP Verification</h3>
+                </div>
+                <div class="card-body px-4 py-4">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        A verification code has been sent to your email. This code will expire in {{ expiry_minutes }} minutes.
+                    </div>
+                    <div class="alert alert-success">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Email Sent:</strong> We've sent your verification code via email using our secure Nodemailer service.
+                    </div>
+                    
+                    <form method="POST" action="{{ url_for('auth.verify_otp') }}">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-4">
+                            <label for="otp_code" class="form-label">{{ form.otp_code.label }}</label>
+                            {{ form.otp_code(class="form-control", placeholder="Enter 6-digit code") }}
+                            {% if form.otp_code.errors %}
+                                <div class="alert alert-danger mt-2">
+                                    {% for error in form.otp_code.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-grid">
+                            {{ form.submit(class="btn btn-primary btn-lg") }}
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer text-center bg-transparent py-3">
+                    <p class="mb-0">Didn't receive the code? <a href="{{ url_for('auth.resend_otp') }}">Resend OTP</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

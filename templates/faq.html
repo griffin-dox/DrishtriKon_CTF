@@ -1,0 +1,440 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-question-circle me-2"></i>Frequently Asked Questions</h1>
+    </div>
+
+    <div class="card bg-dark mb-4">
+        <div class="card-body">
+            <p>Find answers to commonly asked questions about Drishti कोण below. If you don't see your question listed, feel free to <a href="{{ url_for('main.contact') }}">contact us</a>.</p>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-lg-3">
+            <!-- FAQ Categories Sidebar -->
+            <div class="list-group mb-4">
+                <a href="#general" class="list-group-item list-group-item-action bg-dark active" data-bs-toggle="list">General Questions</a>
+                <a href="#account" class="list-group-item list-group-item-action bg-dark" data-bs-toggle="list">Account & Registration</a>
+                <a href="#competitions" class="list-group-item list-group-item-action bg-dark" data-bs-toggle="list">Competitions</a>
+                <a href="#challenges" class="list-group-item list-group-item-action bg-dark" data-bs-toggle="list">Challenges & Labs</a>
+                <a href="#points" class="list-group-item list-group-item-action bg-dark" data-bs-toggle="list">Points & Scoring</a>
+                <a href="#technical" class="list-group-item list-group-item-action bg-dark" data-bs-toggle="list">Technical Issues</a>
+            </div>
+        </div>
+        
+        <div class="col-lg-9">
+            <div class="tab-content">
+                <!-- General Questions -->
+                <div class="tab-pane fade show active" id="general">
+                    <div class="card bg-dark">
+                        <div class="card-header">
+                            <h3 class="mb-0">General Questions</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="accordion" id="accordionGeneral">
+                                <div class="accordion-item bg-dark">
+                                    <h2 class="accordion-header" id="headingOne">
+                                        <button class="accordion-button collapsed bg-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                                            What is a CTF?
+                                        </button>
+                                    </h2>
+                                    <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionGeneral">
+                                        <div class="accordion-body">
+                                            CTF stands for Capture The Flag, a type of computer security competition. Participants solve security challenges to find "flags" (specific strings) that prove they've solved the challenge. These competitions test skills in areas like web exploitation, cryptography, reverse engineering, and more.
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="accordion-item bg-dark">
+                                    <h2 class="accordion-header" id="headingTwo">
+                                        <button class="accordion-button collapsed bg-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                            What skill level is required to participate?
+                                        </button>
+                                    </h2>
+                                    <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionGeneral">
+                                        <div class="accordion-body">
+                                            Our platform caters to all skill levels, from beginners to experts. Challenges are rated by difficulty (1-5 stars), allowing you to start with easier challenges and progressively move to more difficult ones. We recommend beginners start with the lab challenges to build skills before joining competitions.
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="accordion-item bg-dark">
+                                    <h2 class="accordion-header" id="headingThree">
+                                        <button class="accordion-button collapsed bg-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                            Is it free to use the platform?
+                                        </button>
+                                    </h2>
+                                    <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#accordionGeneral">
+                                        <div class="accordion-body">
+                                            Yes, basic access to the platform is free, including participation in most public competitions and access to lab challenges. Premium features or private competitions may require payment in the future.
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="accordion-item bg-dark">
+                                    <h2 class="accordion-header" id="headingFour">
+                                        <button class="accordion-button collapsed bg-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                                            What are the different user roles?
+                                        </button>
+                                    </h2>
+                                    <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour" data-bs-parent="#accordionGeneral">
+                                        <div class="accordion-body">
+                                            <p>The platform has three user roles:</p>
+                                            <ul>
+                                                <li><strong>Player:</strong> Can participate in competitions and solve challenges</li>
+                                                <li><strong>Host:</strong> Can create and manage competitions</li>
+                                                <li><strong>Owner:</strong> Has full administrative access to the platform</li>
+                                            </ul>
+                                            <p>By default, new users are assigned the Player role. Roles can be upgraded by platform administrators.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Account & Registration -->
+                <div class="tab-pane fade" id="account">
+                    <div class="card bg-dark">
+                        <div class="card-header">
+                            <h3 class="mb-0">Account & Registration</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="accordion" id="accordionAccount">
+                                <div class="accordion-item bg-dark">
+                                    <h2 class="accordion-header" id="headingFive">
+                                        <button class="accordion-button collapsed bg-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFive" aria-expanded="false" aria-controls="collapseFive">
+                                            How do I register for an account?
+                                        </button>
+                                    </h2>
+                                    <div id="collapseFive" class="accordion-collapse collapse" aria-labelledby="headingFive" data-bs-parent="#accordionAccount">
+                                        <div class="accordion-body">
+                                            Click the "Register" button in the top navigation bar. Fill out the registration form with your username, email, and password. After submitting, you'll have a Player account and can start participating in competitions or solving lab challenges.
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="accordion-item bg-dark">
+                                    <h2 class="accordion-header" id="headingSix">
+                                        <button class="accordion-button collapsed bg-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSix" aria-expanded="false" aria-controls="collapseSix">
+                                            How can I change my password?
+                                        </button>
+                                    </h2>
+                                    <div id="collapseSix" class="accordion-collapse collapse" aria-labelledby="headingSix" data-bs-parent="#accordionAccount">
+                                        <div class="accordion-body">
+                                            Log in to your account, go to the Settings page from the dropdown menu under your username, and select "Change Password." You'll need to enter your current password and then your new password twice for confirmation.
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="accordion-item bg-dark">
+                                    <h2 class="accordion-header" id="headingSeven">
+                                        <button class="accordion-button collapsed bg-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSeven" aria-expanded="false" aria-controls="collapseSeven">
+                                            How can I become a Host?
+                                        </button>
+                                    </h2>
+                                    <div id="collapseSeven" class="accordion-collapse collapse" aria-labelledby="headingSeven" data-bs-parent="#accordionAccount">
+                                        <div class="accordion-body">
+                                            Host privileges are granted by platform administrators. If you're interested in becoming a host to create competitions, please contact the platform administrators through the Contact page with details about your experience and intentions.
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="accordion-item bg-dark">
+                                    <h2 class="accordion-header" id="headingEight">
+                                        <button class="accordion-button collapsed bg-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEight" aria-expanded="false" aria-controls="collapseEight">
+                                            Can I delete my account?
+                                        </button>
+                                    </h2>
+                                    <div id="collapseEight" class="accordion-collapse collapse" aria-labelledby="headingEight" data-bs-parent="#accordionAccount">
+                                        <div class="accordion-body">
+                                            Account deletion is not currently available through the user interface. If you need to delete your account, please contact a platform administrator through the Contact page with your request.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Competitions -->
+                <div class="tab-pane fade" id="competitions">
+                    <div class="card bg-dark">
+                        <div class="card-header">
+                            <h3 class="mb-0">Competitions</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="accordion" id="accordionCompetitions">
+                                <div class="accordion-item bg-dark">
+                                    <h2 class="accordion-header" id="headingNine">
+                                        <button class="accordion-button collapsed bg-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseNine" aria-expanded="false" aria-controls="collapseNine">
+                                            How do I join a competition?
+                                        </button>
+                                    </h2>
+                                    <div id="collapseNine" class="accordion-collapse collapse" aria-labelledby="headingNine" data-bs-parent="#accordionCompetitions">
+                                        <div class="accordion-body">
+                                            Browse the Competitions page to see all available competitions. Click on a competition to view its details, then click the "Register" button. Some competitions may have registration limits or requirements. Once registered, you'll have access to the competition's challenges when it begins.
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="accordion-item bg-dark">
+                                    <h2 class="accordion-header" id="headingTen">
+                                        <button class="accordion-button collapsed bg-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTen" aria-expanded="false" aria-controls="collapseTen">
+                                            How do I create a competition?
+                                        </button>
+                                    </h2>
+                                    <div id="collapseTen" class="accordion-collapse collapse" aria-labelledby="headingTen" data-bs-parent="#accordionCompetitions">
+                                        <div class="accordion-body">
+                                            You need Host privileges to create competitions. If you're a Host, go to your Host Dashboard and click "Create Competition." Fill out the form with competition details, including title, description, start and end times, and participant limits. After creating the competition, you can add challenges from the management page.
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="accordion-item bg-dark">
+                                    <h2 class="accordion-header" id="headingEleven">
+                                        <button class="accordion-button collapsed bg-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEleven" aria-expanded="false" aria-controls="collapseEleven">
+                                            Can I leave a competition after registering?
+                                        </button>
+                                    </h2>
+                                    <div id="collapseEleven" class="accordion-collapse collapse" aria-labelledby="headingEleven" data-bs-parent="#accordionCompetitions">
+                                        <div class="accordion-body">
+                                            Yes, you can unregister from a competition before it starts. Once a competition has begun, you typically cannot unregister, but you're not obligated to participate actively.
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="accordion-item bg-dark">
+                                    <h2 class="accordion-header" id="headingTwelve">
+                                        <button class="accordion-button collapsed bg-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwelve" aria-expanded="false" aria-controls="collapseTwelve">
+                                            Are there team competitions?
+                                        </button>
+                                    </h2>
+                                    <div id="collapseTwelve" class="accordion-collapse collapse" aria-labelledby="headingTwelve" data-bs-parent="#accordionCompetitions">
+                                        <div class="accordion-body">
+                                            Currently, the platform supports individual participation only. Team competitions may be added in a future update. For now, all competitions are individual-based.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Challenges & Labs -->
+                <div class="tab-pane fade" id="challenges">
+                    <div class="card bg-dark">
+                        <div class="card-header">
+                            <h3 class="mb-0">Challenges & Labs</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="accordion" id="accordionChallenges">
+                                <div class="accordion-item bg-dark">
+                                    <h2 class="accordion-header" id="headingThirteen">
+                                        <button class="accordion-button collapsed bg-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThirteen" aria-expanded="false" aria-controls="collapseThirteen">
+                                            What's the difference between Challenges and Labs?
+                                        </button>
+                                    </h2>
+                                    <div id="collapseThirteen" class="accordion-collapse collapse" aria-labelledby="headingThirteen" data-bs-parent="#accordionChallenges">
+                                        <div class="accordion-body">
+                                            <p><strong>Challenges</strong> are part of competitions and are only available during active competitions you're registered for. They contribute to your competition score and ranking.</p>
+                                            <p><strong>Labs</strong> are practice challenges available to all users at any time, regardless of competition participation. They're great for learning and practicing, and still contribute to your global profile score.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="accordion-item bg-dark">
+                                    <h2 class="accordion-header" id="headingFourteen">
+                                        <button class="accordion-button collapsed bg-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFourteen" aria-expanded="false" aria-controls="collapseFourteen">
+                                            How do I submit a flag?
+                                        </button>
+                                    </h2>
+                                    <div id="collapseFourteen" class="accordion-collapse collapse" aria-labelledby="headingFourteen" data-bs-parent="#accordionChallenges">
+                                        <div class="accordion-body">
+                                            Open the challenge page and read the description to understand what you need to do. Once you find the flag, enter it in the submission form at the bottom of the challenge page and click "Submit Flag." You'll receive immediate feedback on whether your submission is correct.
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="accordion-item bg-dark">
+                                    <h2 class="accordion-header" id="headingFifteen">
+                                        <button class="accordion-button collapsed bg-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFifteen" aria-expanded="false" aria-controls="collapseFifteen">
+                                            What format are flags in?
+                                        </button>
+                                    </h2>
+                                    <div id="collapseFifteen" class="accordion-collapse collapse" aria-labelledby="headingFifteen" data-bs-parent="#accordionChallenges">
+                                        <div class="accordion-body">
+                                            Flags typically follow the format <code>flag{some_text_here}</code>, though the exact format may vary by challenge. The challenge description will often specify the expected format. Always submit the entire flag including the <code>flag{}</code> wrapper unless instructed otherwise.
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="accordion-item bg-dark">
+                                    <h2 class="accordion-header" id="headingSixteen">
+                                        <button class="accordion-button collapsed bg-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSixteen" aria-expanded="false" aria-controls="collapseSixteen">
+                                            I'm stuck on a challenge. Are hints available?
+                                        </button>
+                                    </h2>
+                                    <div id="collapseSixteen" class="accordion-collapse collapse" aria-labelledby="headingSixteen" data-bs-parent="#accordionChallenges">
+                                        <div class="accordion-body">
+                                            Some challenges include hints that are revealed after multiple incorrect submissions (typically after 3 attempts). Not all challenges have hints, especially more advanced ones. If you're really stuck, you can check the challenge category for general solving strategies in the Tips section.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Points & Scoring -->
+                <div class="tab-pane fade" id="points">
+                    <div class="card bg-dark">
+                        <div class="card-header">
+                            <h3 class="mb-0">Points & Scoring</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="accordion" id="accordionPoints">
+                                <div class="accordion-item bg-dark">
+                                    <h2 class="accordion-header" id="headingSeventeen">
+                                        <button class="accordion-button collapsed bg-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSeventeen" aria-expanded="false" aria-controls="collapseSeventeen">
+                                            How is scoring calculated?
+                                        </button>
+                                    </h2>
+                                    <div id="collapseSeventeen" class="accordion-collapse collapse" aria-labelledby="headingSeventeen" data-bs-parent="#accordionPoints">
+                                        <div class="accordion-body">
+                                            Each challenge has a point value based on its difficulty. When you correctly solve a challenge, you earn those points. Points earned in competitions contribute to both your competition ranking and your global profile score. Lab challenge points only contribute to your global score.
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="accordion-item bg-dark">
+                                    <h2 class="accordion-header" id="headingEighteen">
+                                        <button class="accordion-button collapsed bg-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEighteen" aria-expanded="false" aria-controls="collapseEighteen">
+                                            Do I get partial points for attempting challenges?
+                                        </button>
+                                    </h2>
+                                    <div id="collapseEighteen" class="accordion-collapse collapse" aria-labelledby="headingEighteen" data-bs-parent="#accordionPoints">
+                                        <div class="accordion-body">
+                                            No, points are only awarded for correct flag submissions. Incorrect submissions do not earn points, nor do they deduct points. There is no penalty for incorrect submissions except the time spent.
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="accordion-item bg-dark">
+                                    <h2 class="accordion-header" id="headingNineteen">
+                                        <button class="accordion-button collapsed bg-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseNineteen" aria-expanded="false" aria-controls="collapseNineteen">
+                                            How are ties handled in competitions?
+                                        </button>
+                                    </h2>
+                                    <div id="collapseNineteen" class="accordion-collapse collapse" aria-labelledby="headingNineteen" data-bs-parent="#accordionPoints">
+                                        <div class="accordion-body">
+                                            If multiple participants have the same score, the tiebreaker is the time of the last correct submission. The participant who reached their final score first ranks higher. This incentivizes both accuracy and speed.
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="accordion-item bg-dark">
+                                    <h2 class="accordion-header" id="headingTwenty">
+                                        <button class="accordion-button collapsed bg-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwenty" aria-expanded="false" aria-controls="collapseTwenty">
+                                            What are badges and how do I earn them?
+                                        </button>
+                                    </h2>
+                                    <div id="collapseTwenty" class="accordion-collapse collapse" aria-labelledby="headingTwenty" data-bs-parent="#accordionPoints">
+                                        <div class="accordion-body">
+                                            Badges are achievements awarded for accomplishing specific goals, such as solving a certain number of challenges, winning competitions, or reaching point thresholds. Each badge has specific criteria that must be met to earn it. You can view available badges and your earned badges on your Profile page.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Technical Issues -->
+                <div class="tab-pane fade" id="technical">
+                    <div class="card bg-dark">
+                        <div class="card-header">
+                            <h3 class="mb-0">Technical Issues</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="accordion" id="accordionTechnical">
+                                <div class="accordion-item bg-dark">
+                                    <h2 class="accordion-header" id="headingTwentyOne">
+                                        <button class="accordion-button collapsed bg-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwentyOne" aria-expanded="false" aria-controls="collapseTwentyOne">
+                                            What browsers are supported?
+                                        </button>
+                                    </h2>
+                                    <div id="collapseTwentyOne" class="accordion-collapse collapse" aria-labelledby="headingTwentyOne" data-bs-parent="#accordionTechnical">
+                                        <div class="accordion-body">
+                                            The platform is designed to work with all modern browsers, including Chrome, Firefox, Safari, and Edge. For the best experience, we recommend using the latest version of Chrome or Firefox. Some challenges may require specific browser features or developer tools.
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="accordion-item bg-dark">
+                                    <h2 class="accordion-header" id="headingTwentyTwo">
+                                        <button class="accordion-button collapsed bg-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwentyTwo" aria-expanded="false" aria-controls="collapseTwentyTwo">
+                                            The platform isn't accepting my correct flag. What should I do?
+                                        </button>
+                                    </h2>
+                                    <div id="collapseTwentyTwo" class="accordion-collapse collapse" aria-labelledby="headingTwentyTwo" data-bs-parent="#accordionTechnical">
+                                        <div class="accordion-body">
+                                            <ol>
+                                                <li>Check for whitespace or hidden characters in your submission</li>
+                                                <li>Ensure you're using the correct format (including any wrapping characters like <code>flag{}</code>)</li>
+                                                <li>Be aware of case sensitivity - flags are usually case-sensitive</li>
+                                                <li>Try a different browser in case of client-side issues</li>
+                                                <li>If you still believe your flag is correct, contact a competition host or administrator</li>
+                                            </ol>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="accordion-item bg-dark">
+                                    <h2 class="accordion-header" id="headingTwentyThree">
+                                        <button class="accordion-button collapsed bg-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwentyThree" aria-expanded="false" aria-controls="collapseTwentyThree">
+                                            Is the platform mobile-friendly?
+                                        </button>
+                                    </h2>
+                                    <div id="collapseTwentyThree" class="accordion-collapse collapse" aria-labelledby="headingTwentyThree" data-bs-parent="#accordionTechnical">
+                                        <div class="accordion-body">
+                                            Yes, the platform has a responsive design that works on mobile devices. However, solving many challenges will be easier on a desktop or laptop computer with a larger screen and better tools. Some challenges may require desktop tools that aren't available on mobile devices.
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="accordion-item bg-dark">
+                                    <h2 class="accordion-header" id="headingTwentyFour">
+                                        <button class="accordion-button collapsed bg-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwentyFour" aria-expanded="false" aria-controls="collapseTwentyFour">
+                                            How do I report a bug or technical issue?
+                                        </button>
+                                    </h2>
+                                    <div id="collapseTwentyFour" class="accordion-collapse collapse" aria-labelledby="headingTwentyFour" data-bs-parent="#accordionTechnical">
+                                        <div class="accordion-body">
+                                            If you encounter a bug or technical issue, please report it through the Contact page. Include as much detail as possible, including steps to reproduce the issue, your browser and operating system, and any error messages you received. Screenshots are also helpful when applicable.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card bg-dark">
+        <div class="card-body text-center">
+            <h4 class="mb-3">Still have questions?</h4>
+            <p class="mb-4">If you couldn't find the answer you're looking for, feel free to reach out to us directly.</p>
+            <a href="{{ url_for('main.contact') }}" class="btn btn-primary">
+                <i class="fas fa-envelope me-1"></i> Contact Us
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

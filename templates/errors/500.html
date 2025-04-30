@@ -1,0 +1,20 @@
+{% extends 'layout.html' %}
+
+{% block title %}Internal Server Error{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <h1 class="display-1 fw-bold text-danger">500</h1>
+            <h2 class="mb-4">Internal Server Error</h2>
+            <p class="lead mb-5">Something went wrong on our end. Our team has been notified of the issue.</p>
+            <p class="mb-5">Please try again later or contact support if the problem persists.</p>
+            <div class="d-flex justify-content-center">
+                <a href="{{ url_for('main.index') }}" class="btn btn-primary me-2">Go Home</a>
+                <a href="javascript:history.back()" class="btn btn-outline-secondary">Go Back</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,71 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-trophy me-2"></i>My Competitions</h1>
+    </div>
+
+    {% if competitions %}
+    <div class="row">
+        {% for competition in competitions %}
+        <div class="col-md-6 mb-4">
+            <div class="card h-100 competition-card {{ competition.status.value }}">
+                <div class="card-header bg-dark">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <h5 class="card-title mb-0">{{ competition.title }}</h5>
+                        <span class="badge bg-{{ 'success' if competition.status.value == 'active' else ('warning' if competition.status.value == 'upcoming' else 'secondary') }}">
+                            {{ competition.status.value|capitalize }}
+                        </span>
+                    </div>
+                    {% if competition.id in primary_hosted_ids %}
+                        <span class="badge bg-info text-dark"><i class="fas fa-crown me-1"></i>Primary Host</span>
+                    {% else %}
+                        <span class="badge bg-secondary"><i class="fas fa-users-cog me-1"></i>Co-Host</span>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <p class="card-text">{{ competition.description|truncate(150) }}</p>
+                    
+                    <div class="row mt-3 small">
+                        <div class="col-md-6">
+                            <p><i class="far fa-calendar-alt me-1"></i> <strong>Start:</strong> {{ competition.start_time.strftime('%Y-%m-%d %H:%M') }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><i class="far fa-calendar-check me-1"></i> <strong>End:</strong> {{ competition.end_time.strftime('%Y-%m-%d %H:%M') }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="row small">
+                        <div class="col-md-6">
+                            <p><i class="fas fa-users me-1"></i> <strong>Participants:</strong> {{ competition.participants|length }}{% if competition.max_participants %}/{{ competition.max_participants }}{% endif %}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><i class="fas fa-puzzle-piece me-1"></i> <strong>Challenges:</strong> {{ competition.challenges|length }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent d-flex justify-content-between align-items-center">
+                    <a href="{{ url_for('competitions.view_competition', competition_id=competition.id) }}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-eye me-1"></i> View
+                    </a>
+                    <div>
+                        <a href="{{ url_for('host.manage_competition', competition_id=competition.id) }}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-cog me-1"></i> Manage
+                        </a>
+                        <a href="{{ url_for('host.edit_competition', competition_id=competition.id) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>You haven't been assigned to any competitions yet. Competition assignments are managed by the platform administrators.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

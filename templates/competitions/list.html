@@ -1,0 +1,223 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-trophy me-2"></i>Competitions</h1>
+    </div>
+
+    <!-- Active Competitions -->
+    <h3 class="mb-3">Active Competitions</h3>
+    {% if active_competitions %}
+    <div class="row">
+        {% for competition in active_competitions %}
+        <div class="col-md-6 mb-4">
+            <div class="card h-100 competition-card active">
+                <div class="card-header bg-dark d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">{{ competition.title }}</h5>
+                    <span class="badge bg-success">Active</span>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">{{ competition.description|truncate(150) }}</p>
+                    
+                    <div class="row mt-3 small">
+                        <div class="col-md-6">
+                            <p><i class="far fa-calendar-alt me-1"></i> <strong>Start:</strong> {{ competition.start_time.strftime('%Y-%m-%d %H:%M') }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><i class="far fa-calendar-check me-1"></i> <strong>End:</strong> {{ competition.end_time.strftime('%Y-%m-%d %H:%M') }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="row small">
+                        <div class="col-md-6">
+                            <p><i class="fas fa-users me-1"></i> <strong>Participants:</strong> {{ competition.participants|length }}{% if competition.max_participants %}/{{ competition.max_participants }}{% endif %}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><i class="fas fa-clock me-1"></i> <strong>Time left:</strong> 
+                                <span class="competition-countdown" data-end-time="{{ competition.end_time.isoformat() }}">
+                                    Loading...
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="{{ url_for('competitions.view_competition', competition_id=competition.id) }}" class="btn btn-primary">
+                            <i class="fas fa-info-circle me-1"></i> View Details
+                        </a>
+                        {% if current_user.is_authenticated %}
+                            {% if competition.id in registered_competition_ids %}
+                            <span class="badge bg-success">
+                                <i class="fas fa-check-circle me-1"></i> Registered
+                            </span>
+                            {% else %}
+                            <form action="{{ url_for('competitions.register', competition_id=competition.id) }}" method="POST">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-outline-success">
+                                    <i class="fas fa-user-plus me-1"></i> Register
+                                </button>
+                            </form>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info mb-4">
+        <i class="fas fa-info-circle me-2"></i>No active competitions currently. Check back soon!
+    </div>
+    {% endif %}
+
+    <!-- Upcoming Competitions -->
+    <h3 class="mb-3 mt-4">Upcoming Competitions</h3>
+    {% if upcoming_competitions %}
+    <div class="row">
+        {% for competition in upcoming_competitions %}
+        <div class="col-md-6 mb-4">
+            <div class="card h-100 competition-card upcoming">
+                <div class="card-header bg-dark d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">{{ competition.title }}</h5>
+                    <span class="badge bg-warning text-dark">Upcoming</span>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">{{ competition.description|truncate(150) }}</p>
+                    
+                    <div class="row mt-3 small">
+                        <div class="col-md-6">
+                            <p><i class="far fa-calendar-alt me-1"></i> <strong>Start:</strong> {{ competition.start_time.strftime('%Y-%m-%d %H:%M') }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><i class="far fa-calendar-check me-1"></i> <strong>End:</strong> {{ competition.end_time.strftime('%Y-%m-%d %H:%M') }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="row small">
+                        <div class="col-md-6">
+                            <p><i class="fas fa-users me-1"></i> <strong>Participants:</strong> {{ competition.participants|length }}{% if competition.max_participants %}/{{ competition.max_participants }}{% endif %}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><i class="fas fa-hourglass-start me-1"></i> <strong>Starts in:</strong> <span id="start-countdown-{{ competition.id }}"></span></p>
+                            <script>
+                                document.addEventListener('DOMContentLoaded', function() {
+                                    var startDate = new Date("{{ competition.start_time.isoformat() }}");
+                                    var countdownEl = document.getElementById('start-countdown-{{ competition.id }}');
+                                    
+                                    function updateCountdown() {
+                                        var now = new Date();
+                                        var distance = startDate - now;
+                                        
+                                        if (distance <= 0) {
+                                            countdownEl.innerHTML = "Starting soon";
+                                            return;
+                                        }
+                                        
+                                        var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                                        var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                                        var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                                        
+                                        var timeStr = '';
+                                        if (days > 0) timeStr += days + 'd ';
+                                        if (hours > 0) timeStr += hours + 'h ';
+                                        timeStr += minutes + 'm';
+                                        
+                                        countdownEl.innerHTML = timeStr;
+                                    }
+                                    
+                                    updateCountdown();
+                                    setInterval(updateCountdown, 60000); // Update every minute
+                                });
+                            </script>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="{{ url_for('competitions.view_competition', competition_id=competition.id) }}" class="btn btn-primary">
+                            <i class="fas fa-info-circle me-1"></i> View Details
+                        </a>
+                        {% if current_user.is_authenticated %}
+                            {% if competition.id in registered_competition_ids %}
+                            <div>
+                                <span class="badge bg-success me-2">
+                                    <i class="fas fa-check-circle me-1"></i> Registered
+                                </span>
+                                <form action="{{ url_for('competitions.unregister', competition_id=competition.id) }}" method="POST" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-times-circle me-1"></i> Unregister
+                                    </button>
+                                </form>
+                            </div>
+                            {% else %}
+                            <form action="{{ url_for('competitions.register', competition_id=competition.id) }}" method="POST">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-outline-success">
+                                    <i class="fas fa-user-plus me-1"></i> Register
+                                </button>
+                            </form>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info mb-4">
+        <i class="fas fa-info-circle me-2"></i>No upcoming competitions currently. Check back soon!
+    </div>
+    {% endif %}
+
+    <!-- Past Competitions -->
+    <h3 class="mb-3 mt-4">Past Competitions</h3>
+    {% if past_competitions %}
+    <div class="row">
+        {% for competition in past_competitions %}
+        <div class="col-md-6 mb-4">
+            <div class="card h-100 competition-card ended">
+                <div class="card-header bg-dark d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">{{ competition.title }}</h5>
+                    <span class="badge bg-secondary">Ended</span>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">{{ competition.description|truncate(150) }}</p>
+                    
+                    <div class="row mt-3 small">
+                        <div class="col-md-6">
+                            <p><i class="far fa-calendar-alt me-1"></i> <strong>Start:</strong> {{ competition.start_time.strftime('%Y-%m-%d %H:%M') }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><i class="far fa-calendar-check me-1"></i> <strong>End:</strong> {{ competition.end_time.strftime('%Y-%m-%d %H:%M') }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="row small">
+                        <div class="col-md-6">
+                            <p><i class="fas fa-users me-1"></i> <strong>Participants:</strong> {{ competition.participants|length }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><i class="fas fa-history me-1"></i> <strong>Status:</strong> Completed</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a href="{{ url_for('competitions.view_competition', competition_id=competition.id) }}" class="btn btn-primary w-100">
+                        <i class="fas fa-trophy me-1"></i> View Results
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>No past competitions available.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

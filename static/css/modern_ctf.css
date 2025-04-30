@@ -1,0 +1,1185 @@
+/* Modern CTF Design */
+
+:root {
+  /* Core CTF colors */
+  --primary-color: #00dc82;
+  --primary-hover: #00b268;
+  --secondary-color: #1e1e2e;
+  --accent-color: #eb5757;
+  --success-color: #00dc82;
+  --danger-color: #eb5757;
+  --warning-color: #ffb300;
+  --info-color: #2d9cdb;
+  
+  /* Background colors */
+  --dark-bg: #0a0a16;
+  --card-bg: #13131f;
+  --card-hover-bg: #1e1e2e;
+  
+  /* Text colors */
+  --text-color: #f8f8f2;
+  --text-secondary: #ccd6f6;
+  --text-muted: #8892b0;
+  
+  /* Border and shadow */
+  --border-color: #1e1e2e;
+  --border-radius: 8px;
+  --shadow: 0 10px 30px -15px rgba(0, 0, 0, 0.5);
+  --shadow-sm: 0 5px 15px -10px rgba(0, 0, 0, 0.5);
+  --glow: 0 0 10px rgba(0, 220, 130, 0.2);
+  
+  /* Transitions */
+  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* CTF Typography */
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap');
+}
+
+body {
+  background-color: var(--dark-bg);
+  color: var(--text-color);
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: 0.01em;
+  background-image: 
+    radial-gradient(rgba(0, 220, 130, 0.03) 1px, transparent 1px),
+    radial-gradient(rgba(0, 220, 130, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-position: 0 0, 20px 20px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  line-height: 1.3;
+  margin-bottom: 1.25rem;
+  color: var(--text-color);
+}
+
+h1 {
+  font-size: 2.75rem;
+}
+
+h2 {
+  font-size: 2.1rem;
+}
+
+h3 {
+  font-size: 1.75rem;
+}
+
+h4 {
+  font-size: 1.5rem;
+}
+
+code, pre {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Modern CTF Navigation */
+.navbar {
+  background-color: var(--dark-bg);
+  border-bottom: 1px solid var(--border-color);
+  padding: 0.75rem 0;
+  box-shadow: var(--shadow);
+}
+
+.navbar-brand {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 1.55rem;
+  color: var(--primary-color) !important;
+  padding: 0.5rem 0;
+  letter-spacing: -0.01em;
+}
+
+.navbar-nav .nav-link {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-color) !important;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  transition: all var(--transition);
+  position: relative;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+}
+
+.navbar-nav .nav-link:hover {
+  color: var(--primary-color) !important;
+  text-shadow: var(--glow);
+}
+
+.navbar-toggler {
+  border-color: var(--border-color);
+}
+
+.dropdown-menu {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  padding: 0.75rem 0;
+  margin-top: 0.5rem;
+  overflow: hidden;
+}
+
+.dropdown-item {
+  color: var(--text-color);
+  padding: 0.75rem 1.25rem;
+  font-weight: 600;
+  transition: all var(--transition);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+}
+
+.dropdown-item:hover {
+  background-color: var(--card-hover-bg);
+  color: var(--primary-color);
+  text-shadow: var(--glow);
+}
+
+.dropdown-divider {
+  border-top: 1px solid var(--border-color);
+  margin: 0.5rem 0;
+}
+
+/* CTF-styled Cards */
+.card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition);
+  overflow: hidden;
+  position: relative;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow);
+  border-color: rgba(0, 220, 130, 0.2);
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary-color), transparent);
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+
+.card:hover::before {
+  opacity: 1;
+}
+
+.card-header {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid var(--border-color);
+  padding: 1.25rem 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+.card-footer {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-top: 1px solid var(--border-color);
+  padding: 1.25rem 1.5rem;
+}
+
+/* Hero Section for CTF */
+.hero {
+  padding: 5rem 0;
+  background-color: transparent;
+  position: relative;
+  overflow: hidden;
+  border-radius: 0;
+  margin-bottom: 3rem;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(ellipse at center, rgba(0, 220, 130, 0.1) 0%, rgba(0, 0, 0, 0) 70%);
+  z-index: -1;
+}
+
+.hero h1 {
+  margin-bottom: 1.5rem;
+  font-size: 3rem;
+  line-height: 1.2;
+  position: relative;
+  display: inline-block;
+}
+
+.hero h1::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -10px;
+  width: 80px;
+  height: 4px;
+  background: var(--primary-color);
+  box-shadow: var(--glow);
+}
+
+.terminal-effect {
+  position: relative;
+  display: inline-block;
+}
+
+.terminal-effect::after {
+  content: '|';
+  position: absolute;
+  right: -15px;
+  animation: blink 1s step-end infinite;
+  color: var(--primary-color);
+}
+
+@keyframes blink {
+  from, to { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.hero p {
+  font-size: 1.2rem;
+  margin-bottom: 2.5rem;
+  color: var(--text-secondary);
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.7;
+}
+
+/* CTF-themed Buttons */
+.btn {
+  font-weight: 600;
+  border-radius: var(--border-radius);
+  padding: 0.625rem 1.5rem;
+  transition: all var(--transition);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  font-family: 'JetBrains Mono', monospace;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.7s ease;
+}
+
+.btn:hover::before {
+  left: 100%;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  border: none;
+  color: #01241b;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+}
+
+.btn-outline-primary {
+  color: var(--primary-color);
+  border: 2px solid var(--primary-color);
+  background-color: transparent;
+}
+
+.btn-outline-primary:hover {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+  color: #01241b;
+}
+
+.btn-success {
+  background-color: var(--success-color);
+  border: none;
+  color: #01241b;
+}
+
+.btn-danger {
+  background-color: var(--danger-color);
+  border: none;
+}
+
+.btn-warning {
+  background-color: var(--warning-color);
+  border: none;
+  color: #212529;
+}
+
+.btn-info {
+  background-color: var(--info-color);
+  border: none;
+}
+
+/* CTF Stats Cards */
+.stats-card {
+  padding: 2rem;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-sm);
+  height: 100%;
+  transition: all var(--transition);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.stats-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow);
+  border-color: rgba(0, 220, 130, 0.3);
+}
+
+.stats-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--primary-color);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--transition);
+}
+
+.stats-card:hover::after {
+  transform: scaleX(1);
+}
+
+.stats-number {
+  font-size: 2.75rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  line-height: 1.1;
+  margin-bottom: 0.75rem;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.stats-title {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.stats-icon {
+  font-size: 2.25rem;
+  margin-bottom: 1.25rem;
+  color: var(--primary-color);
+}
+
+/* CTF Badges */
+.badge {
+  padding: 0.5em 0.85em;
+  font-weight: 600;
+  border-radius: 4px;
+  letter-spacing: 0.025em;
+  font-size: 0.75rem;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.badge-success {
+  background-color: var(--success-color);
+  color: #01241b;
+}
+
+.badge-danger {
+  background-color: var(--danger-color);
+}
+
+.badge-warning {
+  background-color: var(--warning-color);
+  color: #212529;
+}
+
+.badge-info {
+  background-color: var(--info-color);
+}
+
+.badge-secondary {
+  background-color: var(--secondary-color);
+}
+
+.badge-primary {
+  background-color: var(--dark-bg);
+  border: 1px solid var(--primary-color);
+  color: var(--primary-color);
+}
+
+/* CTF Form Controls */
+.form-control {
+  background-color: var(--dark-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  border-radius: var(--border-radius);
+  padding: 0.75rem 1rem;
+  transition: all var(--transition);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+}
+
+.form-control:focus {
+  background-color: var(--dark-bg);
+  color: var(--text-color);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 0.25rem rgba(0, 220, 130, 0.25);
+}
+
+.form-label {
+  color: var(--text-color);
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.01em;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.form-text {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* CTF Tables */
+.table {
+  color: var(--text-color);
+  margin-bottom: 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+}
+
+.table thead th {
+  border-bottom: 2px solid var(--border-color);
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  padding: 1.25rem 1rem;
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.table td {
+  border-bottom: 1px solid var(--border-color);
+  padding: 1rem;
+  vertical-align: middle;
+}
+
+.table tbody tr {
+  transition: all var(--transition);
+}
+
+.table tbody tr:hover {
+  background-color: rgba(0, 220, 130, 0.05);
+}
+
+/* CTF Alerts */
+.alert {
+  border: none;
+  border-radius: var(--border-radius);
+  padding: 1.25rem 1.5rem;
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+  border-left: 4px solid transparent;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+}
+
+.alert-primary {
+  background-color: rgba(0, 220, 130, 0.1);
+  color: var(--primary-color);
+  border-left-color: var(--primary-color);
+}
+
+.alert-success {
+  background-color: rgba(0, 220, 130, 0.1);
+  color: var(--success-color);
+  border-left-color: var(--success-color);
+}
+
+.alert-danger {
+  background-color: rgba(235, 87, 87, 0.1);
+  color: var(--danger-color);
+  border-left-color: var(--danger-color);
+}
+
+.alert-warning {
+  background-color: rgba(255, 179, 0, 0.1);
+  color: var(--warning-color);
+  border-left-color: var(--warning-color);
+}
+
+.alert-info {
+  background-color: rgba(45, 156, 219, 0.1);
+  color: var(--info-color);
+  border-left-color: var(--info-color);
+}
+
+/* CTF Progress Bar */
+.progress {
+  background-color: var(--dark-bg);
+  border-radius: var(--border-radius);
+  margin: 1.25rem 0;
+  height: 8px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  background-color: var(--primary-color);
+}
+
+/* CTF Footer */
+footer {
+  background-color: var(--card-bg);
+  border-top: 1px solid var(--border-color);
+  padding: 3rem 0 2rem;
+  margin-top: 3rem;
+}
+
+footer h5 {
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  color: var(--text-color);
+  position: relative;
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+footer h5::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  width: 30px;
+  height: 2px;
+  background: var(--primary-color);
+}
+
+footer a {
+  color: var(--text-secondary);
+  transition: all var(--transition);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+}
+
+footer a:hover {
+  color: var(--primary-color);
+  text-decoration: none;
+  padding-left: 5px;
+}
+
+footer .text-muted {
+  color: var(--text-muted) !important;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+}
+
+/* CTF Challenge Cards */
+.challenge-card {
+  height: 100%;
+  position: relative;
+  border: none;
+  background-color: var(--card-bg);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  transition: all var(--transition);
+  border: 1px solid var(--border-color);
+}
+
+.challenge-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow);
+  border-color: rgba(0, 220, 130, 0.3);
+}
+
+.challenge-card .card-header {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid var(--border-color);
+  padding: 1.25rem 1.5rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+}
+
+.challenge-card.solved {
+  border-color: var(--success-color);
+}
+
+.challenge-card.solved .card-header {
+  border-bottom-color: var(--success-color);
+}
+
+.challenge-card.solved .card-header::after {
+  content: 'SOLVED';
+  position: absolute;
+  top: 0;
+  right: 0;
+  background-color: var(--success-color);
+  color: #01241b;
+  font-size: 0.7rem;
+  padding: 0.25rem 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+/* CTF Challenge Difficulty */
+.badge-difficulty {
+  position: relative;
+  padding: 0.35em 0.6em;
+  margin-right: 0.5rem;
+  font-size: 0.75rem;
+  border-radius: 3px;
+}
+
+.badge-difficulty-1 {
+  background-color: rgba(0, 220, 130, 0.1);
+  color: var(--success-color);
+  border: 1px solid var(--success-color);
+}
+
+.badge-difficulty-2 {
+  background-color: rgba(45, 156, 219, 0.1);
+  color: var(--info-color);
+  border: 1px solid var(--info-color);
+}
+
+.badge-difficulty-3 {
+  background-color: rgba(255, 179, 0, 0.1);
+  color: var(--warning-color);
+  border: 1px solid var(--warning-color);
+}
+
+.badge-difficulty-4 {
+  background-color: rgba(235, 87, 87, 0.1);
+  color: var(--danger-color);
+  border: 1px solid var(--danger-color);
+}
+
+.badge-difficulty-5 {
+  background-color: rgba(235, 87, 87, 0.2);
+  color: var(--danger-color);
+  border: 1px solid var(--danger-color);
+}
+
+/* CTF Competition Status Cards */
+.competition-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  background-color: var(--card-bg);
+  border-radius: var(--border-radius);
+  transition: all var(--transition);
+  box-shadow: var(--shadow-sm);
+}
+
+.competition-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow);
+  border-color: rgba(0, 220, 130, 0.3);
+}
+
+.competition-active {
+  border-left: 3px solid var(--success-color);
+}
+
+.competition-upcoming {
+  border-left: 3px solid var(--warning-color);
+}
+
+.competition-ended {
+  border-left: 3px solid var(--text-muted);
+}
+
+/* CTF Countdown Display */
+.countdown-display {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 1rem 0;
+}
+
+.countdown-item {
+  background-color: var(--dark-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 0.4rem 0.3rem;
+  min-width: 55px;
+  text-align: center;
+}
+
+.countdown-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  line-height: 1;
+  margin-bottom: 0.25rem;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.countdown-label {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* CTF Feature Cards */
+.feature-card {
+  padding: 2rem;
+  text-align: center;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-sm);
+  height: 100%;
+  transition: all var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.feature-card:hover {
+  transform: translateY(-7px);
+  box-shadow: var(--shadow);
+  border-color: rgba(0, 220, 130, 0.3);
+}
+
+.feature-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at top right, rgba(0, 220, 130, 0.1), transparent 70%);
+  opacity: 0;
+  transition: opacity var(--transition);
+  z-index: 0;
+}
+
+.feature-card:hover::before {
+  opacity: 1;
+}
+
+/* Advertisement Styling */
+/* Ad container wrapper for fixed positioning */
+.wrapper {
+  position: relative;
+  min-height: 100vh;
+}
+
+/* Common styles for all ad containers */
+.ad-container,
+.ad-sidebar {
+  position: relative;
+  border: 1px solid rgba(0, 220, 130, 0.3);
+  border-radius: 4px;
+  overflow: hidden;
+  background-color: rgba(0, 0, 0, 0.2);
+  padding: 10px;
+  box-shadow: 0 0 15px rgba(0, 220, 130, 0.1);
+  transition: all 0.3s ease;
+}
+
+/* Make sure the row includes all columns */
+.container-fluid > .row {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+/* Make sure the sidebar columns take appropriate width */
+.col-md-2 {
+  position: relative;
+  width: 16.666667%;
+  min-height: 1px;
+  padding-right: 15px;
+  padding-left: 15px;
+}
+
+/* Make sure the main content takes appropriate width */
+.col-lg-8 {
+  position: relative;
+  width: 66.666667%;
+  min-height: 1px;
+  padding-right: 15px;
+  padding-left: 15px;
+}
+
+/* Sidebar ad containers */
+.ad-sidebar {
+  margin-bottom: 20px;
+  width: 100%;
+  min-height: 600px;
+}
+
+/* Horizontal ad containers (top/bottom) */
+.ad-banner {
+  margin: 1.5rem 0;
+  width: 100%;
+}
+
+.ad-container:before,
+.ad-sidebar:before,
+.ad-banner:before {
+  content: "$ cat /sponsored_content.txt";
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--primary-color);
+  margin-bottom: 5px;
+  opacity: 0.8;
+}
+
+/* Media query to hide sidebar ads on smaller screens */
+@media (max-width: 992px) {
+  .d-none.d-lg-block {
+    display: none !important;
+  }
+  
+  .col-lg-8.col-md-12 {
+    width: 100%;
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+}
+
+.ad-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  background-color: rgba(0, 0, 0, 0.2);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.7);
+  border-bottom: 1px solid rgba(0, 220, 130, 0.2);
+  margin-bottom: 5px;
+}
+
+.ad-header .ad-label {
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--primary-color);
+}
+
+.ad-sidebar {
+  background-color: rgba(0, 0, 0, 0.3);
+  padding: 1rem;
+  border-radius: 4px;
+  margin-bottom: 1.5rem;
+}
+
+.ad-banner {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* Responsive adjustments for ads */
+@media (max-width: 768px) {
+  .ad-sidebar {
+    margin-top: 1rem;
+  }
+}
+
+.feature-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--primary-color);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--transition);
+}
+
+.feature-card:hover::after {
+  transform: scaleX(1);
+}
+
+.feature-card h4 {
+  margin-bottom: 1.25rem;
+  color: var(--text-color);
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.feature-card p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.feature-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 4.5rem;
+  height: 4.5rem;
+  margin-bottom: 1.5rem;
+  font-size: 2.25rem;
+  color: var(--primary-color);
+  position: relative;
+}
+
+.feature-icon::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 220, 130, 0.1);
+  border-radius: 25%;
+  transform: rotate(45deg);
+  z-index: -1;
+}
+
+/* CTF Code Block */
+.code-block {
+  background-color: #0a0a16;
+  border: 1px solid var(--border-color);
+  border-left: 4px solid var(--primary-color);
+  border-radius: var(--border-radius);
+  padding: 1.25rem;
+  margin: 1.25rem 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  color: var(--text-color);
+  overflow-x: auto;
+  position: relative;
+}
+
+.code-block::before {
+  position: absolute;
+  top: 0;
+  right: 1rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  background-color: rgba(0, 220, 130, 0.1);
+  border-radius: 0 0 4px 4px;
+}
+
+/* CTF Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--dark-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 220, 130, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 220, 130, 0.5);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .hero h1 {
+    font-size: 2.25rem;
+  }
+  
+  .stats-number {
+    font-size: 2.25rem;
+  }
+  
+  .countdown-item {
+    min-width: 50px;
+    padding: 0.35rem 0.25rem;
+  }
+  
+  .countdown-value {
+    font-size: 1.25rem;
+  }
+  
+  .feature-icon {
+    width: 3.5rem;
+    height: 3.5rem;
+    font-size: 1.75rem;
+  }
+}
+
+@media (max-width: 576px) {
+  h1 {
+    font-size: 2rem;
+  }
+  
+  h2 {
+    font-size: 1.75rem;
+  }
+  
+  .hero {
+    padding: 3.5rem 0;
+  }
+  
+  .hero p {
+    font-size: 1rem;
+  }
+}
+
+.terminal-effect-two {
+  position: relative;
+  display: inline-block;
+}
+
+.terminal-effect-two::after {
+  position: absolute;
+  right: -15px;
+  color: var(--primary-color);
+}
+
+/* Modal styles for admin delete user modal */
+.delete-user-modal {
+  animation: none !important;
+  transition: none !important;
+  pointer-events: auto !important;
+  will-change: auto !important;
+  z-index: 1060 !important; /* Higher z-index to ensure it's on top */
+}
+
+.delete-user-modal.fade,
+.delete-user-modal.fade.show {
+  opacity: 1 !important;
+  animation: none !important;
+  transition: none !important;
+  transform: none !important;
+}
+
+.delete-user-modal .modal-dialog {
+  animation: none !important;
+  transition: none !important;
+  transform: none !important;
+  margin: 1.75rem auto !important;
+  position: relative !important;
+  pointer-events: auto !important;
+  will-change: auto !important;
+}
+
+/* Completely disable all animations and transitions for all elements inside the modal */
+.delete-user-modal *,
+.delete-user-modal *::before,
+.delete-user-modal *::after {
+  animation: none !important;
+  transition: none !important;
+  transform: none !important;
+  will-change: auto !important;
+}
+
+/* Prevent flickering on modal interaction */
+.modal-open {
+  overflow: hidden !important; 
+  padding-right: 0 !important; /* Reset padding to avoid layout shift */
+  touch-action: none !important; /* Disable touch events when modal is open */
+}
+
+/* Strengthen modal backdrop to prevent background events */
+.modal-backdrop {
+  opacity: 0.85 !important;
+  pointer-events: all !important; /* Ensure backdrop catches all clicks */
+  background-color: rgba(0, 0, 0, 0.85) !important;
+}
+
+/* Enhanced modal content */
+.delete-user-modal .modal-content {
+  border: 2px solid var(--primary-color) !important;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.7) !important;
+  position: relative !important;
+  pointer-events: auto !important;
+}
+
+/* Improve modal headers and footers */
+.delete-user-modal .modal-header,
+.delete-user-modal .modal-footer {
+  border-color: var(--border-color) !important;
+  padding: 1rem !important;
+}
+
+/* Additional fixes for table stability */
+.table {
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+}
+
+.table tr {
+  transition: none !important;
+  animation: none !important;
+  will-change: auto !important;
+}
+
+.table tr.no-animation:hover {
+  background-color: var(--dark-bg) !important;
+  transform: none !important;
+}
+
+.no-flicker {
+  backface-visibility: hidden !important;
+  perspective: 1000px !important;
+  transform: translate3d(0, 0, 0) !important;
+}
+
+/* Disable all mouseover effects while a modal is open */
+body.modal-open * {
+  pointer-events: none !important;
+}
+
+body.modal-open .modal-dialog,
+body.modal-open .modal-content,
+body.modal-open .modal-header,
+body.modal-open .modal-body,
+body.modal-open .modal-footer,
+body.modal-open .modal-footer *,
+body.modal-open .btn {
+  pointer-events: auto !important;
+}

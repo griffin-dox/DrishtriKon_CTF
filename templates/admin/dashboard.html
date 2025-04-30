@@ -1,0 +1,188 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-tachometer-alt me-2"></i>Admin Dashboard</h1>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="card stats-card bg-dark text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="stats-number">{{ total_users }}</div>
+                            <div class="stats-title">Total Users</div>
+                        </div>
+                        <div class="stats-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-top">
+                    <a href="{{ url_for('admin.users') }}" class="text-decoration-none">
+                        <small>View All Users <i class="fas fa-arrow-right ms-1"></i></small>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card stats-card bg-dark text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="stats-number">{{ total_challenges }}</div>
+                            <div class="stats-title">Total Challenges</div>
+                        </div>
+                        <div class="stats-icon">
+                            <i class="fas fa-puzzle-piece"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-top">
+                    <a href="{{ url_for('admin.challenges') }}" class="text-decoration-none">
+                        <small>View All Challenges <i class="fas fa-arrow-right ms-1"></i></small>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card stats-card bg-dark text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="stats-number">{{ total_competitions }}</div>
+                            <div class="stats-title">Total Competitions</div>
+                        </div>
+                        <div class="stats-icon">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-top">
+                    <a href="{{ url_for('admin.competitions') }}" class="text-decoration-none">
+                        <small>View All Competitions <i class="fas fa-arrow-right ms-1"></i></small>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card bg-dark mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('admin.create_user') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-user-plus me-2"></i>Create User
+                        </a>
+                        <a href="{{ url_for('admin.create_challenge') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-plus-circle me-2"></i>Create Challenge
+                        </a>
+                        <a href="{{ url_for('admin.create_competition') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-trophy me-2"></i>Create Competition
+                        </a>
+                        <a href="{{ url_for('admin.create_badge') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-medal me-2"></i>Create Badge
+                        </a>
+                        <a href="{{ url_for('admin.global_stats') }}" class="btn btn-outline-info">
+                            <i class="fas fa-chart-bar me-2"></i>Platform Stats
+                        </a>
+                        <a href="{{ url_for('ads.manage_ads') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-ad me-2"></i>Manage Advertisements
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card bg-dark mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-users me-2"></i>Recent Users</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for user in recent_users %}
+                        <div class="list-group-item bg-dark">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">{{ user.username }}</h6>
+                                    <small class="text-muted">{{ user.email }}</small>
+                                </div>
+                                <span class="badge bg-{{ 'success' if user.status.value == 'active' else 'danger' }}">
+                                    {{ user.status.value }}
+                                </span>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="list-group-item bg-dark text-center">
+                            <p class="mb-0">No users found</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a href="{{ url_for('admin.users') }}" class="text-decoration-none">View All Users</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Competitions -->
+    <div class="card bg-dark mb-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-trophy me-2"></i>Recent Competitions</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Start Time</th>
+                            <th>End Time</th>
+                            <th>Status</th>
+                            <th>Host</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for competition in recent_competitions %}
+                        <tr>
+                            <td>{{ competition.title }}</td>
+                            <td>{{ competition.start_time.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>{{ competition.end_time.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if competition.status.value == 'active' else ('warning' if competition.status.value == 'upcoming' else 'secondary') }}">
+                                    {{ competition.status.value }}
+                                </span>
+                            </td>
+                            <td>{{ competition.host.username }}</td>
+                            <td>
+                                <a href="{{ url_for('admin.edit_competition', competition_id=competition.id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center">No competitions found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer bg-transparent">
+            <a href="{{ url_for('admin.competitions') }}" class="text-decoration-none">View All Competitions</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
