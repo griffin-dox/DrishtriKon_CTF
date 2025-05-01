@@ -4,4 +4,3 @@ migrations/
 __pycache__/
 *Create_challenges.py
 *.bak
-logs/

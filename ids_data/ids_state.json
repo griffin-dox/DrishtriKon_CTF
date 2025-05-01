@@ -5,6 +5,7 @@
   "known_user_agents": {},
   "endpoint_access_patterns": {},
   "anomaly_scores": {
-    "152.59.59.15": 0.0
+    "152.59.59.15": 0.0,
+    "127.0.0.1": 0.0
   }
 }
