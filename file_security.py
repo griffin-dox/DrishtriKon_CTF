@@ -22,12 +22,22 @@ class SecureFileHandler:
     # Maximum file size in bytes (16MB)
     MAX_FILE_SIZE = 16 * 1024 * 1024
     
-    def __init__(self, upload_folder):
-        self.upload_folder = upload_folder
+    def __init__(self, upload_folder=None):
+        """
+        Initialize the SecureFileHandler with an upload folder.
+        If upload_folder is not provided, dynamically locate or create an 'Uploads' folder.
+        """
+        if upload_folder is None:
+            # Locate or create the 'Uploads' folder in the current working directory
+            current_dir = os.getcwd()
+            upload_folder = os.path.join(current_dir, "Uploads")
+            if not os.path.exists(upload_folder):
+                os.makedirs(upload_folder, exist_ok=True)
+                logging.info(f"'Uploads' folder created at: {upload_folder}")
+            else:
+                logging.info(f"'Uploads' folder found at: {upload_folder}")
         
-        # Ensure upload folder exists
-        if not os.path.exists(upload_folder):
-            os.makedirs(upload_folder)
+        self.upload_folder = upload_folder
     
     def _check_file_size(self, file_storage):
         """Check if file size is within limits"""
