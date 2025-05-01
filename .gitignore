@@ -1,6 +1,4 @@
 *.env
-*create_test_users.py
 migrations/
 __pycache__/
-*Create_challenges.py
-*.bak
+Ignores/
