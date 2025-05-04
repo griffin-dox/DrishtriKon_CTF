@@ -9,9 +9,7 @@
                     <h3 class="mb-0"><i class="fas fa-edit me-2"></i>Edit Challenge</h3>
                 </div>
                 <div class="card-body">
-                    <form method="POST"
-                          action="{{ url_for('host.edit_challenge', challenge_id=challenge.id) }}"
-                          enctype="multipart/form-data">
+                    <form method="POST" action="{{ url_for('admin.edit_challenge', challenge_id=challenge.id) }}" enctype="multipart/form-data">
                         {{ form.hidden_tag() }}
                         
                         <!-- Challenge Title -->
@@ -47,9 +45,9 @@
                         {% if challenge.file_path %}
                         <div class="mb-3">
                             <label class="form-label">Attached File:</label><br>
-                            <a href="{{ url_for('download_file', filename=challenge.file_path.split('/')[-1]) }}"
+                            <a href="{{ url_for('player.download_file', challenge_id=challenge.id) }}"
                                class="btn btn-sm btn-outline-info" target="_blank">
-                                <i class="fas fa-download me-1"></i>{{ challenge.file_path.split('/')[-1] }}
+                               <i class="fas fa-download me-1"></i>{{ challenge.file_name }}
                             </a>
                         </div>
                         {% endif %}
@@ -128,7 +126,7 @@
                         
                         <!-- Submit and Cancel -->
                         <div class="d-flex justify-content-between">
-                            <a href="{{ url_for('host.challenges', competition_id=competition.id) }}" class="btn btn-secondary">Cancel</a>
+                            <a href="{{ url_for('admin.challenges') }}" class="btn btn-secondary">Cancel</a>
                             {{ form.submit(class="btn btn-primary") }}
                         </div>
                     </form>

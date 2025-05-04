@@ -4,7 +4,7 @@ from functools import wraps
 from app import db
 import os
 from datetime import datetime
-from models import Competition, Challenge, CompetitionChallenge, User, UserCompetition, CompetitionHost, Submission, CompetitionStatus
+from models import Competition, Challenge, CompetitionChallenge, User, UserCompetition, CompetitionHost, Submission, CompetitionStatus, ChallengeVisibilityScope
 from forms import CompetitionForm, ChallengeForm, CompetitionManualStatusForm
 from sqlalchemy import desc
 from sqlalchemy.sql import func
@@ -195,6 +195,13 @@ def create_challenge(competition_id):
         file = form.file.data
         filename, file_path, mimetype = save_file(file)
 
+        # For challenges created within competitions, set visibility accordingly
+        visibility_scope = ChallengeVisibilityScope.COMPETITION
+        
+        # If the host wants this challenge to be public too, allow it
+        if form.is_public.data:
+            visibility_scope = ChallengeVisibilityScope.PUBLIC
+            
         # Create the challenge object
         challenge = Challenge(
             title=form.title.data,
@@ -206,6 +213,7 @@ def create_challenge(competition_id):
             hint=form.hint.data,
             is_lab=form.is_lab.data,
             is_public=form.is_public.data,
+            visibility_scope=visibility_scope,
             creator_id=current_user.id,
             file_name=filename,
             file_path=file_path,
@@ -265,6 +273,13 @@ def edit_challenge(challenge_id):
         challenge.hint = form.hint.data
         challenge.is_lab = form.is_lab.data
         challenge.is_public = form.is_public.data
+        
+        # Update the visibility scope based on public flag
+        if form.is_public.data:
+            challenge.visibility_scope = ChallengeVisibilityScope.PUBLIC
+        else:
+            # If it's part of a competition, it should be COMPETITION scope
+            challenge.visibility_scope = ChallengeVisibilityScope.COMPETITION if challenge.is_in_competition() else ChallengeVisibilityScope.PRIVATE
         
         # Handle file upload
         if form.file.data:

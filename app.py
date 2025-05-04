@@ -28,15 +28,49 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 # Set secrets
 formcarry_url = os.getenv("FORMCARRY_ENDPOINT")
+# Use environment variables for secrets, don't set fallback values for production
 app.secret_key = os.getenv("SESSION_SECRET")
+if not app.secret_key:
+    # Only generate random keys for development environments
+    if app.debug:
+        import secrets
+        logging.warning("No SESSION_SECRET environment variable set. Using randomly generated key for development.")
+        app.secret_key = secrets.token_hex(32)
+    else:
+        logging.critical("No SESSION_SECRET environment variable set in production mode.")
+        raise ValueError("SESSION_SECRET must be set in production mode")
+
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+if not app.config['SECRET_KEY']:
+    # Only use the session secret as a fallback if available
+    if app.secret_key:
+        app.config['SECRET_KEY'] = app.secret_key
+    elif app.debug:
+        import secrets
+        logging.warning("No SECRET_KEY environment variable set. Using randomly generated key for development.")
+        app.config['SECRET_KEY'] = secrets.token_hex(32)
+    else:
+        logging.critical("No SECRET_KEY environment variable set in production mode.")
+        raise ValueError("SECRET_KEY must be set in production mode")
+
+#Upload folder
+current_dir = os.getcwd()
+upload_folder = os.path.join(current_dir, "uploads")
+
+# Check if the folder exists, if not, create it
+if not os.path.exists(upload_folder):
+    os.makedirs(upload_folder, exist_ok=True)
+    logging.info(f"'uploads' folder created at: {upload_folder}")
+else:
+    logging.info(f"'uploads' folder found at: {upload_folder}")
 
 # Security configurations
-app.config['SESSION_COOKIE_SECURE'] = True
+# Set secure cookies based on environment
+app.config['SESSION_COOKIE_SECURE'] = not app.debug  # True in production, False in development
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['PERMANENT_SESSION_LIFETIME'] = 1800  # 30 minutes
-app.config['UPLOAD_FOLDER'] = os.getenv("UPLOAD_FOLDER", "./uploads")
+app.config['UPLOAD_FOLDER'] = upload_folder
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB max upload
 
 # Configure DB
@@ -98,8 +132,8 @@ setup_logging_directories()
 # Check security before processing request
 @app.before_request
 def check_security():
-    # Skip security checks for static files
-    if request.path.startswith('/static/'):
+    # Skip security checks for static files and authentication routes
+    if request.path.startswith('/static/') or request.path == '/login' or request.path == '/register' or request.path == '/verify-otp' or request.path == '/logout':
         return None
     
     # Log the request
@@ -147,6 +181,11 @@ login_manager.login_message = 'Please log in to access this page.'
 login_manager.login_message_category = 'info'
 login_manager.session_protection = "strong"
 
+@login_manager.user_loader
+def load_user(user_id):
+    from models import User
+    return User.query.get(int(user_id))
+
 # Global template vars
 @app.context_processor
 def utility_processor():
@@ -155,6 +194,28 @@ def utility_processor():
 @app.context_processor
 def inject_csrf_token():
     return dict(csrf_token=generate_csrf)
+
+@app.context_processor
+def route_existence_processor():
+    # Check if certain routes exist to prevent template errors
+    # Import Flask related functionality here to avoid circular imports
+    from flask import current_app
+    
+    # Create a dictionary of route existence flags
+    route_exists = {
+        'host_create_competition_exists': 'host.create_competition' in current_app.view_functions,
+        'host_stats_exists': 'host.stats' in current_app.view_functions,
+        'challenges_solved_exists': 'challenges.solved' in current_app.view_functions,
+        'teams_my_team_exists': 'teams.my_team' in current_app.view_functions,
+        'teams_join_team_exists': 'teams.join_team' in current_app.view_functions,
+        'teams_create_team_exists': 'teams.create_team' in current_app.view_functions,
+    }
+    
+    return route_exists
+
+# Add static URL optimization
+from static_optimization import add_static_url_processor
+add_static_url_processor(app)
 
 @app.before_request
 def add_year_to_context():
@@ -192,6 +253,8 @@ with app.app_context():
 
     @app.before_request
     def before_request():
+        # Only update competition statuses periodically (caching is implemented in the function)
+        # This avoids running database queries on every single request
         update_competition_statuses()
         
     # Setup error handlers

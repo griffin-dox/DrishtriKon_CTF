@@ -1,0 +1,29 @@
+CTF1-Welcome
+flag{welcome_to_pentathon2025}
+
+CTF2-Welcome to Discord
+flag{w3lc0me_to_pentathon_discord0106}
+
+CTF3-Quagmire
+flag{hello_mortal_of_a_hollow_vase}
+
+CTF4-Last Transmission
+flag{d34d_p4ck3ts_t3ll_n0_t4l3s_0x28934}
+
+CTF5-ewplusplus
+flag{mississipiburningggg_rick-astleymysaviour}
+
+CTF6-Unblocker
+flag{cd3d0356d34630b7b97f972b23a5ee38}
+
+CTF7-Hidden Source
+flag{sh4d0ws_0f_3rr0rs5_l1ng3r5s_everywh3re33_4r0und_0mg_0x3457}
+
+CTF8-DES-Key-Quest
+flag{Y3MnH9qgcsTWY3MnH9qgcsTWw}
+
+CTF9-Ultra-Safe-Integers
+flag{ac4d5ef1ef46397643e3bf1640e4537df54ddc19}
+
+CTF11-12 Placeholder
+flag{9e9ac49e9e379e72712953f7613639c0d22c}

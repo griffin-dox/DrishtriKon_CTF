@@ -1,0 +1,114 @@
+{% extends 'admin/admin_layout.html' %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-exchange-alt me-2"></i>Move Challenge</h1>
+        <a href="{{ url_for('admin.challenges') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Back to Challenges
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card bg-dark mb-4">
+                <div class="card-header bg-dark border-bottom border-secondary">
+                    <h5 class="mb-0">{{ challenge.title }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h5>Current Status</h5>
+                        <div class="d-flex flex-column">
+                            <span class="mb-2">
+                                <strong>Visibility: </strong>
+                                {% if challenge.visibility_scope.name == 'PUBLIC' %}
+                                    <span class="badge bg-success">Public</span>
+                                {% elif challenge.visibility_scope.name == 'COMPETITION' %}
+                                    <span class="badge bg-primary">Competition</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Private</span>
+                                {% endif %}
+                            </span>
+                            
+                            <span class="mb-2">
+                                <strong>Type: </strong>
+                                {% if challenge.is_lab %}
+                                    <span class="badge bg-info">Lab Challenge</span>
+                                {% else %}
+                                    <span class="badge bg-warning">Standard Challenge</span>
+                                {% endif %}
+                            </span>
+                            
+                            {% if challenge.competitions %}
+                                <span class="mb-2">
+                                    <strong>Current Competition: </strong>
+                                    <span class="badge bg-primary">{{ challenge.competitions[0].competition.title }}</span>
+                                </span>
+                            {% endif %}
+                            
+                            {% if challenge.competition_attribution %}
+                                <span class="mb-2">
+                                    <strong>Previously From: </strong>
+                                    <span class="badge bg-secondary">{{ challenge.competition_attribution }}</span>
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <form method="POST" action="{{ url_for('admin.move_challenge', challenge_id=challenge.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                        
+                        <div class="mb-3">
+                            <label for="competition_id" class="form-label">Select Destination</label>
+                            <select name="competition_id" id="competition_id" class="form-select bg-dark text-light">
+                                <option value="-1">None (Make Public)</option>
+                                {% for competition in competitions %}
+                                <option value="{{ competition.id }}">{{ competition.title }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text text-muted">
+                                Select "None" to make this challenge public, or select a competition to move it there.
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="is_lab" name="is_lab" value="1" {% if challenge.is_lab %}checked{% endif %}>
+                            <label class="form-check-label" for="is_lab">Mark as Lab Challenge</label>
+                            <div class="form-text text-muted">
+                                Lab challenges are educational in nature and appear in the Labs section.
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="attribution" class="form-label">Competition Attribution (if making public)</label>
+                            <input type="text" class="form-control bg-dark text-light" id="attribution" name="attribution" 
+                                   value="{{ challenge.competitions[0].competition.title if challenge.competitions else challenge.competition_attribution }}" 
+                                   placeholder="From Competition: [Name] by [Host]">
+                            <div class="form-text text-muted">
+                                When making a competition challenge public, this attribution will be displayed to users.
+                                Format: "From Competition: [Name] by [Host]"
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i> 
+                            <strong>Warning:</strong> Moving this challenge may affect challenge visibility, competition scoring, and user submissions. Please confirm carefully.
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="confirm" name="confirm" value="1" required>
+                            <label class="form-check-label" for="confirm">I understand the consequences of moving this challenge</label>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-exchange-alt me-1"></i> Move Challenge
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

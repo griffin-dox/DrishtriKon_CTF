@@ -1,0 +1,421 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-chart-bar me-2"></i>Platform Analytics</h1>
+        <div>
+            <a href="{{ url_for('admin.dashboard') }}" class="btn btn-sm btn-outline-secondary me-2">
+                <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+            </a>
+            <button class="btn btn-sm btn-outline-primary" onclick="window.print()">
+                <i class="fas fa-print me-1"></i>Print Report
+            </button>
+        </div>
+    </div>
+
+    <!-- Key Metrics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card bg-dark text-white h-100 border-primary">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="stats-number">{{ total_users }}</div>
+                            <div class="stats-title">Total Users</div>
+                        </div>
+                        <div class="stats-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                    </div>
+                    <div class="progress mt-3" style="height: 6px;">
+                        <div class="progress-bar bg-primary" role="progressbar" style="width: 100%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card bg-dark text-white h-100 border-success">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="stats-number">{{ total_challenges }}</div>
+                            <div class="stats-title">Challenges</div>
+                        </div>
+                        <div class="stats-icon">
+                            <i class="fas fa-puzzle-piece"></i>
+                        </div>
+                    </div>
+                    <div class="progress mt-3" style="height: 6px;">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: 100%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card bg-dark text-white h-100 border-info">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="stats-number">{{ total_competitions }}</div>
+                            <div class="stats-title">Competitions</div>
+                        </div>
+                        <div class="stats-icon">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                    </div>
+                    <div class="progress mt-3" style="height: 6px;">
+                        <div class="progress-bar bg-info" role="progressbar" style="width: 100%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card bg-dark text-white h-100 border-warning">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="stats-number">{{ total_submissions }}</div>
+                            <div class="stats-title">Submissions</div>
+                        </div>
+                        <div class="stats-icon">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                    </div>
+                    <div class="progress mt-3" style="height: 6px;">
+                        <div class="progress-bar bg-warning" role="progressbar" style="width: 100%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        <!-- User Distribution -->
+        <div class="col-md-6 mb-4">
+            <div class="card bg-dark text-white h-100">
+                <div class="card-header bg-dark border-bottom border-secondary d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-users me-2"></i>User Distribution</h5>
+                    <span class="badge bg-secondary">Total: {{ total_users }}</span>
+                </div>
+                <div class="card-body">
+                    <canvas id="userDistributionChart" 
+                            data-players="{{ total_players }}" 
+                            data-hosts="{{ total_hosts }}" 
+                            data-admins="{{ total_admins }}"></canvas>
+                </div>
+                <div class="card-footer bg-dark border-top border-secondary">
+                    <div class="d-flex justify-content-around">
+                        <div class="text-center">
+                            <div class="fs-5 text-primary">{{ total_players }}</div>
+                            <small class="text-muted">Players</small>
+                        </div>
+                        <div class="text-center">
+                            <div class="fs-5 text-info">{{ total_hosts }}</div>
+                            <small class="text-muted">Hosts</small>
+                        </div>
+                        <div class="text-center">
+                            <div class="fs-5 text-warning">{{ total_admins }}</div>
+                            <small class="text-muted">Admins</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Challenge Types -->
+        <div class="col-md-6 mb-4">
+            <div class="card bg-dark text-white h-100">
+                <div class="card-header bg-dark border-bottom border-secondary d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-puzzle-piece me-2"></i>Challenge Types</h5>
+                    <span class="badge bg-secondary">Total: {{ total_challenges }}</span>
+                </div>
+                <div class="card-body">
+                    <canvas id="challengeTypeChart" 
+                            data-public="{{ public_challenges }}" 
+                            data-lab="{{ lab_challenges }}" 
+                            data-private="{{ total_challenges - (public_challenges + lab_challenges) }}"></canvas>
+                </div>
+                <div class="card-footer bg-dark border-top border-secondary">
+                    <div class="d-flex justify-content-around">
+                        <div class="text-center">
+                            <div class="fs-5 text-success">{{ public_challenges }}</div>
+                            <small class="text-muted">Public</small>
+                        </div>
+                        <div class="text-center">
+                            <div class="fs-5 text-info">{{ lab_challenges }}</div>
+                            <small class="text-muted">Lab</small>
+                        </div>
+                        <div class="text-center">
+                            <div class="fs-5 text-secondary">{{ total_challenges - (public_challenges + lab_challenges) }}</div>
+                            <small class="text-muted">Private</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Second Row of Charts -->
+    <div class="row mb-4">
+        <!-- Submission Accuracy -->
+        <div class="col-md-6 mb-4">
+            <div class="card bg-dark text-white h-100">
+                <div class="card-header bg-dark border-bottom border-secondary d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Submission Accuracy</h5>
+                    <span class="badge bg-secondary">Total: {{ total_submissions }}</span>
+                </div>
+                <div class="card-body">
+                    <canvas id="submissionChart" 
+                            data-correct="{{ correct_submissions }}" 
+                            data-incorrect="{{ incorrect_submissions }}"></canvas>
+                </div>
+                <div class="card-footer bg-dark border-top border-secondary">
+                    <div class="d-flex justify-content-around">
+                        <div class="text-center">
+                            <div class="fs-5 text-success">{{ correct_submissions }}</div>
+                            <small class="text-muted">Correct</small>
+                        </div>
+                        <div class="text-center">
+                            <div class="fs-5 text-danger">{{ incorrect_submissions }}</div>
+                            <small class="text-muted">Incorrect</small>
+                        </div>
+                        <div class="text-center">
+                            <div class="fs-5 text-info">{{ (correct_submissions / total_submissions * 100)|round|int if total_submissions > 0 else 0 }}%</div>
+                            <small class="text-muted">Success Rate</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Platform Metrics -->
+        <div class="col-md-6 mb-4">
+            <div class="card bg-dark text-white h-100">
+                <div class="card-header bg-dark border-bottom border-secondary">
+                    <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Platform Metrics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush bg-transparent">
+                        <div class="list-group-item bg-transparent text-white d-flex justify-content-between align-items-center py-3 border-bottom border-secondary">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-medal me-3 text-warning"></i>
+                                <span>Total Badges</span>
+                            </div>
+                            <span class="badge bg-warning text-dark">{{ total_badges }}</span>
+                        </div>
+                        <div class="list-group-item bg-transparent text-white d-flex justify-content-between align-items-center py-3 border-bottom border-secondary">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-flag-checkered me-3 text-success"></i>
+                                <span>Success Rate</span>
+                            </div>
+                            <span class="badge bg-success">{{ (correct_submissions / total_submissions * 100)|round|int if total_submissions > 0 else 0 }}%</span>
+                        </div>
+                        <div class="list-group-item bg-transparent text-white d-flex justify-content-between align-items-center py-3 border-bottom border-secondary">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-user-graduate me-3 text-info"></i>
+                                <span>Players per Challenge</span>
+                            </div>
+                            <span class="badge bg-info">{{ (total_players / total_challenges)|round(1) if total_challenges > 0 else 0 }}</span>
+                        </div>
+                        <div class="list-group-item bg-transparent text-white d-flex justify-content-between align-items-center py-3">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-bullseye me-3 text-primary"></i>
+                                <span>Submissions per User</span>
+                            </div>
+                            <span class="badge bg-primary">{{ (total_submissions / total_users)|round(1) if total_users > 0 else 0 }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Metrics -->
+    <div class="card bg-dark text-white mb-4">
+        <div class="card-header bg-dark border-bottom border-secondary">
+            <h5 class="mb-0"><i class="fas fa-tachometer-alt me-2"></i>Performance Metrics</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="me-3" style="width: 100px;">
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-success" role="progressbar" 
+                                     style="width: {{ (public_challenges / total_challenges * 100)|round|int if total_challenges > 0 else 0 }}%"></div>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 d-flex justify-content-between align-items-center">
+                            <span>Public Challenge Ratio</span>
+                            <span class="badge bg-success">{{ (public_challenges / total_challenges * 100)|round|int if total_challenges > 0 else 0 }}%</span>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="me-3" style="width: 100px;">
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-primary" role="progressbar" 
+                                     style="width: {{ (total_players / total_users * 100)|round|int if total_users > 0 else 0 }}%"></div>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 d-flex justify-content-between align-items-center">
+                            <span>Player Ratio</span>
+                            <span class="badge bg-primary">{{ (total_players / total_users * 100)|round|int if total_users > 0 else 0 }}%</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="me-3" style="width: 100px;">
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-info" role="progressbar" 
+                                     style="width: {{ (lab_challenges / total_challenges * 100)|round|int if total_challenges > 0 else 0 }}%"></div>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 d-flex justify-content-between align-items-center">
+                            <span>Lab Challenge Ratio</span>
+                            <span class="badge bg-info">{{ (lab_challenges / total_challenges * 100)|round|int if total_challenges > 0 else 0 }}%</span>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="me-3" style="width: 100px;">
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-warning" role="progressbar" 
+                                     style="width: {{ (total_hosts / total_users * 100)|round|int if total_users > 0 else 0 }}%"></div>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 d-flex justify-content-between align-items-center">
+                            <span>Host Ratio</span>
+                            <span class="badge bg-warning">{{ (total_hosts / total_users * 100)|round|int if total_users > 0 else 0 }}%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // User distribution chart
+    const userChart = document.getElementById('userDistributionChart');
+    const players = Number(userChart.dataset.players);
+    const hosts = Number(userChart.dataset.hosts);
+    const admins = Number(userChart.dataset.admins);
+
+    const userDistributionChart = new Chart(userChart, {
+        type: 'pie',
+        data: {
+            labels: ['Players', 'Hosts', 'Admins'],
+            datasets: [{
+                data: [players, hosts, admins],
+                backgroundColor: ['#0dcaf0', '#0d6efd', '#ffc107'],
+                borderColor: ['#0dcaf0', '#0d6efd', '#ffc107'],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        color: '#fff'
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const total = players + hosts + admins;
+                            const value = context.raw;
+                            const percentage = Math.round((value / total) * 100);
+                            return `${context.label}: ${value} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Challenge type chart
+    const challengeChart = document.getElementById('challengeTypeChart');
+    const publicChallenges = Number(challengeChart.dataset.public);
+    const labChallenges = Number(challengeChart.dataset.lab);
+    const privateChallenges = Number(challengeChart.dataset.private);
+
+    const challengeTypeChart = new Chart(challengeChart, {
+        type: 'pie',
+        data: {
+            labels: ['Public', 'Lab', 'Private'],
+            datasets: [{
+                data: [publicChallenges, labChallenges, privateChallenges],
+                backgroundColor: ['#20c997', '#0dcaf0', '#6c757d'],
+                borderColor: ['#20c997', '#0dcaf0', '#6c757d'],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        color: '#fff'
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const total = publicChallenges + labChallenges + privateChallenges;
+                            const value = context.raw;
+                            const percentage = Math.round((value / total) * 100);
+                            return `${context.label}: ${value} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Submission accuracy chart
+    const submissionChart = document.getElementById('submissionChart');
+    const correct = Number(submissionChart.dataset.correct);
+    const incorrect = Number(submissionChart.dataset.incorrect);
+
+    const submissionAccuracyChart = new Chart(submissionChart, {
+        type: 'doughnut',
+        data: {
+            labels: ['Correct', 'Incorrect'],
+            datasets: [{
+                data: [correct, incorrect],
+                backgroundColor: ['#198754', '#dc3545'],
+                borderColor: ['#198754', '#dc3545'],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        color: '#fff'
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const total = correct + incorrect;
+                            const value = context.raw;
+                            const percentage = Math.round((value / total) * 100);
+                            return `${context.label}: ${value} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

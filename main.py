@@ -8,5 +8,5 @@ logger = logging.getLogger(__name__)
 logger.debug("Starting application...")
 
 if __name__ == "__main__":
-    port = int(os.environ.get(5000))  # Using the PORT from environment variable
-    # Normally, Gunicorn is run from the command line, not here in the code.
+    port = int(os.environ.get("PORT", 5000))  # Using the PORT from environment variable
+    app.run(host="0.0.0.0", port=port, debug=True)

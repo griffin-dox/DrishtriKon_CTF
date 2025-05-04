@@ -156,6 +156,13 @@
                         <span>Points:</span>
                         <span class="badge bg-primary">{{ challenge.points }}</span>
                     </div>
+                    
+                    {% if challenge.competition_attribution %}
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>Origin:</span>
+                        <span class="badge bg-info">{{ challenge.competition_attribution }}</span>
+                    </div>
+                    {% endif %}
                     <div class="d-flex justify-content-between mb-3">
                         <span>Type:</span>
                         <span>{% if challenge.is_lab %}Lab Challenge{% else %}Competition Challenge{% endif %}</span>

@@ -5,32 +5,21 @@ from models import Competition, CompetitionStatus, User, UserCompetition, UserRo
 from sqlalchemy import desc
 from datetime import datetime
 from forms import TeamCompetitionRegisterForm
+from cache_utils import cached_query, invalidate_cache
 
 competitions_bp = Blueprint('competitions', __name__, url_prefix='/competitions')
 
 @competitions_bp.route('/')
 def list_competitions():
-    # Get active and upcoming public competitions
-    active_competitions = Competition.query.filter_by(
-        status=CompetitionStatus.ACTIVE,
-        is_public=True
-    ).order_by(Competition.start_time).all()
-    
-    upcoming_competitions = Competition.query.filter_by(
-        status=CompetitionStatus.UPCOMING,
-        is_public=True
-    ).order_by(Competition.start_time).all()
-    
-    past_competitions = Competition.query.filter_by(
-        status=CompetitionStatus.ENDED,
-        is_public=True
-    ).order_by(desc(Competition.end_time)).all()
+    # Use cached queries for better performance
+    active_competitions = get_active_competitions()
+    upcoming_competitions = get_upcoming_competitions()
+    past_competitions = get_past_competitions()
     
     # Check which competitions the user is registered for
     registered_competition_ids = []
     if current_user.is_authenticated:
-        user_competitions = UserCompetition.query.filter_by(user_id=current_user.id).all()
-        registered_competition_ids = [uc.competition_id for uc in user_competitions]
+        registered_competition_ids = get_user_registered_competitions(current_user.id)
     
     return render_template('competitions/list.html', 
                           active_competitions=active_competitions,
@@ -39,9 +28,43 @@ def list_competitions():
                           registered_competition_ids=registered_competition_ids,
                           title='Competitions')
 
+@cached_query(ttl=300)  # Cache for 5 minutes
+def get_active_competitions():
+    """Get active public competitions with caching"""
+    return Competition.query.filter_by(
+        status=CompetitionStatus.ACTIVE,
+        is_public=True
+    ).order_by(Competition.start_time).all()
+
+@cached_query(ttl=300)  # Cache for 5 minutes
+def get_upcoming_competitions():
+    """Get upcoming public competitions with caching"""
+    return Competition.query.filter_by(
+        status=CompetitionStatus.UPCOMING,
+        is_public=True
+    ).order_by(Competition.start_time).all()
+
+@cached_query(ttl=300)  # Cache for 5 minutes
+def get_past_competitions():
+    """Get past public competitions with caching"""
+    return Competition.query.filter_by(
+        status=CompetitionStatus.ENDED,
+        is_public=True
+    ).order_by(desc(Competition.end_time)).all()
+
+@cached_query(ttl=60)  # Cache for 1 minute
+def get_user_registered_competitions(user_id):
+    """Get competition IDs the user is registered for"""
+    user_competitions = UserCompetition.query.filter_by(user_id=user_id).all()
+    return [uc.competition_id for uc in user_competitions]
+
 @competitions_bp.route('/<int:competition_id>')
 def view_competition(competition_id):
-    competition = Competition.query.get_or_404(competition_id)
+    # Get the competition with efficient query
+    competition = get_competition_by_id(competition_id)
+    if not competition:
+        flash('Competition not found', 'danger')
+        return redirect(url_for('competitions.list_competitions')), 404
     
     # Check if the competition is public or if the user is the host
     is_host = current_user.is_authenticated and (
@@ -55,34 +78,12 @@ def view_competition(competition_id):
     # Check if the user is registered
     is_registered = False
     if current_user.is_authenticated:
-        user_competition = UserCompetition.query.filter_by(
-            user_id=current_user.id,
-            competition_id=competition_id
-        ).first()
-        is_registered = user_competition is not None
+        is_registered = check_user_registered(current_user.id, competition_id)
     
-    # Get participants for the leaderboard - join with users to filter out admin and host users
-    participants = db.session.query(UserCompetition, User)\
-        .join(User, UserCompetition.user_id == User.id)\
-        .filter(UserCompetition.competition_id == competition_id)\
-        .filter(User.role == UserRole.PLAYER)\
-        .order_by(desc(UserCompetition.score)).all()
-    
-        # Prepare leaderboard data
+    # Get competition leaderboard with caching
     leaderboard = []
     if competition.show_leaderboard or is_host:
-        participants = db.session.query(UserCompetition, User)\
-            .join(User, UserCompetition.user_id == User.id)\
-            .filter(UserCompetition.competition_id == competition_id)\
-            .filter(User.role == UserRole.PLAYER)\
-            .order_by(desc(UserCompetition.score)).all()
-
-        for idx, (participant, user) in enumerate(participants):
-            leaderboard.append({
-                'rank': idx + 1,
-                'username': user.username,
-                'score': participant.score
-            })
+        leaderboard = get_competition_leaderboard(competition_id)
 
     form = TeamCompetitionRegisterForm()
 
@@ -92,7 +93,40 @@ def view_competition(competition_id):
                           is_host=is_host,
                           leaderboard=leaderboard,
                           title=competition.title,
-                          form=form,)
+                          form=form)
+
+@cached_query(ttl=300)  # Cache for 5 minutes
+def get_competition_by_id(competition_id):
+    """Get competition by ID with caching"""
+    return Competition.query.get(competition_id)
+
+@cached_query(ttl=60)  # Cache for 1 minute
+def check_user_registered(user_id, competition_id):
+    """Check if user is registered for a competition"""
+    user_competition = UserCompetition.query.filter_by(
+        user_id=user_id,
+        competition_id=competition_id
+    ).first()
+    return user_competition is not None
+
+@cached_query(ttl=60)  # Cache for 1 minute
+def get_competition_leaderboard(competition_id):
+    """Get competition leaderboard with caching"""
+    participants = db.session.query(UserCompetition, User)\
+        .join(User, UserCompetition.user_id == User.id)\
+        .filter(UserCompetition.competition_id == competition_id)\
+        .filter(User.role == UserRole.PLAYER)\
+        .order_by(desc(UserCompetition.score)).all()
+    
+    leaderboard = []
+    for idx, (participant, user) in enumerate(participants):
+        leaderboard.append({
+            'rank': idx + 1,
+            'username': user.username,
+            'score': participant.score
+        })
+    
+    return leaderboard
 
 @competitions_bp.route('/<int:competition_id>/register', methods=['POST'])
 @login_required
@@ -131,6 +165,12 @@ def register(competition_id):
     try:
         db.session.add(user_competition)
         db.session.commit()
+        
+        # Invalidate caches after successful registration
+        invalidate_cache(f"check_user_registered:{current_user.id}:{competition_id}")
+        invalidate_cache(f"get_user_registered_competitions:{current_user.id}")
+        invalidate_cache(f"get_competition_leaderboard:{competition_id}")
+        
         flash('You have successfully registered for this competition', 'success')
     except Exception as e:
         db.session.rollback()
@@ -170,7 +210,16 @@ def unregister(competition_id):
 
 @competitions_bp.route('/leaderboard')
 def global_leaderboard():
-    # Get top users by score, excluding admin and host roles (only show players)
+    # Get top users with caching
+    leaderboard = get_global_leaderboard()
+    
+    return render_template('competitions/global_leaderboard.html', 
+                          leaderboard=leaderboard,
+                          title='Global Leaderboard')
+
+@cached_query(ttl=300)  # Cache for 5 minutes
+def get_global_leaderboard():
+    """Get global leaderboard with caching"""
     top_users = User.query.filter_by(role=UserRole.PLAYER).order_by(desc(User.score)).limit(100).all()
     
     leaderboard = []
@@ -181,6 +230,4 @@ def global_leaderboard():
             'score': user.score
         })
     
-    return render_template('competitions/global_leaderboard.html', 
-                          leaderboard=leaderboard,
-                          title='Global Leaderboard')
+    return leaderboard

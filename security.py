@@ -116,11 +116,24 @@ def check_csrf_token():
     # Skip for GET, HEAD, OPTIONS
     if request.method in ['GET', 'HEAD', 'OPTIONS']:
         return True
-        
-    # During development, temporarily disable CSRF checks
-    # TODO: Re-enable CSRF protection in production
-    return True
     
+    # Check if it's a request to static files
+    if request.path.startswith('/static/'):
+        return True
+    
+    # Allow POST for webhook endpoints that need to bypass CSRF
+    exempt_routes = [
+        '/webhook/', 
+        '/api/',  # For API endpoints that use token auth
+        '/login',  # Authentication routes exempt from CSRF
+        '/logout',  # Logout exempt from CSRF
+        '/register',  # Registration exempt from CSRF
+        '/verify-otp'  # OTP verification exempt from CSRF
+    ]
+    
+    if any(request.path.startswith(route) for route in exempt_routes):
+        return True
+        
     # Verify CSRF token for all other methods
     token = session.get('csrf_token', None)
     form_token = request.form.get('csrf_token', None)
@@ -136,43 +149,69 @@ def check_csrf_token():
 
 def require_tls():
     """Ensure connection is over HTTPS"""
-    # During development, temporarily disable HTTPS requirement
-    # TODO: Re-enable HTTPS requirement in production
-    return True
-    
-    if not request.is_secure and not request.headers.get('X-Forwarded-Proto') == 'https':
+    # In development mode, allow HTTP
+    from flask import current_app
+    if current_app.debug:
+        return True
+        
+    # In production, require HTTPS
+    if not request.is_secure and request.headers.get('X-Forwarded-Proto') != 'https':
+        logging.warning(f"Insecure connection attempt to {request.path} from {request.remote_addr}")
         return False
+    
     return True
     
 def check_referrer():
     """Verify referrer is from the same origin"""
-    # During development, temporarily disable referrer checks
-    # TODO: Re-enable referrer checks in production
-    return True
+    # Check the current environment
+    from flask import current_app
     
+    # For development, allow all referrers
+    if current_app.debug:
+        return True
+    
+    # Skip referrer check for GET requests
+    if request.method == 'GET':
+        return True
+        
+    # For API routes, skip referrer check as they often use token auth
+    if request.path.startswith('/api/'):
+        return True
+    
+    # For POST to non-API routes, check referrer
     referrer = request.headers.get('Referer', '')
     if not referrer:
-        return True  # No referrer, can't check
+        # If sensitive route, fail for missing referrer
+        sensitive_routes = ['/login', '/register', '/admin']
+        if any(request.path.startswith(route) for route in sensitive_routes):
+            logging.warning(f"Missing referrer for sensitive route: {request.path} from {request.remote_addr}")
+            return False
+        return True  # Allow for non-sensitive routes
         
     # Allow same origin or allowed domains
-    allowed_hosts = [request.host]  # Add trusted domains here
+    allowed_hosts = [request.host]
+    # Add any additional trusted domains here
     
     for host in allowed_hosts:
         if referrer.startswith(f"https://{host}/") or referrer.startswith(f"http://{host}/"):
             return True
             
+    logging.warning(f"Invalid referrer: {referrer} for {request.path} from {request.remote_addr}")
     return False
 
 def security_checks():
     """Run all security checks and return a boolean"""
     # Perform security checks for sensitive routes
     sensitive_routes = [
-        '/login', '/register', '/admin', '/account', 
+        '/admin', '/account', 
         '/password/change', '/user/edit', '/payment'
     ]
     
     if any(request.path.startswith(route) for route in sensitive_routes):
         # For sensitive routes, require all security checks
+        # Skip sensitive security checks for authentication routes
+        if request.path == '/login' or request.path == '/register' or request.path == '/verify-otp' or request.path == '/logout':
+            return True
         return (require_tls() and 
                 check_csrf_token() and 
                 check_referrer())

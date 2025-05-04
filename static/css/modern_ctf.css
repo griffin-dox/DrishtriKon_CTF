@@ -87,6 +87,10 @@ code, pre {
   border-bottom: 1px solid var(--border-color);
   padding: 0.75rem 0;
   box-shadow: var(--shadow);
+  position: sticky;
+  top: 0;
+  z-index: 1030;
+  transition: all 0.3s ease;
 }
 
 .navbar-brand {
@@ -569,6 +573,33 @@ code, pre {
 
 .progress-bar {
   background-color: var(--primary-color);
+}
+
+/* Mobile Navigation Improvements */
+@media (max-width: 991.98px) {
+  .dropdown-menu-dark {
+    background-color: rgba(0, 0, 0, 0.2);
+    border: none;
+    margin-left: 1rem;
+    padding-left: 0.5rem;
+  }
+  
+  .dropdown-menu-dark .dropdown-item {
+    padding: 0.5rem 1rem;
+    color: var(--text-secondary);
+  }
+  
+  .dropdown-menu-dark .dropdown-item:hover {
+    background-color: rgba(0, 220, 130, 0.05);
+  }
+  
+  .navbar-nav {
+    padding: 0.5rem 0;
+  }
+  
+  .navbar-nav .nav-link {
+    padding: 0.75rem 0.5rem;
+  }
 }
 
 /* CTF Footer */

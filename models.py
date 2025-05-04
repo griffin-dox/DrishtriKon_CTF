@@ -33,9 +33,9 @@ class ChallengeType(enum.Enum):
 
 # Challenge Visibility Scope Enum
 class ChallengeVisibilityScope(enum.Enum):
-    PUBLIC = "PUBLIC"
-    COMPETITION = "COMPETITION"
-    PRIVATE = "PRIVATE"
+    PUBLIC = "PUBLIC"                # Visible to all users on public pages
+    COMPETITION = "COMPETITION"      # Only visible within competitions
+    PRIVATE = "PRIVATE"              # Only visible to admins and creators
 
 # Competition Status Enum
 class CompetitionStatus(enum.Enum):
@@ -181,6 +181,9 @@ class Challenge(db.Model):
                                default=ChallengeVisibilityScope.PRIVATE, 
                                nullable=False)
     
+    # Store competition attribution for challenges that were previously in a competition
+    competition_attribution = db.Column(db.String(255), nullable=True)
+    
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -189,6 +192,38 @@ class Challenge(db.Model):
     creator = db.relationship('User')
     submissions = db.relationship('Submission', back_populates='challenge', lazy=True)
     competitions = db.relationship('CompetitionChallenge', back_populates='challenge', lazy=True)
+    
+    def is_in_competition(self):
+        """Returns True if this challenge is associated with any competition"""
+        return len(self.competitions) > 0
+        
+    def is_public_challenge(self):
+        """Returns True if this challenge should be visible on public challenges page"""
+        return self.is_public and not self.is_lab and self.visibility_scope == ChallengeVisibilityScope.PUBLIC and not self.is_in_competition()
+        
+    def is_public_lab(self):
+        """Returns True if this challenge should be visible on public labs page"""
+        return self.is_public and self.is_lab and self.visibility_scope == ChallengeVisibilityScope.PUBLIC and not self.is_in_competition()
+        
+    def competition_name(self):
+        """Returns the name of the competition this challenge is associated with, if any"""
+        if not self.is_in_competition():
+            return None
+        
+        competition_challenge = self.competitions[0] if self.competitions else None
+        if competition_challenge:
+            return competition_challenge.competition.title
+        return None
+        
+    def competition_host_name(self):
+        """Returns the name of the host of the competition this challenge is associated with"""
+        if not self.is_in_competition():
+            return None
+            
+        competition_challenge = self.competitions[0] if self.competitions else None
+        if competition_challenge and competition_challenge.competition:
+            return competition_challenge.competition.host.username
+        return None
 
 # Submission Model
 class Submission(db.Model):

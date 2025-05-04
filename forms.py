@@ -27,15 +27,24 @@ class SecureForm(FlaskForm):
         csrf = True
 
 class LoginForm(FlaskForm):
+    class Meta:
+        csrf = False  # Temporarily disable CSRF for login form
+    
     username = StringField('Username', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
     submit = SubmitField('Login')
 
 class OTPForm(FlaskForm):
+    class Meta:
+        csrf = False  # Temporarily disable CSRF for OTP form
+        
     otp_code = StringField('OTP Code', validators=[DataRequired(), Length(min=6, max=6)])
     submit = SubmitField('Verify')
 
 class RegistrationForm(FlaskForm):
+    class Meta:
+        csrf = False  # Temporarily disable CSRF for registration form
+        
     username = StringField('Username', validators=[DataRequired(), Length(min=3, max=64)])
     email = StringField('Email', validators=[DataRequired(), Email()])
     password = PasswordField('Password', validators=[
@@ -103,8 +112,12 @@ class ChallengeForm(FlaskForm):
     type = SelectField('Type', choices=[(t.name, t.value) for t in ChallengeType])
     difficulty = SelectField('Difficulty', choices=[(str(i), str(i)) for i in range(1, 6)])
     hint = TextAreaField('Hint', validators=[Optional()])
-    is_lab = BooleanField('Is Lab Challenge', default=False)
-    is_public = BooleanField('Public Challenge (Accessible to all users)', default=False)
+    is_lab = BooleanField('Mark as Lab Challenge (educational/tutorial challenges)', 
+                 default=False, 
+                 description="Lab challenges are educational in nature and appear in the Labs section")
+    is_public = BooleanField('Make Publicly Visible (outside competitions)', 
+                  default=False, 
+                  description="Public challenges appear on public pages for all users. Competition-specific challenges are only visible within that competition.")
     submit = SubmitField('Save Challenge')
 
 class CompetitionForm(FlaskForm):

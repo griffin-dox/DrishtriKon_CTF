@@ -9,7 +9,7 @@
                     <h3 class="mb-0"><i class="fas fa-edit me-2"></i>Edit Challenge</h3>
                 </div>
                 <div class="card-body">
-                    <form method="POST" action="{{ url_for('admin.edit_challenge', challenge_id=challenge.id) }}">
+                    <form method="POST" enctype="multipart/form-data" action="{{ url_for('admin.edit_challenge', challenge_id=challenge.id) }}">
                         {{ form.hidden_tag() }}
                         
                         <div class="mb-3">
@@ -43,18 +43,25 @@
                         {% if challenge.file_path %}
                         <div class="mb-3">
                             <label class="form-label">Attached File:</label><br>
-                            <a href="{{ url_for('download_file', filename=challenge.file_path.split('/')[-1]) }}"
+                            <a href="{{ url_for('player.download_file', challenge_id=challenge.id) }}"
                                class="btn btn-sm btn-outline-info" target="_blank">
-                                <i class="fas fa-download me-1"></i>{{ challenge.file_path.split('/')[-1] }}
+                                <i class="fas fa-download me-1"></i>{{ challenge.file_name }}
                             </a>
                         </div>
                         {% endif %}
 
                         <!-- Upload New File -->
                         <div class="mb-3">
-                            <label class="form-label">Replace File (optional):</label>
-                            <input type="file" name="file" class="form-control">
+                            <label class="form-label">{{ form.file.label }}</label>
+                            {{ form.file(class="form-control") }}
                             <small class="form-text text-muted">Upload a new file to replace the existing one.</small>
+                            {% if form.file.errors %}
+                                <div class="alert alert-danger mt-2">
+                                    {% for error in form.file.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </div>
                         
                         <div class="mb-3">
@@ -118,11 +125,19 @@
                             {% endif %}
                         </div>
                         
-                        <div class="mb-4 form-check">
+                        <div class="mb-3 form-check">
                             {{ form.is_lab(class="form-check-input") }}
                             <label class="form-check-label" for="is_lab">{{ form.is_lab.label }}</label>
                             <small class="form-text text-muted d-block">
-                                Lab challenges are always available to all users, regardless of competition.
+                                Lab challenges are always available to all users, regardless of competition. They will appear on the dedicated Lab Challenges page.
+                            </small>
+                        </div>
+                        
+                        <div class="mb-4 form-check">
+                            {{ form.is_public(class="form-check-input") }}
+                            <label class="form-check-label" for="is_public">{{ form.is_public.label }}</label>
+                            <small class="form-text text-muted d-block">
+                                Public challenges are accessible to all users outside of competitions. They will appear on the Public Challenges page.
                             </small>
                         </div>
                         

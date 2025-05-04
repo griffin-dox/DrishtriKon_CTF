@@ -3,10 +3,10 @@
 {% block content %}
 <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1><i class="fas fa-flask me-2"></i>Lab Challenges</h1>
+        <h1><i class="fas fa-globe me-2"></i>Public Challenges</h1>
         <div>
-            <a href="{{ url_for('challenges.public') }}" class="btn btn-info me-2">
-                <i class="fas fa-globe me-1"></i> Public Challenges
+            <a href="{{ url_for('challenges.labs') }}" class="btn btn-info me-2">
+                <i class="fas fa-flask me-1"></i> Lab Challenges
             </a>
             <a href="{{ url_for('challenges.list_challenges') }}" class="btn btn-primary">
                 <i class="fas fa-puzzle-piece me-1"></i> Competition Challenges
@@ -16,7 +16,7 @@
 
     <div class="alert alert-info mb-4">
         <i class="fas fa-info-circle me-2"></i>
-        Lab challenges are always available to all users and are designed for practice and learning. They don't affect competition scores but still contribute to your global rank.
+        Public challenges are available to all users outside of competitions. These challenges contribute to your global ranking and are perfect for casual practice.
     </div>
     
     <!-- Challenge Type Filter -->
@@ -54,7 +54,7 @@
     {% if challenges %}
     <div class="row" id="challenges-container">
         {% for challenge in challenges %}
-        <div class="col-md-4 mb-4 lab-challenge-item" data-category="{{ challenge.type.value }}" data-difficulty="{{ challenge.difficulty }}">
+        <div class="col-md-4 mb-4 public-challenge-item" data-category="{{ challenge.type.value }}" data-difficulty="{{ challenge.difficulty }}">
             <div class="card challenge-card bg-dark h-100 {% if challenge.id in solved_challenge_ids %}solved{% endif %}">
                 <div class="card-header">
                     <div class="d-flex justify-content-between align-items-center">
@@ -110,65 +110,48 @@
     </div>
     {% else %}
     <div class="alert alert-info">
-        <i class="fas fa-info-circle me-2"></i>No lab challenges are available yet. Check back soon!
+        <i class="fas fa-info-circle me-2"></i>No public challenges are available yet. Check back soon!
     </div>
     {% endif %}
 
-    <!-- Learning Resources -->
+    <!-- Community Rankings -->
     <div class="card bg-dark mt-4">
         <div class="card-header">
-            <h5 class="mb-0"><i class="fas fa-book me-2"></i>Learning Resources</h5>
+            <h5 class="mb-0"><i class="fas fa-trophy me-2"></i>Public Challenge Leaderboard</h5>
         </div>
         <div class="card-body">
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <h6>Web Security</h6>
-                    <ul class="mb-0">
-                        <li>OWASP Top 10</li>
-                        <li>Web Security Academy</li>
-                        <li>PortSwigger Web Academy</li>
-                    </ul>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <h6>Cryptography</h6>
-                    <ul class="mb-0">
-                        <li>Cryptopals Challenges</li>
-                        <li>CryptoHack</li>
-                        <li>Introduction to Modern Cryptography</li>
-                    </ul>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <h6>Forensics</h6>
-                    <ul class="mb-0">
-                        <li>Digital Forensics Framework</li>
-                        <li>Autopsy</li>
-                        <li>SANS Digital Forensics Resources</li>
-                    </ul>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <h6>Reverse Engineering</h6>
-                    <ul class="mb-0">
-                        <li>Ghidra</li>
-                        <li>IDA Pro</li>
-                        <li>Practical Reverse Engineering</li>
-                    </ul>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <h6>Binary Exploitation</h6>
-                    <ul class="mb-0">
-                        <li>PWN College</li>
-                        <li>LiveOverflow YouTube</li>
-                        <li>Exploit Exercises</li>
-                    </ul>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <h6>OSINT</h6>
-                    <ul class="mb-0">
-                        <li>OSINT Framework</li>
-                        <li>Bellingcat's Online Investigation Toolkit</li>
-                        <li>SANS OSINT Resources</li>
-                    </ul>
-                </div>
+            <p class="text-muted mb-3">Top solvers of public challenges are showcased here. Solve more challenges to climb the ranks!</p>
+            <div class="table-responsive">
+                <table class="table table-dark table-bordered table-hover">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>User</th>
+                            <th>Challenges Solved</th>
+                            <th>Points</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>#1</td>
+                            <td>CyberNinja</td>
+                            <td>42</td>
+                            <td>4,200</td>
+                        </tr>
+                        <tr>
+                            <td>#2</td>
+                            <td>HackMaster</td>
+                            <td>38</td>
+                            <td>3,800</td>
+                        </tr>
+                        <tr>
+                            <td>#3</td>
+                            <td>ByteWizard</td>
+                            <td>35</td>
+                            <td>3,500</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -178,7 +161,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         const filterButtons = document.querySelectorAll('.filter-btn');
         const difficultyButtons = document.querySelectorAll('.difficulty-btn');
-        const challengeItems = document.querySelectorAll('.lab-challenge-item');
+        const challengeItems = document.querySelectorAll('.public-challenge-item');
         const noResultsDiv = document.getElementById('no-results');
         
         function updateVisibility() {

@@ -58,10 +58,13 @@
                             <td>{{ challenge.created_at.strftime('%Y-%m-%d') }}</td>
                             <td>
                                 <div class="btn-group">
-                                    <a href="{{ url_for('admin.edit_challenge', challenge_id=challenge.id) }}" class="btn btn-sm btn-outline-primary">
+                                    <a href="{{ url_for('admin.edit_challenge', challenge_id=challenge.id) }}" class="btn btn-sm btn-outline-primary" title="Edit Challenge">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <button type="button" class="btn btn-sm btn-outline-danger btn-delete" data-bs-toggle="modal" data-bs-target="#deleteModal{{ challenge.id }}">
+                                    <a href="{{ url_for('admin.move_challenge', challenge_id=challenge.id) }}" class="btn btn-sm btn-outline-info" title="Move Challenge">
+                                        <i class="fas fa-exchange-alt"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-danger btn-delete" data-bs-toggle="modal" data-bs-target="#deleteModal{{ challenge.id }}" title="Delete Challenge">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </div>

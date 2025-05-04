@@ -110,14 +110,20 @@
                         </div>
                         
                         <!-- Lab + Public Toggles -->
-                        <div class="form-check mb-3">
+                        <div class="mb-3 form-check">
                             {{ form.is_lab(class="form-check-input") }}
-                            <label class="form-check-label">{{ form.is_lab.label }}</label>
+                            <label class="form-check-label" for="is_lab">{{ form.is_lab.label }}</label>
+                            <small class="form-text text-muted d-block">
+                                {{ form.is_lab.description }}
+                            </small>
                         </div>
-
-                        <div class="form-check mb-3">
+                        
+                        <div class="mb-4 form-check">
                             {{ form.is_public(class="form-check-input") }}
-                            <label class="form-check-label">{{ form.is_public.label }}</label>
+                            <label class="form-check-label" for="is_public">{{ form.is_public.label }}</label>
+                            <small class="form-text text-muted d-block">
+                                {{ form.is_public.description }}
+                            </small>
                         </div>
                         
                         <div class="d-flex justify-content-between">

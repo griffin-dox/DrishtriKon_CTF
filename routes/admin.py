@@ -1,11 +1,27 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_required, current_user
+from flask_wtf import FlaskForm
+from wtforms import SelectField, BooleanField, SubmitField
+from wtforms.validators import Optional
 from functools import wraps
 from app import db
-from models import User, UserRole, Challenge, Competition, Badge, UserStatus, CompetitionHost
+from models import User, UserRole, Challenge, Competition, Badge, UserStatus, CompetitionHost, ChallengeVisibilityScope, CompetitionChallenge
 from forms import UserCreateForm, UserEditForm, ChallengeForm, CompetitionForm, BadgeForm, CompetitionHostForm, UserSearchForm
 from sqlalchemy import desc
 from utils import save_file
+from werkzeug.utils import secure_filename
+from cache_utils import cached_query, invalidate_cache
+from sqlalchemy import func
+from models import Submission
+import os
+import logging
+
+# Use a set for efficient lookup
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'zip'}  # Added zip
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -23,6 +39,20 @@ def admin_required(f):
 @login_required
 @admin_required
 def dashboard():
+    # Get dashboard data with caching
+    dashboard_data = get_admin_dashboard_data()
+    
+    return render_template('admin/dashboard.html', 
+                           total_users=dashboard_data['total_users'],
+                           total_challenges=dashboard_data['total_challenges'],
+                           total_competitions=dashboard_data['total_competitions'],
+                           recent_users=dashboard_data['recent_users'],
+                           recent_competitions=dashboard_data['recent_competitions'],
+                           title='Admin Dashboard')
+
+@cached_query(ttl=300)  # Cache for 5 minutes
+def get_admin_dashboard_data():
+    """Get admin dashboard data with caching"""
     # Get counts for dashboard
     total_users = User.query.count()
     total_challenges = Challenge.query.count()
@@ -34,21 +64,39 @@ def dashboard():
     # Get recent competitions
     recent_competitions = Competition.query.order_by(desc(Competition.created_at)).limit(5).all()
     
-    return render_template('admin/dashboard.html', 
-                           total_users=total_users,
-                           total_challenges=total_challenges,
-                           total_competitions=total_competitions,
-                           recent_users=recent_users,
-                           recent_competitions=recent_competitions,
-                           title='Admin Dashboard')
+    return {
+        'total_users': total_users,
+        'total_challenges': total_challenges,
+        'total_competitions': total_competitions,
+        'recent_users': recent_users,
+        'recent_competitions': recent_competitions
+    }
 
 @admin_bp.route('/stats')
 @login_required
 @admin_required
 def global_stats():
-    from sqlalchemy import func
-    from models import Submission, Badge
+    # Get all stats with caching to avoid repetitive database queries
+    stats = get_admin_global_stats()
+    
+    return render_template('admin/global_stats_enhanced.html',
+                           total_users=stats['total_users'],
+                           total_players=stats['total_players'],
+                           total_hosts=stats['total_hosts'],
+                           total_admins=stats['total_admins'],
+                           total_challenges=stats['total_challenges'],
+                           public_challenges=stats['public_challenges'],
+                           lab_challenges=stats['lab_challenges'],
+                           total_submissions=stats['total_submissions'],
+                           correct_submissions=stats['correct_submissions'],
+                           incorrect_submissions=stats['incorrect_submissions'],
+                           total_badges=stats['total_badges'],
+                           total_competitions=stats['total_competitions'],
+                           title='Platform Analytics')
 
+@cached_query(ttl=600)  # Cache for 10 minutes
+def get_admin_global_stats():
+    """Get global platform statistics with caching for admin dashboard"""
     # User breakdown
     total_users = User.query.count()
     total_players = User.query.filter_by(role=UserRole.PLAYER).count()
@@ -67,21 +115,21 @@ def global_stats():
     # Badges and Competitions
     total_badges = Badge.query.count()
     total_competitions = Competition.query.count()
-
-    return render_template('admin/global_stats.html',
-                           total_users=total_users,
-                           total_players=total_players,
-                           total_hosts=total_hosts,
-                           total_admins=total_admins,
-                           total_challenges=total_challenges,
-                           public_challenges=public_challenges,
-                           lab_challenges=lab_challenges,
-                           total_submissions=total_submissions,
-                           correct_submissions=correct_submissions,
-                           incorrect_submissions=incorrect_submissions,
-                           total_badges=total_badges,
-                           total_competitions=total_competitions,
-                           title='Platform Stats')
+    
+    return {
+        'total_users': total_users,
+        'total_players': total_players,
+        'total_hosts': total_hosts,
+        'total_admins': total_admins,
+        'total_challenges': total_challenges,
+        'public_challenges': public_challenges,
+        'lab_challenges': lab_challenges,
+        'total_submissions': total_submissions,
+        'correct_submissions': correct_submissions,
+        'incorrect_submissions': incorrect_submissions,
+        'total_badges': total_badges,
+        'total_competitions': total_competitions
+    }
 
 # User Management
 @admin_bp.route('/users', methods=['GET', 'POST'])
@@ -185,6 +233,11 @@ def create_challenge():
         file = form.file.data
         filename, file_path, mimetype = save_file(file)
 
+        # Determine visibility scope based on is_public flag
+        visibility_scope = ChallengeVisibilityScope.PRIVATE
+        if form.is_public.data:
+            visibility_scope = ChallengeVisibilityScope.PUBLIC
+            
         challenge = Challenge(
             title=form.title.data,
             description=form.description.data,
@@ -198,6 +251,7 @@ def create_challenge():
             hint=form.hint.data,
             is_lab=form.is_lab.data,
             is_public=form.is_public.data,
+            visibility_scope=visibility_scope,
             creator_id=current_user.id
         )
         
@@ -220,6 +274,7 @@ def edit_challenge(challenge_id):
     form = ChallengeForm(obj=challenge)
     
     if form.validate_on_submit():
+        # Update non-file attributes
         challenge.title = form.title.data
         challenge.description = form.description.data
         challenge.flag = form.flag.data
@@ -229,9 +284,39 @@ def edit_challenge(challenge_id):
         challenge.hint = form.hint.data
         challenge.is_lab = form.is_lab.data
         challenge.is_public = form.is_public.data
-        challenge.file_name = form.file_name.data
-        challenge.file_path = form.file_path.data
-        challenge.file_mimetype = form.file_mimetype.data
+        
+        # Update visibility scope based on challenge status
+        if challenge.is_public:
+            challenge.visibility_scope = ChallengeVisibilityScope.PUBLIC
+        else:
+            challenge.visibility_scope = ChallengeVisibilityScope.PRIVATE
+            
+        # Handle file upload if a new file is selected
+        file = form.file.data
+        if file and file.filename:  # Check if a file was actually uploaded
+            if allowed_file(file.filename):
+                # Store the old file path for potential cleanup
+                old_file_path = challenge.file_path if challenge.file_path else None
+                
+                # Use the utility function to save the file consistently
+                filename, file_path, mimetype = save_file(file)
+                
+                # Update the challenge with the new file information
+                if filename and file_path and mimetype:
+                    challenge.file_name = filename
+                    challenge.file_path = file_path
+                    challenge.file_mimetype = mimetype
+                    
+                    # Clean up the old file if it exists and is different
+                    if old_file_path and old_file_path != file_path and os.path.exists(old_file_path):
+                        try:
+                            os.remove(old_file_path)
+                            logging.info(f"Removed old challenge file: {old_file_path}")
+                        except Exception as e:
+                            logging.error(f"Error removing old file {old_file_path}: {str(e)}")
+            else:
+                flash('Invalid file type selected.', 'danger')
+                return redirect(url_for('admin.edit_challenge', challenge_id=challenge_id))
 
         try:
             db.session.commit()
@@ -335,8 +420,15 @@ def delete_competition(competition_id):
             if action == 'delete':
                 db.session.delete(challenge)
             elif action == 'make_public':
-                challenge.competition_id = None
+                # Set the competition attribution
+                attribution = f"From Competition: {competition.title} by {competition.host.username}"
+                challenge.competition_attribution = attribution
+                
+                # Update visibility scope
+                challenge.visibility_scope = ChallengeVisibilityScope.PUBLIC
                 challenge.is_public = True
+                
+                # Remove the competition association
                 db.session.delete(comp_challenge)  # Remove link from junction table
             else:
                 raise ValueError("Invalid challenge action selected.")
@@ -503,3 +595,78 @@ def delete_badge(badge_id):
         flash(f'Error deleting badge: {str(e)}', 'danger')
     
     return redirect(url_for('admin.badges'))
+
+# Challenge Competition Management
+@admin_bp.route('/challenges/<int:challenge_id>/move', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def move_challenge(challenge_id):
+    challenge = Challenge.query.get_or_404(challenge_id)
+    
+    # Create dynamic form with competition choices
+    class MoveChallengeForm(FlaskForm):
+        competition = SelectField('Target Competition', choices=[], coerce=int, validators=[Optional()])
+        make_public = BooleanField('Make Public')
+        submit = SubmitField('Move Challenge')
+    
+    # Load all competitions
+    competitions = Competition.query.all()
+    form = MoveChallengeForm()
+    
+    # Add empty choice for "No Competition" (making it public)
+    form.competition.choices = [(-1, 'None (Make Public)')] + [(c.id, c.title) for c in competitions]
+    
+    # Get current competition info if any
+    current_competition = None
+    competition_challenge = None
+    if challenge.competitions:
+        competition_challenge = challenge.competitions[0]  # Get the first (should be only) competition
+        current_competition = competition_challenge.competition
+    
+    if form.validate_on_submit():
+        try:
+            # Remove from current competition if it exists
+            if competition_challenge:
+                db.session.delete(competition_challenge)
+            
+            target_competition_id = form.competition.data
+            
+            if target_competition_id == -1 or form.make_public.data:
+                # Make public with attribution if coming from a competition
+                if current_competition:
+                    attribution = f"From Competition: {current_competition.title} by {current_competition.host.username}"
+                    challenge.competition_attribution = attribution
+                
+                # Update visibility settings
+                challenge.is_public = True
+                challenge.visibility_scope = ChallengeVisibilityScope.PUBLIC
+            else:
+                # Add to the new competition
+                new_competition = Competition.query.get(target_competition_id)
+                if new_competition:
+                    # Create new competition challenge association
+                    new_comp_challenge = CompetitionChallenge(
+                        competition_id=new_competition.id,
+                        challenge_id=challenge.id
+                    )
+                    db.session.add(new_comp_challenge)
+                    
+                    # Update visibility settings for competition
+                    challenge.is_public = False
+                    challenge.visibility_scope = ChallengeVisibilityScope.COMPETITION
+            
+            db.session.commit()
+            flash(f'Challenge "{challenge.title}" has been moved successfully', 'success')
+            return redirect(url_for('admin.challenges'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error moving challenge: {str(e)}', 'danger')
+    
+    # Pass competitions to the template for dropdown
+    return render_template('admin/move_challenge.html', 
+                          challenge=challenge,
+                          current_competition=current_competition,
+                          competitions=competitions,
+                          form=form,
+                          title='Move Challenge')

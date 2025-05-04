@@ -16,3 +16,6 @@ email_validator
 python-dotenv
 python-magic
 faker
+python-dotenv
+flask-cors
+python-magic

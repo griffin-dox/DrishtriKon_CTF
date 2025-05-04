@@ -6,55 +6,77 @@ import os
 import pyotp
 import random
 import string
+import time
 from app import db, mail
 from models import Competition, CompetitionStatus, Challenge, CompetitionChallenge
-import os
 from werkzeug.utils import secure_filename
 from flask import current_app, render_template
 from flask_mail import Message
 from email_service import send_otp 
 
-def update_competition_statuses():
+# Cache variables
+_last_status_update = 0
+_STATUS_UPDATE_INTERVAL = 60  # Only update competition status every 60 seconds
+
+def update_competition_statuses(force=False):
     """
     Updates the status of competitions based on their start and end times.
     Should be run periodically.
+    
+    Args:
+        force (bool): Force update regardless of cache time
     """
+    global _last_status_update
     now = datetime.utcnow()
+    current_time = time.time()
+    
+    # Check if we need to update based on cache time
+    if not force and current_time - _last_status_update < _STATUS_UPDATE_INTERVAL:
+        # Skip update, using cached status
+        return
+    
     logging.debug(f"Updating competition statuses at {now}")
+    _last_status_update = current_time
     
     try:
-        # Update upcoming competitions to active
-        upcoming_to_active = Competition.query.filter(
-            Competition.status == CompetitionStatus.UPCOMING,
-            Competition.start_time <= now
+        # Use optimized query with single database call for better performance
+        competitions_to_update = Competition.query.filter(
+            ((Competition.status == CompetitionStatus.UPCOMING) & 
+             (Competition.start_time <= now)) |
+            ((Competition.status == CompetitionStatus.ACTIVE.value) & 
+             (Competition.end_time <= now))
         ).all()
         
+        # Process based on current status
+        upcoming_to_active = []
+        active_to_ended = []
+        
+        for comp in competitions_to_update:
+            if comp.status == CompetitionStatus.UPCOMING and comp.start_time <= now:
+                comp.status = CompetitionStatus.ACTIVE.value
+                upcoming_to_active.append(comp)
+            elif comp.status == CompetitionStatus.ACTIVE.value and comp.end_time <= now:
+                comp.status = CompetitionStatus.ENDED
+                active_to_ended.append(comp)
+                
+        # Only log if we have competitions to update
         if upcoming_to_active:
             logging.debug(f"Found {len(upcoming_to_active)} competitions to transition from upcoming to active")
+            for comp in upcoming_to_active:
+                logging.debug(f"Changed competition '{comp.title}' (ID: {comp.id}) from UPCOMING to ACTIVE")
             
-        for comp in upcoming_to_active:
-            logging.debug(f"Changing competition '{comp.title}' (ID: {comp.id}) from UPCOMING to ACTIVE")
-            logging.debug(f"  - Start time: {comp.start_time}, Current time: {now}")
-            comp.status = CompetitionStatus.ACTIVE.value
-        
-        # Update active competitions to ended
-        active_to_ended = Competition.query.filter(
-            Competition.status == CompetitionStatus.ACTIVE.value,
-            Competition.end_time <= now
-        ).all()
-        
         if active_to_ended:
             logging.debug(f"Found {len(active_to_ended)} competitions to transition from active to ended")
-            
-        for comp in active_to_ended:
-            logging.debug(f"Changing competition '{comp.title}' (ID: {comp.id}) from ACTIVE to ENDED")
-            logging.debug(f"  - End time: {comp.end_time}, Current time: {now}")
-            comp.status = CompetitionStatus.ENDED
-            
-            # When a competition ends, make all its challenges public
-            make_challenges_public(comp.id)
+            for comp in active_to_ended:
+                logging.debug(f"Changed competition '{comp.title}' (ID: {comp.id}) from ACTIVE to ENDED")
         
-        db.session.commit()
+        # Commit changes if any were made
+        if upcoming_to_active or active_to_ended:
+            db.session.commit()
+            
+            # Process ended competitions after commit to avoid issues
+            for comp in active_to_ended:
+                make_challenges_public(comp.id)
         
     except Exception as e:
         db.session.rollback()
