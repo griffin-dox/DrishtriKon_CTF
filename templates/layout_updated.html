@@ -204,8 +204,8 @@
             <div class="d-flex justify-content-between flex-wrap">
                 <p class="text-muted">&copy; {{ g.year }} Drishti कोण. All rights reserved. <span class="ms-2 small" style="color: var(--primary-color)">// Hack The Planet</span></p>
                 <div>
-                    <a href="#" class="me-3">Privacy Policy</a>
-                    <a href="#">Terms of Service</a>
+                    <a href="{{ url_for('main.privacy') }}" class="me-3">Privacy Policy</a>
+                    <a href="{{ url_for('main.terms') }}">Terms of Service</a>
                 </div>
             </div>
         </div>
@@ -221,8 +221,8 @@
     <script src="{{ url_for('static', filename='js/ads.js') }}"></script>
     
     <!-- Google Ads Script -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" 
-        crossorigin="anonymous"></script>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4151615559408811"
+     crossorigin="anonymous"></script>
     
     {% block scripts %}{% endblock %}
 </body>

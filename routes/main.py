@@ -77,3 +77,11 @@ def contact():
 @main_bp.route('/faq')
 def faq():
     return render_template('faq.html', title='FAQ')
+
+@main_bp.route('/privacy')
+def privacy():
+    return render_template('privacy.html', title='Privacy Policy')
+
+@main_bp.route('/terms')
+def terms():
+    return render_template('terms.html', title='Terms of Service')
