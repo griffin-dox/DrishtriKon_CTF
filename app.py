@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from flask import Flask, render_template, request, g, session, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, current_user
-from flask_wtf.csrf import CSRFProtect, generate_csrf
+from flask_wtf.csrf import CSRFProtect
 from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_migrate import Migrate
 from flask_mail import Mail
@@ -14,8 +14,17 @@ from flask_mail import Mail
 # Load environment variables early
 load_dotenv()
 
-# Logging
-logging.basicConfig(level=logging.DEBUG)
+# Configure logging based on environment
+if os.getenv('FLASK_ENV') == 'production':
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+else:
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
 
 # Init extensions
 db = SQLAlchemy()
@@ -26,12 +35,21 @@ csrf = CSRFProtect()
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
+# Set environment
+app.config['ENV'] = os.getenv('FLASK_ENV', 'production')
+app.config['DEBUG'] = app.config['ENV'] == 'development'
+app.config['TESTING'] = app.config['ENV'] == 'testing'
+
+# Force SESSION_COOKIE_SECURE = False for local development
+if app.debug:
+    app.config['SESSION_COOKIE_SECURE'] = False
+
 # Set secrets
 formcarry_url = os.getenv("FORMCARRY_ENDPOINT")
+
 # Use environment variables for secrets, don't set fallback values for production
 app.secret_key = os.getenv("SESSION_SECRET")
 if not app.secret_key:
-    # Only generate random keys for development environments
     if app.debug:
         import secrets
         logging.warning("No SESSION_SECRET environment variable set. Using randomly generated key for development.")
@@ -60,13 +78,11 @@ upload_folder = os.path.join(current_dir, "uploads")
 # Check if the folder exists, if not, create it
 if not os.path.exists(upload_folder):
     os.makedirs(upload_folder, exist_ok=True)
-    logging.info(f"'uploads' folder created at: {upload_folder}")
 else:
-    logging.info(f"'uploads' folder found at: {upload_folder}")
+    pass
 
 # Security configurations
 # Set secure cookies based on environment
-app.config['SESSION_COOKIE_SECURE'] = not app.debug  # True in production, False in development
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['PERMANENT_SESSION_LIFETIME'] = 1800  # 30 minutes
@@ -105,14 +121,24 @@ migrate = Migrate(app, db)
 
 # Import security middleware
 from security import add_security_headers, security_checks, sanitize_html
-from honeypot import check_honeypot_path, check_honeypot_fields
+from honeypot import check_honeypot_path, check_honeypot_fields, create_honeypot_routes
 from ids import analyze_request
 from ip_logging import log_ip_activity, get_client_ip
+from session_security import init_session_security, require_session_security
+from rate_limiter import ip_rate_limit, user_rate_limit, endpoint_rate_limit
+from security_headers import init_security, require_csrf, sanitize_timestamp
 
-# Honeypot routes disabled for now due to application stability
-# TODO: Re-enable after resolving endpoint conflicts
-# from honeypot import create_honeypot_routes
-# create_honeypot_routes(app)
+# Initialize session security
+init_session_security(app)
+
+# Initialize security
+init_security(app)
+
+# Create honeypot routes with proper error handling
+try:
+    create_honeypot_routes(app)
+except Exception as e:
+    logging.error("Failed to create honeypot routes: %s", str(e))
 
 # Apply security headers to all responses
 @app.after_request
@@ -129,49 +155,48 @@ def setup_logging_directories():
 # Run setup
 setup_logging_directories()
 
-# Check security before processing request
+# Combine security and session update logic in a single before_request
 @app.before_request
-def check_security():
-    # Skip security checks for static files and authentication routes
-    if request.path.startswith('/static/') or request.path == '/login' or request.path == '/register' or request.path == '/verify-otp' or request.path == '/logout':
-        return None
-    
-    # Log the request
-    log_ip_activity('request')
-    
-    # Check if path is a honeypot
-    if check_honeypot_path():
-        logging.warning(f"Honeypot triggered for path {request.path} from {get_client_ip()}")
-        return render_template('honeypot/fake_login.html'), 200
-    
-    # Check form for honeypot fields
-    if request.method == 'POST' and check_honeypot_fields(request.form):
-        logging.warning(f"Honeypot form field triggered from {get_client_ip()}")
-        return redirect(url_for('main.index')), 302
-    
-    # Run IDS analysis
-    alerts = analyze_request()
-    if alerts and len(alerts) > 0:
-        logging.warning(f"IDS alerts triggered: {len(alerts)} for {request.path} from {get_client_ip()}")
-    
-    # Run security checks
-    if not security_checks():
-        logging.warning(f"Security check failed for {request.path} from {get_client_ip()}")
-        return render_template('errors/403.html'), 403
-
-# Update session activity timestamp
-@app.before_request
-def update_session_timestamp():
+def combined_before_request():
+    # Always update session timestamp and user info
     session.permanent = True
-    session['last_active'] = datetime.utcnow().isoformat()
-    
-    # Store user info for audit logging
+    session['last_active'] = sanitize_timestamp(datetime.utcnow().timestamp())
     if current_user.is_authenticated:
         g.user_id = current_user.id
         g.username = current_user.username
     else:
         g.user_id = None
         g.username = 'anonymous'
+
+    # Log for debugging session/CSRF issues
+    logging.debug(f"[BeforeRequest] Path: {request.path}, Method: {request.method}, Session Keys: {list(session.keys())}")
+
+    # Skip custom security checks for static files and authentication routes
+    if request.path.startswith('/static/') or request.path in ['/login', '/register', '/verify-otp', '/logout']:
+        return None
+
+    # Log the request
+    log_ip_activity('request')
+
+    # Check if path is a honeypot
+    if check_honeypot_path():
+        logging.warning(f"Honeypot triggered for path {request.path} from {get_client_ip()}")
+        return render_template('honeypot/fake_login.html'), 200
+
+    # Check form for honeypot fields
+    if request.method == 'POST' and check_honeypot_fields(request.form):
+        logging.warning(f"Honeypot form field triggered from {get_client_ip()}")
+        return redirect(url_for('main.index')), 302
+
+    # Run IDS analysis
+    alerts = analyze_request()
+    if alerts and len(alerts) > 0:
+        logging.warning(f"IDS alerts triggered: {len(alerts)} for {request.path} from {get_client_ip()}")
+
+    # Run security checks
+    if not security_checks():
+        logging.warning(f"Security check failed for {request.path} from {get_client_ip()}")
+        return render_template('errors/403.html'), 403
 
 # Flask-Login config
 login_manager = LoginManager()
@@ -190,10 +215,6 @@ def load_user(user_id):
 @app.context_processor
 def utility_processor():
     return dict(year=lambda: datetime.now().year)
-
-@app.context_processor
-def inject_csrf_token():
-    return dict(csrf_token=generate_csrf)
 
 @app.context_processor
 def route_existence_processor():
@@ -227,6 +248,18 @@ def add_year_to_context():
 def contact():
     return render_template("contact.html", form_action=formcarry_url)
 
+@app.route('/csp-violation-report-endpoint/', methods=['POST'])
+def csp_violation_report():
+    try:
+        report = request.get_json(force=True, silent=True)
+        if not report:
+            app.logger.warning('CSP Violation: No report data received or invalid JSON.')
+        else:
+            app.logger.warning(f'CSP Violation: {report}')
+    except Exception as e:
+        app.logger.warning(f'CSP Violation: Failed to parse report. Error: {e}')
+    return '', 204  # No Content
+
 # Register routes & update competition status
 with app.app_context():
     from routes.auth import auth_bp
@@ -251,12 +284,9 @@ with app.app_context():
 
     from utils import update_competition_statuses
 
-    @app.before_request
-    def before_request():
-        # Only update competition statuses periodically (caching is implemented in the function)
-        # This avoids running database queries on every single request
-        update_competition_statuses()
-        
+    # Removed the @app.before_request that called update_competition_statuses()
+    # If you need to update competition statuses, call update_competition_statuses() at startup or use a scheduler.
+    
     # Setup error handlers
     @app.errorhandler(404)
     def page_not_found(e):

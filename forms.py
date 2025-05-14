@@ -27,24 +27,15 @@ class SecureForm(FlaskForm):
         csrf = True
 
 class LoginForm(FlaskForm):
-    class Meta:
-        csrf = False  # Temporarily disable CSRF for login form
-    
     username = StringField('Username', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
     submit = SubmitField('Login')
 
 class OTPForm(FlaskForm):
-    class Meta:
-        csrf = False  # Temporarily disable CSRF for OTP form
-        
     otp_code = StringField('OTP Code', validators=[DataRequired(), Length(min=6, max=6)])
     submit = SubmitField('Verify')
 
 class RegistrationForm(FlaskForm):
-    class Meta:
-        csrf = False  # Temporarily disable CSRF for registration form
-        
     username = StringField('Username', validators=[DataRequired(), Length(min=3, max=64)])
     email = StringField('Email', validators=[DataRequired(), Email()])
     password = PasswordField('Password', validators=[

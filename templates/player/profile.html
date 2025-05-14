@@ -39,7 +39,7 @@
                 </div>
                 <div class="card-body">
                     <form method="POST" action="{{ url_for('player.profile') }}">
-                        {{ form.hidden_tag() }}
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         
                         <div class="mb-3">
                             <label for="username" class="form-label">{{ form.username.label }}</label>

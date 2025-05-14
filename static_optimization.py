@@ -3,7 +3,7 @@ import re
 import logging
 import hashlib
 import time
-from flask import request, url_for
+from flask import request, url_for, current_app
 
 # Cache variables for optimized static URLs
 _static_file_cache = {}
@@ -21,9 +21,10 @@ def get_static_url(filename):
     Returns:
         str: URL with cache-busting version parameter
     """
-    # Add version parameter for cache busting
     version = get_file_version(filename)
-    return url_for('static', filename=filename, v=version)
+    url = url_for('static', filename=filename, v=version)
+    logging.debug(f"static_url: {filename} -> {url}")
+    return url
 
 def get_file_version(filename):
     """
@@ -48,8 +49,9 @@ def get_file_version(filename):
     if filename in _static_file_version_cache:
         return _static_file_version_cache[filename]
     
-    # Generate a version based on file modification time or content hash
-    full_path = os.path.join('static', filename)
+    # Use app.static_folder for correct path
+    static_folder = current_app.static_folder if current_app else 'static'
+    full_path = os.path.join(static_folder, filename)
     
     if os.path.exists(full_path):
         try:
@@ -66,6 +68,8 @@ def get_file_version(filename):
             return version
         except Exception as e:
             logging.error(f"Error generating version for {filename}: {str(e)}")
+    else:
+        logging.error(f"static_url: File not found: {full_path}")
     
     # Default version if file not found or error occurred
     return 'dev'

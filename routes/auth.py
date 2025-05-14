@@ -6,6 +6,8 @@ from app import db, login_manager
 from models import User
 from forms import LoginForm, RegistrationForm, ChangePasswordForm, OTPForm
 from utils import set_user_otp, send_otp_email, verify_otp as verify_otp_code
+from session_security import generate_session_id
+from flask_wtf.csrf import generate_csrf
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -67,8 +69,10 @@ def login():
         otp_code = set_user_otp(user)
         send_otp_email(user, otp_code)
         
-        # Regenerate session to prevent session fixation
-        session.clear()
+        # Instead of session.clear(), selectively clear only what you need
+        for key in list(session.keys()):
+            if key not in ('_fresh', 'csrf_token', 'last_active'):
+                session.pop(key)
         
         # Store user ID in session for the OTP verification
         session['otp_user_id'] = user.id
@@ -148,8 +152,17 @@ def verify_otp():
             
             # Log user in
             login_user(user)
-            
-            # Clear session data
+
+            # Set session security keys after login
+            session['_id'] = generate_session_id()
+            session['_created'] = datetime.utcnow().timestamp()
+            session['_last_activity'] = datetime.utcnow().timestamp()
+            session['_ip'] = request.remote_addr
+            session['_user_agent'] = request.headers.get('User-Agent', '')
+
+            session.modified = True  # Force session to be saved before redirect
+
+            # Clear only OTP-related session data
             next_page = session.pop('next_page', None)
             session.pop('otp_user_id', None)
             

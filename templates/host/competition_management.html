@@ -208,6 +208,7 @@
                                 </a>
 
                                 <form action="{{ url_for('host.delete_challenge', challenge_id=cc.challenge.id) }}" method="POST" style="display:inline;">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this challenge?')">
                                         <i class="fas fa-trash"></i>
                                     </button>

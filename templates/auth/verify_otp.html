@@ -13,10 +13,6 @@
                         <i class="fas fa-info-circle me-2"></i>
                         A verification code has been sent to your email. This code will expire in {{ expiry_minutes }} minutes.
                     </div>
-                    <div class="alert alert-success">
-                        <i class="fas fa-info-circle me-2"></i>
-                        <strong>Email Sent:</strong> We've sent your verification code via email using our secure Nodemailer service.
-                    </div>
                     
                     <form method="POST" action="{{ url_for('auth.verify_otp') }}">
                         {{ form.hidden_tag() }}

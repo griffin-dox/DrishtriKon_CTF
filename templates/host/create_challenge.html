@@ -20,6 +20,7 @@
                           }}"
                           enctype="multipart/form-data">
                         {{ form.hidden_tag() }}
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
                         <!-- Challenge Title -->
                         <div class="mb-3">

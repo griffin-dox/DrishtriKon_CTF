@@ -32,10 +32,9 @@ def update_competition_statuses(force=False):
     
     # Check if we need to update based on cache time
     if not force and current_time - _last_status_update < _STATUS_UPDATE_INTERVAL:
-        # Skip update, using cached status
         return
     
-    logging.debug(f"Updating competition statuses at {now}")
+    logging.info("Updating competition statuses")
     _last_status_update = current_time
     
     try:
@@ -61,14 +60,10 @@ def update_competition_statuses(force=False):
                 
         # Only log if we have competitions to update
         if upcoming_to_active:
-            logging.debug(f"Found {len(upcoming_to_active)} competitions to transition from upcoming to active")
-            for comp in upcoming_to_active:
-                logging.debug(f"Changed competition '{comp.title}' (ID: {comp.id}) from UPCOMING to ACTIVE")
+            logging.info(f"Updated {len(upcoming_to_active)} competitions to active status")
             
         if active_to_ended:
-            logging.debug(f"Found {len(active_to_ended)} competitions to transition from active to ended")
-            for comp in active_to_ended:
-                logging.debug(f"Changed competition '{comp.title}' (ID: {comp.id}) from ACTIVE to ENDED")
+            logging.info(f"Updated {len(active_to_ended)} competitions to ended status")
         
         # Commit changes if any were made
         if upcoming_to_active or active_to_ended:
@@ -80,7 +75,7 @@ def update_competition_statuses(force=False):
         
     except Exception as e:
         db.session.rollback()
-        logging.error(f"Error updating competition statuses: {str(e)}")
+        logging.error("Error updating competition statuses")
 
 def make_challenges_public(competition_id):
     """
@@ -92,7 +87,7 @@ def make_challenges_public(competition_id):
         challenge_ids = [cc_id[0] for cc_id in cc_ids]
         
         if challenge_ids:
-            logging.debug(f"Making {len(challenge_ids)} challenges public for ended competition ID {competition_id}")
+            logging.info(f"Making challenges public for competition {competition_id}")
             
             # Update all these challenges to be public
             Challenge.query.filter(Challenge.id.in_(challenge_ids)).update(
@@ -104,7 +99,7 @@ def make_challenges_public(competition_id):
             
     except Exception as e:
         db.session.rollback()
-        logging.error(f"Error making challenges public: {str(e)}")
+        logging.error("Error making challenges public")
 
 def format_datetime(value, format='%Y-%m-%d %H:%M:%S'):
     """Format a datetime object."""

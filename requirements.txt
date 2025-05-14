@@ -19,3 +19,4 @@ faker
 python-dotenv
 flask-cors
 python-magic
+redis
