@@ -20,3 +20,4 @@ python-dotenv
 flask-cors
 python-magic
 redis
+user-agents
