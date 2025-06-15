@@ -1,11 +1,11 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
 from app import db
-from models import Competition, CompetitionStatus, User, UserCompetition, UserRole
+from core.models import Competition, CompetitionStatus, User, UserCompetition, UserRole
 from sqlalchemy import desc
 from datetime import datetime
 from forms import TeamCompetitionRegisterForm
-from cache_utils import cached_query, invalidate_cache
+from core.cache_utils import cached_query, invalidate_cache
 
 competitions_bp = Blueprint('competitions', __name__, url_prefix='/competitions')
 

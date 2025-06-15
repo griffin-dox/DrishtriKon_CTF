@@ -1,9 +1,9 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, TextAreaField, SelectField, IntegerField, BooleanField, DateTimeField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError, Optional, URL, NumberRange
-from models import User, UserRole, ChallengeType, CompetitionStatus, TeamStatus, TeamRole
+from core.models import User, UserRole, ChallengeType, CompetitionStatus, TeamStatus, TeamRole
 from flask_wtf.file import FileField, FileAllowed, FileRequired
-from user_security import validate_password_strength, PasswordBreachDetector
+from security.user_security import validate_password_strength, PasswordBreachDetector
 
 # Custom validator for secure passwords
 class SecurePassword:
@@ -60,7 +60,8 @@ class ProfileForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired(), Length(min=3, max=64)])
     email = StringField('Email', validators=[DataRequired(), Email()])
     bio = TextAreaField('Bio', validators=[Optional(), Length(max=500)])
-    avatar = StringField('Avatar URL', validators=[Optional()])
+    avatar = StringField('Avatar URL', validators=[Optional(), Length(max=255)])
+    two_factor_enabled = BooleanField('Enable Two-Factor Authentication (2FA)')
     submit = SubmitField('Update Profile')
 
 class ChangePasswordForm(FlaskForm):
@@ -87,7 +88,8 @@ class UserCreateForm(FlaskForm):
 class UserEditForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired(), Length(min=3, max=64)])
     email = StringField('Email', validators=[DataRequired(), Email()])
-    role = SelectField('Role', choices=[(role.name, role.value) for role in UserRole])
+    # Set dropdown order: player, host, owner
+    role = SelectField('Role', choices=[('PLAYER', 'player'), ('HOST', 'host'), ('OWNER', 'owner')])
     status = SelectField('Status', choices=[('ACTIVE', 'Active'), ('RESTRICTED', 'Restricted'), 
                                            ('SUSPENDED', 'Suspended'), ('BANNED', 'Banned')])
     submit = SubmitField('Update User')
@@ -183,7 +185,7 @@ class AdPlacementForm(FlaskForm):
     
     def __init__(self, *args, **kwargs):
         super(AdPlacementForm, self).__init__(*args, **kwargs)
-        from models import AdLocation
+        from core.models import AdLocation
         self.location.choices = [(loc.name, loc.value.replace('_', ' ').title()) for loc in AdLocation]
 
 
@@ -195,7 +197,7 @@ class TeamCreateForm(FlaskForm):
     submit = SubmitField('Create Team')
     
     def validate_name(self, name):
-        from models import Team
+        from core.models import Team
         team = Team.query.filter_by(name=name.data).first()
         if team:
             raise ValidationError('Team name already exists. Please choose a different one.')
@@ -210,7 +212,7 @@ class TeamEditForm(FlaskForm):
     submit = SubmitField('Update Team')
     
     def validate_name(self, name):
-        from models import Team
+        from core.models import Team
         team = Team.query.filter_by(name=name.data).first()
         if team and team.id != self.id.data:
             raise ValidationError('Team name already exists. Please choose a different one.')

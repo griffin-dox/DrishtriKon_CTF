@@ -1,13 +1,14 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session
 from flask_login import login_user, logout_user, current_user, login_required
 from urllib.parse import urlparse
-from datetime import datetime
+from datetime import datetime, timedelta
 from app import db, login_manager
-from models import User
+from core.models import User
 from forms import LoginForm, RegistrationForm, ChangePasswordForm, OTPForm
-from utils import set_user_otp, send_otp_email, verify_otp as verify_otp_code
-from session_security import generate_session_id
+from core.utils import set_user_otp, send_otp_email, verify_otp as verify_otp_code
+from security.session_security import generate_session_id
 from flask_wtf.csrf import generate_csrf
+import random
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -24,7 +25,7 @@ def login():
     ip_address = request.remote_addr
     
     # Import rate limiting and tracking functions
-    from security import is_rate_limited, track_login_attempt
+    from security.security import is_rate_limited, track_login_attempt
     
     # Check if the IP is rate limited
     if is_rate_limited(None, ip_address):
@@ -62,29 +63,38 @@ def login():
             track_login_attempt(username, ip_address, False)
             return redirect(url_for('auth.login'))
         
+        if not user.email_verified:
+            flash('Please verify your email before logging in.', 'warning')
+            return redirect(url_for('auth.login'))
+        
         # Track successful attempt
         track_login_attempt(username, ip_address, True)
-        
-        # Generate and send OTP for verification
-        otp_code = set_user_otp(user)
-        send_otp_email(user, otp_code)
-        
-        # Instead of session.clear(), selectively clear only what you need
-        for key in list(session.keys()):
-            if key not in ('_fresh', 'csrf_token', 'last_active'):
-                session.pop(key)
-        
-        # Store user ID in session for the OTP verification
-        session['otp_user_id'] = user.id
-        session['login_time'] = datetime.utcnow().isoformat()
-        
-        # Store next page in session if it exists and it's a relative path
-        next_page = request.args.get('next')
-        if next_page and urlparse(next_page).netloc == '':
-            session['next_page'] = next_page
-        
-        flash('A verification code has been sent to your email.', 'info')
-        return redirect(url_for('auth.verify_otp'))
+        if user.two_factor_enabled:
+            # Generate and send OTP for 2FA
+            otp_code = set_user_otp(user)
+            send_otp_email(user, otp_code)
+            
+            # Instead of session.clear(), selectively clear only what you need
+            for key in list(session.keys()):
+                if key not in ('_fresh', 'csrf_token', 'last_active'):
+                    session.pop(key)
+            
+            # Store user ID in session for the OTP verification
+            session['otp_user_id'] = user.id
+            session['login_time'] = datetime.utcnow().isoformat()
+            
+            # Store next page in session if it exists and it's a relative path
+            next_page = request.args.get('next')
+            if next_page and urlparse(next_page).netloc == '':
+                session['next_page'] = next_page
+            
+            flash('A verification code has been sent to your email.', 'info')
+            return redirect(url_for('auth.verify_otp'))
+        else:
+            # Log in directly if 2FA is not enabled
+            login_user(user)
+            next_page = session.pop('next_page', None)
+            return redirect(next_page or url_for('main.index'))
     
     return render_template('auth/login.html', form=form, title='Login')
 
@@ -98,7 +108,6 @@ def logout():
 def register():
     if current_user.is_authenticated:
         return redirect(url_for('main.index'))
-    
     form = RegistrationForm()
     if form.validate_on_submit():
         user = User(
@@ -106,17 +115,52 @@ def register():
             email=form.email.data
         )
         user.set_password(form.password.data)
-        
+        user.email_verified = False
+        user.otp_secret = str(random.randint(100000, 999999))
+        user.otp_valid_until = datetime.utcnow() + timedelta(minutes=10)
         try:
             db.session.add(user)
             db.session.commit()
-            flash('Your account has been created! You can now login.', 'success')
-            return redirect(url_for('auth.login'))
+            # Send OTP to email
+            from core.email_service import send_otp
+            send_otp(user.email, user.username, user.otp_secret)
+            session['verify_email_user_id'] = user.id
+            flash('A verification code has been sent to your email. Please verify to complete registration.', 'info')
+            return redirect(url_for('auth.verify_email'))
         except Exception as e:
             db.session.rollback()
             flash(f'Error creating account: {str(e)}', 'danger')
-    
     return render_template('auth/register.html', form=form, title='Register')
+
+@auth_bp.route('/verify-email', methods=['GET', 'POST'])
+def verify_email():
+    if 'verify_email_user_id' not in session:
+        flash('No verification in progress. Please register.', 'warning')
+        return redirect(url_for('auth.register'))
+    user = User.query.get(session['verify_email_user_id'])
+    if not user:
+        flash('User not found. Please register again.', 'danger')
+        return redirect(url_for('auth.register'))
+    # Check if OTP expired
+    if not user.otp_valid_until or user.otp_valid_until < datetime.utcnow():
+        db.session.delete(user)
+        db.session.commit()
+        session.pop('verify_email_user_id', None)
+        flash('Verification code expired. Please register again.', 'warning')
+        return redirect(url_for('auth.register'))
+    form = OTPForm()
+    if form.validate_on_submit():
+        if user.otp_secret == form.otp_code.data:
+            user.email_verified = True
+            user.otp_secret = None
+            user.otp_valid_until = None
+            db.session.commit()
+            session.pop('verify_email_user_id', None)
+            flash('Email verified! You can now log in.', 'success')
+            return redirect(url_for('auth.login'))
+        else:
+            flash('Invalid verification code.', 'danger')
+    return render_template('auth/verify_email.html', form=form, title='Verify Email')
 
 @auth_bp.route('/verify-otp', methods=['GET', 'POST'])
 def verify_otp():

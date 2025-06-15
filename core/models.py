@@ -67,6 +67,7 @@ class User(UserMixin, db.Model):
     otp_secret = db.Column(db.String(32), nullable=True)
     otp_valid_until = db.Column(db.DateTime, nullable=True)
     email_verified = db.Column(db.Boolean, default=False)
+    two_factor_enabled = db.Column(db.Boolean, default=False)  # New field for 2FA toggle
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

@@ -80,6 +80,7 @@
         <div class="error-message" id="errorMessage"></div>
         
         <form id="loginForm" action="/admin/auth" method="POST">
+            {{ form.hidden_tag() }}
             <div class="form-group">
                 <label for="username">Username:</label>
                 <input type="text" id="username" name="username" required>

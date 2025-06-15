@@ -92,6 +92,15 @@
                             </small>
                         </div>
                         
+                        <div class="mb-3">
+                            <div class="form-check">
+                                {{ form.two_factor_enabled(class="form-check-input") }}
+                                <label class="form-check-label" for="two_factor_enabled">
+                                    {{ form.two_factor_enabled.label }}
+                                </label>
+                            </div>
+                        </div>
+                        
                         <div class="d-grid">
                             {{ form.submit(class="btn btn-primary") }}
                         </div>

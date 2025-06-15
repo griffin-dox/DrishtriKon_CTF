@@ -4,11 +4,11 @@ from functools import wraps
 from app import db
 import os
 from datetime import datetime
-from models import Competition, Challenge, CompetitionChallenge, User, UserCompetition, CompetitionHost, Submission, CompetitionStatus, ChallengeVisibilityScope
+from core.models import Competition, Challenge, CompetitionChallenge, User, UserCompetition, CompetitionHost, Submission, CompetitionStatus, ChallengeVisibilityScope
 from forms import CompetitionForm, ChallengeForm, CompetitionManualStatusForm
 from sqlalchemy import desc
 from sqlalchemy.sql import func
-from utils import save_file
+from core.utils import save_file
 from werkzeug.utils import secure_filename
 
 # Define the upload folder

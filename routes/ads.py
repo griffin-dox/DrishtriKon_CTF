@@ -5,10 +5,10 @@ from werkzeug.utils import secure_filename
 from datetime import datetime
 
 from app import db
-from models import User, UserRole, AdImage, AdPlacement, AdConfiguration, AdLocation
+from core.models import User, UserRole, AdImage, AdPlacement, AdConfiguration, AdLocation
 from forms import AdConfigurationForm, AdImageForm, AdPlacementForm
 from routes.admin import admin_required
-from utils import save_file
+from core.utils import save_file
 
 ads_bp = Blueprint('ads', __name__)
 

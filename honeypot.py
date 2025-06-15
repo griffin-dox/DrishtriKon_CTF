@@ -8,7 +8,7 @@ import hashlib
 import re
 from datetime import datetime, timedelta
 from flask import request, render_template, abort, redirect, url_for, jsonify
-from ip_logging import flag_suspicious_ip, log_ip_activity, get_client_ip
+from core.ip_logging import flag_suspicious_ip, log_ip_activity, get_client_ip
 
 # Configure logging
 honeypot_logger = logging.getLogger('honeypot')

@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
 from flask_login import login_required, current_user
 from app import db
-from models import User, Team, TeamMember, TeamRole, TeamStatus, TeamCompetition, Competition, CompetitionStatus, UserCompetition
+from core.models import User, Team, TeamMember, TeamRole, TeamStatus, TeamCompetition, Competition, CompetitionStatus, UserCompetition
 from forms import TeamCreateForm, TeamEditForm, TeamInviteMemberForm, TeamJoinForm, TeamLeaveForm, TeamKickMemberForm, TeamCompetitionRegisterForm
 import secrets
 import string

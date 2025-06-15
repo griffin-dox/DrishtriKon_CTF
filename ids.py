@@ -6,7 +6,7 @@ import os
 from datetime import datetime, timedelta
 from collections import defaultdict, Counter
 from flask import request, session, g
-from ip_logging import get_client_ip, flag_suspicious_ip, log_ip_activity
+from core.ip_logging import get_client_ip, flag_suspicious_ip, log_ip_activity
 
 # Initialize logging
 ids_logger = logging.getLogger('ids')

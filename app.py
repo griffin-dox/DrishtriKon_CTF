@@ -1,6 +1,6 @@
 import os
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timezone
 from dotenv import load_dotenv
 
 from flask import Flask, render_template, request, g, session, redirect, url_for
@@ -39,6 +39,7 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 app.config['ENV'] = os.getenv('FLASK_ENV', 'production')
 app.config['DEBUG'] = app.config['ENV'] == 'development'
 app.config['TESTING'] = app.config['ENV'] == 'testing'
+
 
 # Force SESSION_COOKIE_SECURE = False for local development
 if app.debug:
@@ -120,13 +121,12 @@ csrf.init_app(app)
 migrate = Migrate(app, db)
 
 # Import security middleware
-from security import add_security_headers, security_checks, sanitize_html
+from security.security import add_security_headers, security_checks
 from honeypot import check_honeypot_path, check_honeypot_fields, create_honeypot_routes
 from ids import analyze_request
-from ip_logging import log_ip_activity, get_client_ip
-from session_security import init_session_security, require_session_security
-from rate_limiter import ip_rate_limit, user_rate_limit, endpoint_rate_limit
-from security_headers import init_security, require_csrf, sanitize_timestamp
+from core.ip_logging import log_ip_activity, get_client_ip
+from security.session_security import init_session_security
+from security.security_headers import init_security, sanitize_timestamp
 
 # Initialize session security
 init_session_security(app)
@@ -160,7 +160,7 @@ setup_logging_directories()
 def combined_before_request():
     # Always update session timestamp and user info
     session.permanent = True
-    session['last_active'] = sanitize_timestamp(datetime.utcnow().timestamp())
+    session['last_active'] = sanitize_timestamp(datetime.now(timezone.utc).timestamp())
     if current_user.is_authenticated:
         g.user_id = current_user.id
         g.username = current_user.username
@@ -208,7 +208,7 @@ login_manager.session_protection = "strong"
 
 @login_manager.user_loader
 def load_user(user_id):
-    from models import User
+    from core.models import User
     return User.query.get(int(user_id))
 
 # Global template vars
@@ -235,7 +235,7 @@ def route_existence_processor():
     return route_exists
 
 # Add static URL optimization
-from static_optimization import add_static_url_processor
+from core.static_optimization import add_static_url_processor
 add_static_url_processor(app)
 
 @app.before_request
@@ -260,6 +260,9 @@ def csp_violation_report():
         app.logger.warning(f'CSP Violation: Failed to parse report. Error: {e}')
     return '', 204  # No Content
 
+# Exempt the route using your CSRFProtect instance
+csrf.exempt(csp_violation_report)
+
 # Register routes & update competition status
 with app.app_context():
     from routes.auth import auth_bp
@@ -282,24 +285,25 @@ with app.app_context():
     app.register_blueprint(ads_bp)
     app.register_blueprint(teams_bp)
 
-    from utils import update_competition_statuses
-
-    # Removed the @app.before_request that called update_competition_statuses()
-    # If you need to update competition statuses, call update_competition_statuses() at startup or use a scheduler.
+    # --- Periodic Cleanup for Unverified Users ---
+    # To keep your database clean, periodically delete users who have not verified their email within 10 minutes of registration.
+    # You can call this function at startup, or schedule it using a background thread, cron job, or external scheduler.
+    from core.utils import delete_expired_unverified_users
+    delete_expired_unverified_users()  # Run once at startup (optional)
     
     # Setup error handlers
     @app.errorhandler(404)
-    def page_not_found(e):
+    def page_not_found(_):
         return render_template('errors/404.html'), 404
 
     @app.errorhandler(403)
-    def forbidden(e):
+    def forbidden(_):
         return render_template('errors/403.html'), 403
 
     @app.errorhandler(500)
-    def internal_server_error(e):
+    def internal_server_error(_):
         return render_template('errors/500.html'), 500
         
     @app.errorhandler(429)
-    def too_many_requests(e):
+    def too_many_requests(_):
         return render_template('errors/429.html'), 429

@@ -16,14 +16,30 @@ SECURITY_HEADERS = {
     'X-Content-Type-Options': 'nosniff',
     'X-Frame-Options': 'SAMEORIGIN',
     'X-XSS-Protection': '1; mode=block',
-    # Updated CSP to allow Google Fonts, Font Awesome, Google Ads, and common CDNs
-    'Content-Security-Policy': "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://code.jquery.com https://pagead2.googlesyndication.com; "
-        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
+    'Content-Security-Policy': (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' "
+            "https://cdn.jsdelivr.net "
+            "https://code.jquery.com "
+            "https://cdnjs.cloudflare.com "
+            "https://pagead2.googlesyndication.com "
+            "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js "
+            "https://kit.fontawesome.com; "
+        "style-src 'self' 'unsafe-inline' "
+            "https://fonts.googleapis.com "
+            "https://cdn.jsdelivr.net "
+            "https://cdnjs.cloudflare.com "
+            "https://use.fontawesome.com "
+            "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css; "
         "img-src 'self' data: https:; "
-        "font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
+        "font-src 'self' data: "
+            "https://fonts.gstatic.com "
+            "https://cdn.jsdelivr.net "
+            "https://cdnjs.cloudflare.com "
+            "https://use.fontawesome.com; "
         "connect-src *; "
-        "report-uri /csp-violation-report-endpoint/;",
+        "report-uri /csp-violation-report-endpoint/;"
+    ),
     'Referrer-Policy': 'strict-origin-when-cross-origin',
     'Permissions-Policy': 'geolocation=(), microphone=(), camera=()'
 }

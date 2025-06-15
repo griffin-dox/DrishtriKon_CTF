@@ -111,42 +111,6 @@ def sanitize_html(html_content):
     
     return sanitized
 
-def check_csrf_token():
-    """Check CSRF token in form submissions"""
-    # Skip for GET, HEAD, OPTIONS
-    if request.method in ['GET', 'HEAD', 'OPTIONS']:
-        return True
-    
-    # Check if it's a request to static files
-    if request.path.startswith('/static/'):
-        return True
-    
-    # Allow POST for webhook endpoints that need to bypass CSRF
-    exempt_routes = [
-        '/webhook/', 
-        '/api/',  # For API endpoints that use token auth
-        '/login',  # Authentication routes exempt from CSRF
-        '/logout',  # Logout exempt from CSRF
-        '/register',  # Registration exempt from CSRF
-        '/verify-otp'  # OTP verification exempt from CSRF
-    ]
-    
-    if any(request.path.startswith(route) for route in exempt_routes):
-        return True
-        
-    # Verify CSRF token for all other methods
-    token = session.get('csrf_token', None)
-    form_token = request.form.get('csrf_token', None)
-    
-    # Also check for token in headers for AJAX requests
-    header_token = request.headers.get('X-CSRF-Token', None)
-    
-    if token and (token == form_token or token == header_token):
-        return True
-    
-    logging.warning(f"CSRF validation failed for {request.path} from {request.remote_addr}")
-    return False
-
 def require_tls():
     """Ensure connection is over HTTPS"""
     # In development mode, allow HTTP
@@ -213,8 +177,7 @@ def security_checks():
         if request.path == '/login' or request.path == '/register' or request.path == '/verify-otp' or request.path == '/logout':
             return True
         return (require_tls() and 
-                check_csrf_token() and 
-                check_referrer())
+                check_referrer())  # Removed check_csrf_token()
     
     # For other routes, be less strict
     return True

@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 import os
 from flask_login import login_required, current_user
 from app import db
-from models import User, Competition, Submission, Badge, UserBadge, UserCompetition, Challenge
+from core.models import User, Competition, Submission, Badge, UserBadge, UserCompetition, Challenge
 from forms import ProfileForm
 from sqlalchemy import desc
 from werkzeug.utils import safe_join
@@ -55,6 +55,8 @@ def profile():
         current_user.email = form.email.data
         current_user.bio = form.bio.data
         current_user.avatar = form.avatar.data
+        # Update 2FA toggle
+        current_user.two_factor_enabled = form.two_factor_enabled.data
         
         try:
             db.session.commit()

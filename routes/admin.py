@@ -4,15 +4,15 @@ from flask_wtf import FlaskForm
 from wtforms import SelectField, BooleanField, SubmitField
 from wtforms.validators import Optional
 from functools import wraps
-from app import db
-from models import User, UserRole, Challenge, Competition, Badge, UserStatus, CompetitionHost, ChallengeVisibilityScope, CompetitionChallenge
+from app import db, csrf
+from core.models import User, UserRole, Challenge, Competition, Badge, UserStatus, CompetitionHost, ChallengeVisibilityScope, CompetitionChallenge
 from forms import UserCreateForm, UserEditForm, ChallengeForm, CompetitionForm, BadgeForm, CompetitionHostForm, UserSearchForm
 from sqlalchemy import desc
-from utils import save_file
+from core.utils import save_file
 from werkzeug.utils import secure_filename
-from cache_utils import cached_query, invalidate_cache
+from core.cache_utils import cached_query, invalidate_cache
 from sqlalchemy import func
-from models import Submission
+from core.models import Submission
 import os
 import logging
 
@@ -177,8 +177,11 @@ def create_user():
 @admin_required
 def edit_user(user_id):
     user = User.query.get_or_404(user_id)
-    form = UserEditForm(obj=user)
-    
+    if request.method == "POST":
+        form = UserEditForm(request.form, obj=user)
+    else:
+        form = UserEditForm(obj=user)
+        
     if form.validate_on_submit():
         user.username = form.username.data
         user.email = form.email.data
@@ -192,6 +195,9 @@ def edit_user(user_id):
         except Exception as e:
             db.session.rollback()
             flash(f'Error updating user: {str(e)}', 'danger')
+    print("form:", form)
+    print("form.csrf_token:", getattr(form, 'csrf_token', None))
+    print("form.hidden_tag:", getattr(form, 'hidden_tag', None))
     
     return render_template('admin/edit_user.html', form=form, user=user, title='Edit User')
 
@@ -200,11 +206,13 @@ def edit_user(user_id):
 @admin_required
 def delete_user(user_id):
     user = User.query.get_or_404(user_id)
-    
+    # Prevent deletion of protected email
+    if user.email == 'codeitishant@gmail.com':
+        flash('This user cannot be deleted.', 'danger')
+        return redirect(url_for('admin.users'))
     if user.id == current_user.id:
         flash('You cannot delete your own account', 'danger')
         return redirect(url_for('admin.users'))
-    
     try:
         db.session.delete(user)
         db.session.commit()
@@ -212,7 +220,6 @@ def delete_user(user_id):
     except Exception as e:
         db.session.rollback()
         flash(f'Error deleting user: {str(e)}', 'danger')
-    
     return redirect(url_for('admin.users'))
 
 # Challenge Management
@@ -530,7 +537,8 @@ def remove_competition_host(competition_id, host_id):
 @admin_required
 def badges():
     badges = Badge.query.order_by(Badge.name).all()
-    return render_template('admin/badges.html', badges=badges, title='Badge Management')
+    form = FlaskForm() 
+    return render_template('admin/badges.html', badges=badges, form=form, title='Badge Management')
 
 @admin_bp.route('/badges/create', methods=['GET', 'POST'])
 @login_required

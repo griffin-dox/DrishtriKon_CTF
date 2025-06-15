@@ -1,5 +1,5 @@
 from app import app, db
-import models
+import core.models as models
 
 with app.app_context():
     db.create_all()

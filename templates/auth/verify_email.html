@@ -1,0 +1,31 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Verify Your Email</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        <div class="mb-3">
+                            <label for="otp_code" class="form-label">Enter the OTP sent to your email</label>
+                            {{ form.otp_code(class="form-control", placeholder="6-digit code") }}
+                            {% if form.otp_code.errors %}
+                                <div class="alert alert-danger mt-2">
+                                    {% for error in form.otp_code.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <button type="submit" class="btn btn-primary">Verify Email</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -8,11 +8,11 @@ import random
 import string
 import time
 from app import db, mail
-from models import Competition, CompetitionStatus, Challenge, CompetitionChallenge
+from core.models import Competition, CompetitionStatus, Challenge, CompetitionChallenge
 from werkzeug.utils import secure_filename
 from flask import current_app, render_template
 from flask_mail import Message
-from email_service import send_otp 
+from core.email_service import send_otp 
 
 # Cache variables
 _last_status_update = 0
@@ -182,3 +182,28 @@ def send_otp_email(user, otp_code):
     except Exception as e:
         logging.error(f"Error in send_otp_email: {str(e)}")
         return False
+
+def delete_expired_unverified_users():
+    """
+    Delete users who have not verified their email within 10 minutes of registration.
+    Should be run periodically (e.g., via cron, scheduler, or background thread).
+    """
+    from core.models import User
+    from datetime import datetime, timedelta
+    now = datetime.utcnow()
+    ten_minutes_ago = now - timedelta(minutes=10)
+    try:
+        expired_users = User.query.filter(
+            (User.email_verified == False) &
+            (User.created_at < ten_minutes_ago)
+        ).all()
+        count = len(expired_users)
+        for user in expired_users:
+            logging.info(f"Deleting unverified user: {user.username} ({user.email})")
+            db.session.delete(user)
+        if count > 0:
+            db.session.commit()
+            logging.info(f"Deleted {count} unverified users.")
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Error deleting unverified users: {str(e)}")

@@ -10,7 +10,6 @@
                 </div>
                 <div class="card-body">
                     <form method="POST" action="{{ url_for('admin.edit_challenge', challenge_id=challenge.id) }}" enctype="multipart/form-data">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         {{ form.hidden_tag() }}
                         
                         <!-- Challenge Title -->
