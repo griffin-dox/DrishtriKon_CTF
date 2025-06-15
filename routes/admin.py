@@ -4,7 +4,7 @@ from flask_wtf import FlaskForm
 from wtforms import SelectField, BooleanField, SubmitField
 from wtforms.validators import Optional
 from functools import wraps
-from core.app import db, csrf
+from app import db, csrf
 from core.models import User, UserRole, Challenge, Competition, Badge, UserStatus, CompetitionHost, ChallengeVisibilityScope, CompetitionChallenge
 from forms import UserCreateForm, UserEditForm, ChallengeForm, CompetitionForm, BadgeForm, CompetitionHostForm, UserSearchForm
 from sqlalchemy import desc

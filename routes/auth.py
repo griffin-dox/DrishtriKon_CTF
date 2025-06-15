@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_user, logout_user, current_user, login_required
 from urllib.parse import urlparse
 from datetime import datetime, timedelta
-from core.app import db, login_manager
+from app import db, login_manager
 from core.models import User
 from forms import LoginForm, RegistrationForm, ChangePasswordForm, OTPForm
 from core.utils import set_user_otp, send_otp_email, verify_otp as verify_otp_code

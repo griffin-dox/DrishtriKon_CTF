@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
-from core.app import db
+from app import db
 from core.models import Competition, CompetitionStatus, User, UserCompetition, UserRole
 from sqlalchemy import desc
 from datetime import datetime

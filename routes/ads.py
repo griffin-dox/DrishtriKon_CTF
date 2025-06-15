@@ -4,7 +4,7 @@ import os
 from werkzeug.utils import secure_filename
 from datetime import datetime
 
-from core.app import db
+from app import db
 from core.models import User, UserRole, AdImage, AdPlacement, AdConfiguration, AdLocation
 from forms import AdConfigurationForm, AdImageForm, AdPlacementForm
 from routes.admin import admin_required

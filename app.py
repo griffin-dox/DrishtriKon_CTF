@@ -1,5 +1,6 @@
 import os
 import logging
+from logging.handlers import RotatingFileHandler
 from datetime import datetime, timezone
 from dotenv import load_dotenv
 
@@ -14,17 +15,38 @@ from flask_mail import Mail
 # Load environment variables early
 load_dotenv()
 
-# Configure logging based on environment
-if os.getenv('FLASK_ENV') == 'production':
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
-else:
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
+# --- Improved Logging Setup ---
+LOG_LEVEL = logging.DEBUG if os.getenv('FLASK_ENV') == 'development' else logging.INFO
+
+# Ensure logs directory exists
+if not os.path.exists("logs"):
+    os.makedirs("logs")
+
+# Remove default handlers to avoid duplicate logs
+for handler in logging.root.handlers[:]:
+    logging.root.removeHandler(handler)
+
+# Console handler
+console_handler = logging.StreamHandler()
+console_handler.setLevel(LOG_LEVEL)
+console_handler.setFormatter(logging.Formatter(
+    "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+))
+
+# Rotating file handler
+file_handler = RotatingFileHandler(
+    "logs/app.log", maxBytes=2 * 1024 * 1024, backupCount=5, encoding="utf-8"
+)
+file_handler.setLevel(LOG_LEVEL)
+file_handler.setFormatter(logging.Formatter(
+    "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+))
+
+logging.basicConfig(
+    level=LOG_LEVEL,
+    handlers=[console_handler, file_handler]
+)
+# --- End Improved Logging Setup ---
 
 # Init extensions
 db = SQLAlchemy()
@@ -39,7 +61,6 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 app.config['ENV'] = os.getenv('FLASK_ENV', 'production')
 app.config['DEBUG'] = app.config['ENV'] == 'development'
 app.config['TESTING'] = app.config['ENV'] == 'testing'
-
 
 # Force SESSION_COOKIE_SECURE = False for local development
 if app.debug:
@@ -259,9 +280,6 @@ def csp_violation_report():
     except Exception as e:
         app.logger.warning(f'CSP Violation: Failed to parse report. Error: {e}')
     return '', 204  # No Content
-
-# Exempt the route using your CSRFProtect instance
-csrf.exempt(csp_violation_report)
 
 # Register routes & update competition status
 with app.app_context():
