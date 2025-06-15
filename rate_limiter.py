@@ -1,68 +1,64 @@
-import time
 import logging
-import redis
+from threading import Lock
 from functools import wraps
 from flask import request, jsonify, current_app
-from datetime import datetime, timedelta
+import time
 
 # Configure logging
 rate_logger = logging.getLogger('rate_limiter')
 rate_logger.setLevel(logging.INFO)
 
-class RedisRateLimiter:
-    def __init__(self, redis_url=None):
-        self.redis = redis.from_url(redis_url or 'redis://localhost:6379/0')
-        
+class InMemoryRateLimiter:
+    def __init__(self):
+        self.data = {}
+        self.lock = Lock()
+
     def _get_key(self, key_type, identifier):
-        """Generate Redis key for rate limiting"""
+        """Generate key for rate limiting"""
         return f"rate_limit:{key_type}:{identifier}"
-        
-    def _get_window_key(self, key_type, identifier, window):
-        """Generate Redis key for rate limit window"""
-        return f"rate_limit:{key_type}:{identifier}:{window}"
-        
+
     def is_rate_limited(self, key_type, identifier, max_requests, window):
         """Check if request should be rate limited"""
         key = self._get_key(key_type, identifier)
-        window_key = self._get_window_key(key_type, identifier, window)
-        
-        # Get current count
-        current = self.redis.get(key)
-        if current is None:
-            # First request in window
-            self.redis.setex(key, window, 1)
+        now = int(time.time())
+        with self.lock:
+            record = self.data.get(key)
+            if not record or now >= record['reset']:
+                # New window
+                self.data[key] = {'count': 1, 'reset': now + window}
+                return False
+            if record['count'] >= max_requests:
+                return True
+            self.data[key]['count'] += 1
             return False
-            
-        current = int(current)
-        if current >= max_requests:
-            # Rate limit exceeded
-            return True
-            
-        # Increment counter
-        self.redis.incr(key)
-        return False
-        
+
     def get_remaining_requests(self, key_type, identifier, max_requests):
         """Get remaining requests in current window"""
         key = self._get_key(key_type, identifier)
-        current = self.redis.get(key)
-        if current is None:
-            return max_requests
-        return max(0, max_requests - int(current))
-        
+        now = int(time.time())
+        with self.lock:
+            record = self.data.get(key)
+            if not record or now >= record['reset']:
+                return max_requests
+            return max(0, max_requests - record['count'])
+
     def get_reset_time(self, key_type, identifier):
         """Get time until rate limit resets"""
         key = self._get_key(key_type, identifier)
-        ttl = self.redis.ttl(key)
-        return max(0, ttl)
+        now = int(time.time())
+        with self.lock:
+            record = self.data.get(key)
+            if not record or now >= record['reset']:
+                return 0
+            return max(0, record['reset'] - now)
 
 # Initialize rate limiter
-rate_limiter = RedisRateLimiter()
+rate_limiter = InMemoryRateLimiter()
 
 def rate_limit(key_type, max_requests, window, identifier_func=None):
     """
     Rate limit decorator
-    
+
     Args:
         key_type: Type of rate limit (e.g., 'ip', 'user', 'endpoint')
         max_requests: Maximum number of requests allowed in window
@@ -77,18 +73,18 @@ def rate_limit(key_type, max_requests, window, identifier_func=None):
                 identifier = identifier_func()
             else:
                 identifier = request.remote_addr
-                
+
             # Check rate limit
             if rate_limiter.is_rate_limited(key_type, identifier, max_requests, window):
                 # Get remaining time
                 reset_time = rate_limiter.get_reset_time(key_type, identifier)
-                
+
                 # Log rate limit hit
                 rate_logger.warning(
                     f"Rate limit exceeded: {key_type}:{identifier} "
                     f"on {request.path} from {request.remote_addr}"
                 )
-                
+
                 # Return rate limit response
                 response = jsonify({
                     'error': 'Too many requests',
@@ -97,7 +93,7 @@ def rate_limit(key_type, max_requests, window, identifier_func=None):
                 response.status_code = 429
                 response.headers['Retry-After'] = str(reset_time)
                 return response
-                
+
             return f(*args, **kwargs)
         return decorated_function
     return decorator
@@ -125,4 +121,4 @@ def endpoint_rate_limit(max_requests, window):
 # @ip_rate_limit(100, 60)  # 100 requests per minute per IP
 # @user_rate_limit(1000, 3600)  # 1000 requests per hour per user
 # def api_endpoint():
-#     return jsonify({'status': 'success'}) 
+#     return jsonify({'status': 'success'})

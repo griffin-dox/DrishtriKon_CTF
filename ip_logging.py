@@ -8,8 +8,6 @@ from functools import wraps
 from flask import request, session, g
 from collections import defaultdict
 from user_agents import parse
-import redis
-from redis_config import get_redis_client
 
 # Configure logging for IP activity
 logging.basicConfig(level=logging.INFO)
@@ -29,9 +27,6 @@ MAX_LOG_FILES = 10
 # Ensure log directory exists
 if not os.path.exists(IP_LOG_DIR):
     os.makedirs(IP_LOG_DIR)
-
-# Initialize Redis client
-redis_client = get_redis_client()
 
 class IPActivityTracker:
     def __init__(self):
@@ -102,19 +97,24 @@ class IPActivityTracker:
         return info
     
     def is_rate_limited(self, ip):
-        """Check if IP is rate limited using Redis"""
-        key = f"rate_limit:{ip}"
-        current = redis_client.get(key)
+        """Check if IP is rate limited using in-memory dictionary"""
+        if not hasattr(self, '_rate_limit_cache'):
+            self._rate_limit_cache = {}
         
-        if current is None:
-            redis_client.setex(key, 60, 1)  # 1 minute window
-            return False
+        now = int(time.time())
+        window = now // 60  # current minute window
+        key = (ip, window)
         
-        current = int(current)
-        if current >= MAX_REQUESTS_PER_MINUTE:
+        # Clean up old entries
+        keys_to_delete = [k for k in self._rate_limit_cache if k[1] < window]
+        for k in keys_to_delete:
+            del self._rate_limit_cache[k]
+        
+        count = self._rate_limit_cache.get(key, 0) + 1
+        self._rate_limit_cache[key] = count
+        
+        if count > MAX_REQUESTS_PER_MINUTE:
             return True
-        
-        redis_client.incr(key)
         return False
     
     def log_ip_activity(self, activity_type, additional_info=None):
