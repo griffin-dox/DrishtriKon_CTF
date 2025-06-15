@@ -122,8 +122,8 @@ migrate = Migrate(app, db)
 
 # Import security middleware
 from security.security import add_security_headers, security_checks
-from honeypot import check_honeypot_path, check_honeypot_fields, create_honeypot_routes
-from ids import analyze_request
+from security.honeypot import check_honeypot_path, check_honeypot_fields, create_honeypot_routes
+from security.ids import analyze_request
 from core.ip_logging import log_ip_activity, get_client_ip
 from security.session_security import init_session_security
 from security.security_headers import init_security, sanitize_timestamp

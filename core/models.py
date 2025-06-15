@@ -1,6 +1,6 @@
 import enum
 from datetime import datetime
-from app import db
+from core.app import db
 from flask_login import UserMixin
 from sqlalchemy import case, func, cast
 from sqlalchemy.ext.hybrid import hybrid_property

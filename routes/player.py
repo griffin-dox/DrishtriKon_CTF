@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, send_from_directory, abort
 import os
 from flask_login import login_required, current_user
-from app import db
+from core.app import db
 from core.models import User, Competition, Submission, Badge, UserBadge, UserCompetition, Challenge
 from forms import ProfileForm
 from sqlalchemy import desc

@@ -1,4 +1,4 @@
-from app import app  # Import the already configured app instance
+from core.app import app  # Import the already configured app instance
 import logging
 import os
 

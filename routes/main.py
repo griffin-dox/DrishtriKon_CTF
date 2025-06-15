@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request
 from core.models import Competition, Challenge, User, CompetitionStatus, UserRole
 from sqlalchemy import func, desc
 from datetime import datetime
-from app import db
+from core.app import db
 from core.cache_utils import cached_query, invalidate_cache
 
 main_bp = Blueprint('main', __name__)

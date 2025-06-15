@@ -7,7 +7,7 @@ import pyotp
 import random
 import string
 import time
-from app import db, mail
+from core.app import db, mail
 from core.models import Competition, CompetitionStatus, Challenge, CompetitionChallenge
 from werkzeug.utils import secure_filename
 from flask import current_app, render_template

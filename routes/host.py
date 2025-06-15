@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, render_template
 from flask_login import login_required, current_user
 from functools import wraps
-from app import db
+from core.app import db
 import os
 from datetime import datetime
 from core.models import Competition, Challenge, CompetitionChallenge, User, UserCompetition, CompetitionHost, Submission, CompetitionStatus, ChallengeVisibilityScope

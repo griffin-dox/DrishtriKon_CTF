@@ -356,6 +356,6 @@ def create_honeypot_routes(app):
         
         app.add_url_rule(
             path,
-            f"honeypot_{hashlib.md5(p.encode()).hexdigest()}",
+            f"honeypot_{hashlib.md5(path.encode()).hexdigest()}",
             create_route_handler(path)
         )
