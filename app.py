@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from dotenv import load_dotenv
 import uuid
 
-from flask import Flask, render_template, request, g, session, redirect, url_for
+from flask import Flask, render_template, request, g, session, redirect, url_for, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, current_user
 from flask_wtf.csrf import CSRFProtect
@@ -287,6 +287,14 @@ def csp_violation_report():
         app.logger.warning(f'CSP Violation: Failed to parse report. Error: {e}')
     return '', 204  # No Content
 csrf.exempt(csp_violation_report)
+
+@app.route('/maintenance')
+def maintenance():
+    return render_template('maintenance.html'), 503
+
+@app.route('/healthz')
+def healthz():
+    return jsonify({"status": "ok"}), 200
 
 # Register routes & update competition status
 with app.app_context():
