@@ -11,6 +11,8 @@ _static_file_version_cache = {}
 _last_static_file_check = 0
 _STATIC_CHECK_INTERVAL = 3600  # Check static files once per hour
 
+logger = logging.getLogger(__name__)
+
 def get_static_url(filename):
     """
     Generate a URL for a static file with cache-busting version parameter.
@@ -23,7 +25,7 @@ def get_static_url(filename):
     """
     version = get_file_version(filename)
     url = url_for('static', filename=filename, v=version)
-    logging.debug(f"static_url: {filename} -> {url}")
+    logger.debug(f"static_url: {filename} -> {url}")
     return url
 
 def get_file_version(filename):
@@ -67,9 +69,9 @@ def get_file_version(filename):
             _static_file_version_cache[filename] = version
             return version
         except Exception as e:
-            logging.error(f"Error generating version for {filename}: {str(e)}")
+            logger.error(f"Error generating version for {filename}: {str(e)}")
     else:
-        logging.error(f"static_url: File not found: {full_path}")
+        logger.error(f"static_url: File not found: {full_path}")
     
     # Default version if file not found or error occurred
     return 'dev'

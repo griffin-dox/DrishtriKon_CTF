@@ -7,6 +7,10 @@ from datetime import datetime, timedelta
 from flask import request, abort, session, jsonify, g, Response, render_template
 from werkzeug.http import dump_cookie
 
+
+import logging
+logger = logging.getLogger(__name__)
+
 # Rate limiting counters - in a production environment, use Redis or similar
 # Dictionary to store IP: [request_count, first_request_time]
 LOGIN_ATTEMPT_TRACKER = {}
@@ -65,22 +69,6 @@ def rate_limited(tracker, max_requests, window):
 login_rate_limited = rate_limited(LOGIN_ATTEMPT_TRACKER, MAX_LOGIN_ATTEMPTS, LOGIN_ATTEMPT_WINDOW)
 api_rate_limited = rate_limited(API_REQUEST_TRACKER, API_MAX_REQUESTS, API_WINDOW)
 
-# Security headers
-SECURITY_HEADERS = {
-    'X-Content-Type-Options': 'nosniff',
-    'X-Frame-Options': 'SAMEORIGIN',
-    'X-XSS-Protection': '1; mode=block',
-    'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://cdn.replit.com; img-src 'self' data: https:; font-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.gstatic.com; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self';",
-    'Referrer-Policy': 'strict-origin-when-cross-origin',
-    'Permissions-Policy': 'camera=(), microphone=(), geolocation=()'
-}
-
-def add_security_headers(response):
-    """Add security headers to every response"""
-    for header, value in SECURITY_HEADERS.items():
-        response.headers[header] = value
-    return response
-
 def sanitize_html(html_content):
     """Sanitize HTML content to prevent XSS"""
     if not html_content:
@@ -120,7 +108,7 @@ def require_tls():
         
     # In production, require HTTPS
     if not request.is_secure and request.headers.get('X-Forwarded-Proto') != 'https':
-        logging.warning(f"Insecure connection attempt to {request.path} from {request.remote_addr}")
+        logger.warning(f"Insecure connection attempt to {request.path} from {request.remote_addr}")
         return False
     
     return True
@@ -148,7 +136,7 @@ def check_referrer():
         # If sensitive route, fail for missing referrer
         sensitive_routes = ['/login', '/register', '/admin']
         if any(request.path.startswith(route) for route in sensitive_routes):
-            logging.warning(f"Missing referrer for sensitive route: {request.path} from {request.remote_addr}")
+            logger.warning(f"Missing referrer for sensitive route: {request.path} from {request.remote_addr}")
             return False
         return True  # Allow for non-sensitive routes
         
@@ -160,7 +148,7 @@ def check_referrer():
         if referrer.startswith(f"https://{host}/") or referrer.startswith(f"http://{host}/"):
             return True
             
-    logging.warning(f"Invalid referrer: {referrer} for {request.path} from {request.remote_addr}")
+    logger.warning(f"Invalid referrer: {referrer} for {request.path} from {request.remote_addr}")
     return False
 
 def security_checks():
@@ -225,12 +213,11 @@ def track_login_attempt(user_id=None, ip_address=None, successful=False):
 
 def invalidate_session():
     """Invalidate user session securely"""
+    from flask_login import logout_user
+    # Log out the user (removes user_id from session)
+    logout_user()
     # Clear session
     session.clear()
-    
-    # Generate a new session id to prevent session fixation
-    session.regenerate_id()
-    
     # Set a secure, expired cookie to force client removal
     expired_cookie = dump_cookie(
         key='session',
@@ -242,7 +229,6 @@ def invalidate_session():
         httponly=True,
         samesite='Lax'
     )
-    
     response = Response()
     response.headers.add('Set-Cookie', expired_cookie)
     return response

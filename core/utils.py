@@ -14,6 +14,8 @@ from flask import current_app, render_template
 from flask_mail import Message
 from core.email_service import send_otp 
 
+logger = logging.getLogger(__name__)
+
 # Cache variables
 _last_status_update = 0
 _STATUS_UPDATE_INTERVAL = 60  # Only update competition status every 60 seconds
@@ -34,7 +36,7 @@ def update_competition_statuses(force=False):
     if not force and current_time - _last_status_update < _STATUS_UPDATE_INTERVAL:
         return
     
-    logging.info("Updating competition statuses")
+    logger.info("Updating competition statuses")
     _last_status_update = current_time
     
     try:
@@ -60,10 +62,10 @@ def update_competition_statuses(force=False):
                 
         # Only log if we have competitions to update
         if upcoming_to_active:
-            logging.info(f"Updated {len(upcoming_to_active)} competitions to active status")
+            logger.info(f"Updated {len(upcoming_to_active)} competitions to active status")
             
         if active_to_ended:
-            logging.info(f"Updated {len(active_to_ended)} competitions to ended status")
+            logger.info(f"Updated {len(active_to_ended)} competitions to ended status")
         
         # Commit changes if any were made
         if upcoming_to_active or active_to_ended:
@@ -75,7 +77,7 @@ def update_competition_statuses(force=False):
         
     except Exception as e:
         db.session.rollback()
-        logging.error("Error updating competition statuses")
+        logger.error("Error updating competition statuses")
 
 def make_challenges_public(competition_id):
     """
@@ -87,7 +89,7 @@ def make_challenges_public(competition_id):
         challenge_ids = [cc_id[0] for cc_id in cc_ids]
         
         if challenge_ids:
-            logging.info(f"Making challenges public for competition {competition_id}")
+            logger.info(f"Making challenges public for competition {competition_id}")
             
             # Update all these challenges to be public
             Challenge.query.filter(Challenge.id.in_(challenge_ids)).update(
@@ -99,7 +101,7 @@ def make_challenges_public(competition_id):
             
     except Exception as e:
         db.session.rollback()
-        logging.error("Error making challenges public")
+        logger.error("Error making challenges public")
 
 def format_datetime(value, format='%Y-%m-%d %H:%M:%S'):
     """Format a datetime object."""
@@ -166,21 +168,21 @@ def set_user_otp(user):
 def send_otp_email(user, otp_code):
     """Send OTP code to user's email using the email_service.py"""
     
-    logging.info(f"Preparing to send OTP email to {user.email} for user {user.username}")
+    logger.info(f"Preparing to send OTP email to {user.email} for user {user.username}")
     
     try:
         # Call the email service to send the OTP
         result = send_otp(user.email, user.username, otp_code)
 
         if result["success"]:
-            logging.info(f"Successfully sent OTP email to {user.email}")
+            logger.info(f"Successfully sent OTP email to {user.email}")
             return True
         else:
-            logging.error(f"Failed to send OTP email to {user.email}. Error: {result['error']}")
+            logger.error(f"Failed to send OTP email to {user.email}. Error: {result['error']}")
             return False
 
     except Exception as e:
-        logging.error(f"Error in send_otp_email: {str(e)}")
+        logger.error(f"Error in send_otp_email: {str(e)}")
         return False
 
 def delete_expired_unverified_users():
@@ -199,11 +201,11 @@ def delete_expired_unverified_users():
         ).all()
         count = len(expired_users)
         for user in expired_users:
-            logging.info(f"Deleting unverified user: {user.username} ({user.email})")
+            logger.info(f"Deleting unverified user: {user.username} ({user.email})")
             db.session.delete(user)
         if count > 0:
             db.session.commit()
-            logging.info(f"Deleted {count} unverified users.")
+            logger.info(f"Deleted {count} unverified users.")
     except Exception as e:
         db.session.rollback()
-        logging.error(f"Error deleting unverified users: {str(e)}")
+        logger.error(f"Error deleting unverified users: {str(e)}")

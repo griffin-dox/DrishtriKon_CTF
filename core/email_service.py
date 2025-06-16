@@ -14,9 +14,11 @@ MAIL_DEFAULT_SENDER = os.getenv("MAIL_DEFAULT_SENDER")
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
 
+logger = logging.getLogger(__name__)
+
 def send_otp(recipient_email, username, otp_code):
     try:
-        logging.info(f"Attempting to send OTP email to {recipient_email}")
+        logger.info(f"Attempting to send OTP email to {recipient_email}")
 
         # Create the HTML content for the email
         html_content = f"""
@@ -114,10 +116,10 @@ def send_otp(recipient_email, username, otp_code):
             # Send the email
             server.sendmail(MAIL_DEFAULT_SENDER, recipient_email, msg.as_string())
 
-        logging.info(f"OTP email sent successfully to {recipient_email}")
+        logger.info(f"OTP email sent successfully to {recipient_email}")
 
         return {"success": True, "message": "OTP email sent successfully"}
 
     except Exception as e:
-        logging.error(f"Error sending OTP email to {recipient_email}: {str(e)}")
+        logger.error(f"Error sending OTP email to {recipient_email}: {str(e)}")
         return {"success": False, "error": str(e)}

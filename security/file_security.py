@@ -5,6 +5,8 @@ import hashlib
 import re
 from werkzeug.utils import secure_filename
 
+logger = logging.getLogger(__name__)
+
 class SecureFileHandler:
     """Class to securely handle file uploads with enhanced security checks"""
     
@@ -25,11 +27,11 @@ class SecureFileHandler:
         Initialize the SecureFileHandler with an upload folder.
         """
         if upload_folder is None:
-            logging.error("No upload folder provided.")
+            logger.error("No upload folder provided.")
             raise ValueError("No upload folder provided.")
         
         # Log the final path to ensure it's correct
-        logging.info(f"Upload folder set to: {upload_folder}")
+        logger.info(f"Upload folder set to: {upload_folder}")
         self.upload_folder = upload_folder
     
     def _check_file_size(self, file_storage):
@@ -54,7 +56,7 @@ class SecureFileHandler:
                 return False, f"File extension does not match content type {detected_mime}"
             return True, "File type verified successfully"
         except Exception as e:
-            logging.error(f"Error verifying MIME type: {str(e)}")
+            logger.error(f"Error verifying MIME type: {str(e)}")
             return False, "Error verifying file type"
     
     def _generate_secure_filename(self, original_filename):
@@ -127,7 +129,7 @@ class SecureFileHandler:
                     
             return True, "Text content scan passed"
         except Exception as e:
-            logging.error(f"Error scanning text content: {str(e)}")
+            logger.error(f"Error scanning text content: {str(e)}")
             return True, "Error while scanning text content, proceeding with caution"
     
     def _check_for_polyglot_content(self, file_path, detected_mime):
@@ -159,7 +161,7 @@ class SecureFileHandler:
             return True, "File passed polyglot detection check"
             
         except Exception as e:
-            logging.error(f"Error in polyglot check: {str(e)}")
+            logger.error(f"Error in polyglot check: {str(e)}")
             return False, "Error during polyglot file check, rejecting file for safety"
     
     def save_file_securely(self, file_storage):
@@ -182,7 +184,7 @@ class SecureFileHandler:
             
             # 3. Save to temporary location
             temp_path = os.path.join(self.upload_folder, "temp_" + secure_name)
-            logging.info(f"Saving file to temp path: {temp_path}")
+            logger.info(f"Saving file to temp path: {temp_path}")
             file_storage.save(temp_path)
             
             # 4. Verify MIME type matches the extension
@@ -213,23 +215,23 @@ class SecureFileHandler:
                 # Make file read-only to prevent modification after upload
                 os.chmod(temp_path, 0o440)  # read-only for owner and group
             except Exception as e:
-                logging.warning(f"Could not set permissions on file: {str(e)}")
+                logger.warning(f"Could not set permissions on file: {str(e)}")
             
             # 9. Move to final location
             final_path = os.path.join(self.upload_folder, secure_name)
-            logging.info(f"Moving file to final path: {final_path}")
+            logger.info(f"Moving file to final path: {final_path}")
             os.rename(temp_path, final_path)
             
             # 10. Log successful upload
-            logging.info(f"Successfully saved file {original_filename} as {secure_name} with MIME type {detected_mime}")
+            logger.info(f"Successfully saved file {original_filename} as {secure_name} with MIME type {detected_mime}")
             return True, "File saved successfully", secure_name
             
         except Exception as e:
-            logging.error(f"Error saving file securely: {str(e)}")
+            logger.error(f"Error saving file securely: {str(e)}")
             try:
                 if temp_path and os.path.exists(temp_path):
                     os.remove(temp_path)
             except Exception as cleanup_error:
-                logging.error(f"Error during cleanup: {str(cleanup_error)}")
+                logger.error(f"Error during cleanup: {str(cleanup_error)}")
                 
             return False, f"Error processing file: {str(e)}", None

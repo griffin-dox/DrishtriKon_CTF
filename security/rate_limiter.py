@@ -1,59 +1,37 @@
 import logging
-from threading import Lock
 from functools import wraps
-from flask import request, jsonify, current_app
-import time
+from flask import request, jsonify
+from datetime import datetime, timedelta
+from core.models import RateLimit, db
 
-# Configure logging
 rate_logger = logging.getLogger('rate_limiter')
 rate_logger.setLevel(logging.INFO)
 
-class InMemoryRateLimiter:
-    def __init__(self):
-        self.data = {}
-        self.lock = Lock()
+def is_rate_limited(key_type, identifier, max_requests, window):
+    """Check if request should be rate limited using the database"""
+    now = datetime.utcnow()
+    rl = RateLimit.query.filter_by(ip=identifier, endpoint=key_type).first()
+    if rl:
+        if now - rl.window_start > timedelta(seconds=window):
+            rl.count = 1
+            rl.window_start = now
+        else:
+            rl.count += 1
+        db.session.commit()
+        return rl.count > max_requests
+    else:
+        new_rl = RateLimit(ip=identifier, endpoint=key_type, count=1, window_start=now)
+        db.session.add(new_rl)
+        db.session.commit()
+        return False
 
-    def _get_key(self, key_type, identifier):
-        """Generate key for rate limiting"""
-        return f"rate_limit:{key_type}:{identifier}"
-
-    def is_rate_limited(self, key_type, identifier, max_requests, window):
-        """Check if request should be rate limited"""
-        key = self._get_key(key_type, identifier)
-        now = int(time.time())
-        with self.lock:
-            record = self.data.get(key)
-            if not record or now >= record['reset']:
-                # New window
-                self.data[key] = {'count': 1, 'reset': now + window}
-                return False
-            if record['count'] >= max_requests:
-                return True
-            self.data[key]['count'] += 1
-            return False
-
-    def get_remaining_requests(self, key_type, identifier, max_requests):
-        """Get remaining requests in current window"""
-        key = self._get_key(key_type, identifier)
-        now = int(time.time())
-        with self.lock:
-            record = self.data.get(key)
-            if not record or now >= record['reset']:
-                return max_requests
-            return max(0, max_requests - record['count'])
-
-    def get_reset_time(self, key_type, identifier):
-        """Get time until rate limit resets"""
-        key = self._get_key(key_type, identifier)
-        now = int(time.time())
-        with self.lock:
-            record = self.data.get(key)
-            if not record or now >= record['reset']:
-                return 0
-            return max(0, record['reset'] - now)
-
-# Initialize rate limiter
-rate_limiter = InMemoryRateLimiter()
+def get_reset_time(key_type, identifier, window):
+    rl = RateLimit.query.filter_by(ip=identifier, endpoint=key_type).first()
+    if rl:
+        now = datetime.utcnow()
+        elapsed = (now - rl.window_start).total_seconds()
+        return max(0, window - elapsed)
+    return 0
 
 def rate_limit(key_type, max_requests, window, identifier_func=None):
     """
@@ -75,9 +53,9 @@ def rate_limit(key_type, max_requests, window, identifier_func=None):
                 identifier = request.remote_addr
 
             # Check rate limit
-            if rate_limiter.is_rate_limited(key_type, identifier, max_requests, window):
+            if is_rate_limited(key_type, identifier, max_requests, window):
                 # Get remaining time
-                reset_time = rate_limiter.get_reset_time(key_type, identifier)
+                reset_time = get_reset_time(key_type, identifier, window)
 
                 # Log rate limit hit
                 rate_logger.warning(

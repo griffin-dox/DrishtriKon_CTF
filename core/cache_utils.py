@@ -6,6 +6,8 @@ from datetime import datetime, timedelta
 # Dictionary to store cached results
 _query_cache = {}
 
+logger = logging.getLogger(__name__)
+
 def cached_query(ttl=60):
     """
     Decorator to cache function results, particularly useful for expensive database queries.
@@ -62,7 +64,7 @@ def clean_expired_cache(ttl):
         del _query_cache[key]
     
     if expired_keys:
-        logging.debug(f"Cleaned {len(expired_keys)} expired cache entries")
+        logger.debug(f"Cleaned {len(expired_keys)} expired cache entries")
 
 def invalidate_cache(key_prefix=None):
     """
@@ -78,8 +80,8 @@ def invalidate_cache(key_prefix=None):
         keys_to_remove = [k for k in _query_cache if k.startswith(key_prefix)]
         for key in keys_to_remove:
             del _query_cache[key]
-        logging.debug(f"Invalidated {len(keys_to_remove)} cache entries with prefix '{key_prefix}'")
+        logger.debug(f"Invalidated {len(keys_to_remove)} cache entries with prefix '{key_prefix}'")
     else:
         count = len(_query_cache)
         _query_cache = {}
-        logging.debug(f"Invalidated all {count} cache entries")
+        logger.debug(f"Invalidated all {count} cache entries")

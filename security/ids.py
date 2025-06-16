@@ -7,6 +7,9 @@ from datetime import datetime, timedelta
 from collections import defaultdict, Counter
 from flask import request, session, g
 from core.ip_logging import get_client_ip, flag_suspicious_ip, log_ip_activity
+from core.models import IDSAlert, db
+# Add import for IDSState
+from core.models import IDSState
 
 # Initialize logging
 ids_logger = logging.getLogger('ids')
@@ -22,23 +25,14 @@ IDS_STATE_FILE = os.path.join(IDS_DIR, "ids_state.json")
 if not os.path.exists(IDS_DIR):
     os.makedirs(IDS_DIR)
 
-# IDS State
-IDS_STATE = {
-    'last_analysis': datetime.now().isoformat(),
-    'attack_counters': {},
-    'ip_request_stats': {},
-    'known_user_agents': {},
-    'endpoint_access_patterns': {},
-    'anomaly_scores': {}
-}
-
-# Load IDS state if it exists
-if os.path.exists(IDS_STATE_FILE):
-    try:
-        with open(IDS_STATE_FILE, 'r') as f:
-            IDS_STATE = json.load(f)
-    except json.JSONDecodeError:
-        pass
+def get_ids_state():
+    """Fetch or create the singleton IDSState row from the database."""
+    state = IDSState.query.first()
+    if not state:
+        state = IDSState()
+        db.session.add(state)
+        db.session.commit()
+    return state
 
 # Rules for pattern-based detection
 # Basic rule format: {'id': '', 'pattern': '', 'location': '', 'severity': 0, 'description': ''}
@@ -112,23 +106,11 @@ COMMON_BROWSER_PATTERNS = [
     r'Opera/\d+'
 ]
 
-# Track request stats for behavioral analysis
-REQUEST_STATS = defaultdict(list)
-FAILED_LOGINS = defaultdict(int)
-
-def save_ids_state():
-    """Save the IDS state to file"""
-    with open(IDS_STATE_FILE, 'w') as f:
-        json.dump(IDS_STATE, f, indent=2)
-
 def log_ids_alert(rule_id, details):
-    """Log an IDS alert"""
+    """Log an IDS alert using the database"""
     ip = get_client_ip()
     timestamp = datetime.now().isoformat()
-    
-    # Get rule details
     rule = next((r for r in IDS_RULES if r['id'] == rule_id), {'severity': 1, 'description': 'Unknown rule'})
-    
     alert = {
         'timestamp': timestamp,
         'ip': ip,
@@ -142,31 +124,32 @@ def log_ids_alert(rule_id, details):
         'user_agent': request.headers.get('User-Agent', ''),
         'details': details
     }
-    
-    # Log to file
-    with open(IDS_ALERTS_FILE, 'a') as f:
-        f.write(json.dumps(alert) + '\n')
-    
+    # Save to DB
+    db_alert = IDSAlert(
+        ip=ip,
+        endpoint=request.path,
+        alert_type=rule_id,
+        details=json.dumps(details),
+        detected_at=datetime.utcnow()
+    )
+    db.session.add(db_alert)
+    db.session.commit()
     # Log to standard logger
     ids_logger.warning(f"IDS ALERT: Rule={rule_id}, Severity={rule['severity']}, IP={ip}, Path={request.path}")
-    
     # Flag IP as suspicious based on severity
     flag_suspicious_ip(ip, f"IDS Alert: {rule['description']}", rule['severity'])
-    
-    # Update attack counters in IDS state
-    if not rule_id in IDS_STATE['attack_counters']:
-        IDS_STATE['attack_counters'][rule_id] = 0
-    IDS_STATE['attack_counters'][rule_id] += 1
-    
+    # Update attack counters in IDS state (DB)
+    state = get_ids_state()
+    counters = state.attack_counters or {}
+    counters[rule_id] = counters.get(rule_id, 0) + 1
+    state.attack_counters = counters
+    db.session.commit()
     # Log using IP logging
     log_ip_activity('ids_alert', additional_info={
         'rule_id': rule_id,
         'severity': rule['severity'],
         'description': rule['description']
     })
-    
-    # Save updated state
-    save_ids_state()
     
     return alert
 
@@ -190,14 +173,15 @@ def analyze_request():
             clean_params[key] = value
     
     # Add request to stats
-    REQUEST_STATS[ip].append({
-        'timestamp': time.time(),
-        'path': path,
-        'method': request.method
-    })
-    
+    state = get_ids_state()
+    request_stats = state.ip_request_stats or {}
+    ip_stats = request_stats.get(ip, [])
+    ip_stats.append({'timestamp': time.time(), 'path': path, 'method': request.method})
     # Clean old requests (older than 5 minutes)
-    REQUEST_STATS[ip] = [r for r in REQUEST_STATS[ip] if r['timestamp'] > time.time() - 300]
+    ip_stats = [r for r in ip_stats if r['timestamp'] > time.time() - 300]
+    request_stats[ip] = ip_stats
+    state.ip_request_stats = request_stats
+    db.session.commit()
     
     # Check each rule
     for rule in IDS_RULES:
@@ -233,28 +217,26 @@ def track_failed_login(username, ip=None):
     """Track failed login attempt"""
     if ip is None:
         ip = get_client_ip()
-    
-    # Increment counter
-    FAILED_LOGINS[ip] += 1
-    
-    # Check threshold (5 failed attempts in 15 minutes)
-    if FAILED_LOGINS[ip] >= 5:
+    state = get_ids_state()
+    failed_logins = state.failed_logins or {}
+    failed_logins[ip] = failed_logins.get(ip, 0) + 1
+    state.failed_logins = failed_logins
+    db.session.commit()
+    if failed_logins[ip] >= 5:
         log_ids_alert('LOGIN_SPAM_1', {
             'username': username,
-            'failed_count': FAILED_LOGINS[ip]
+            'failed_count': failed_logins[ip]
         })
-        
-        # Reset counter
-        FAILED_LOGINS[ip] = 0
-        
+        failed_logins[ip] = 0
+        state.failed_logins = failed_logins
+        db.session.commit()
         return True
-    
     return False
 
 def run_behavioral_analysis(ip):
     """Run behavioral analysis on the client IP"""
-    # Check request rate
-    requests = REQUEST_STATS[ip]
+    state = get_ids_state()
+    requests = (state.ip_request_stats or {}).get(ip, [])
     
     # Skip if not enough data
     if len(requests) < 10:
@@ -290,9 +272,10 @@ def run_behavioral_analysis(ip):
     # Update anomaly score
     anomaly_score = calculate_anomaly_score(ip, request_rate, unique_endpoints)
     
-    # Save anomaly score in state
-    IDS_STATE['anomaly_scores'][ip] = anomaly_score
-    save_ids_state()
+    anomaly_scores = state.anomaly_scores or {}
+    anomaly_scores[ip] = anomaly_score
+    state.anomaly_scores = anomaly_scores
+    db.session.commit()
     
     return anomaly_score
 
@@ -317,7 +300,8 @@ def calculate_anomaly_score(ip, request_rate, unique_endpoints):
         score += 10
     
     # Previous anomaly score factor (persistence)
-    previous_score = IDS_STATE['anomaly_scores'].get(ip, 0)
+    state = get_ids_state()
+    previous_score = (state.anomaly_scores or {}).get(ip, 0)
     score += previous_score * 0.5  # Decay previous score by half
     
     # Cap score at 100

@@ -99,8 +99,17 @@ def rotate_session():
         session_logger.info(f"Session rotated from {old_id} to {session['_id']}")
 
 def enforce_session_limit(user_id):
-    """Enforce maximum sessions per user"""
-    # This would typically interact with a database to track active sessions
-    # For now, we'll just log the check
+    """Enforce maximum sessions per user using the UserSession model"""
+    from core.models import UserSession, db
     session_logger.info(f"Checking session limit for user {user_id}")
-    return True  # Placeholder for actual implementation 
+    # Query all active sessions for this user
+    active_sessions = UserSession.query.filter_by(user_id=user_id).order_by(UserSession.created_at.asc()).all()
+    if len(active_sessions) >= MAX_SESSIONS_PER_USER:
+        # Remove oldest sessions to enforce limit
+        sessions_to_remove = active_sessions[:len(active_sessions) - MAX_SESSIONS_PER_USER + 1]
+        for s in sessions_to_remove:
+            session_logger.info(f"Removing old session {s.session_id} for user {user_id}")
+            db.session.delete(s)
+        db.session.commit()
+        return False  # Limit was exceeded, sessions removed
+    return True  # Under the limit

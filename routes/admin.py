@@ -16,6 +16,9 @@ from core.models import Submission
 import os
 import logging
 
+# Define a module logger
+logger = logging.getLogger(__name__)
+
 # Use a set for efficient lookup
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'zip'}  # Added zip
 
@@ -318,9 +321,9 @@ def edit_challenge(challenge_id):
                     if old_file_path and old_file_path != file_path and os.path.exists(old_file_path):
                         try:
                             os.remove(old_file_path)
-                            logging.info(f"Removed old challenge file: {old_file_path}")
+                            logger.info(f"Removed old challenge file: {old_file_path}")
                         except Exception as e:
-                            logging.error(f"Error removing old file {old_file_path}: {str(e)}")
+                            logger.error(f"Error removing old file {old_file_path}: {str(e)}")
             else:
                 flash('Invalid file type selected.', 'danger')
                 return redirect(url_for('admin.edit_challenge', challenge_id=challenge_id))

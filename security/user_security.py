@@ -3,6 +3,8 @@ import logging
 from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 
+logger = logging.getLogger(__name__)
+
 # Password complexity requirements
 PASSWORD_MIN_LENGTH = 8
 PASSWORD_COMPLEXITY_REGEX = r"^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9!@#$%^&*(),.?\":{}|<>]).*$"
@@ -110,6 +112,7 @@ class PasswordBreachDetector:
         In a real application, this would use an API like HaveIBeenPwned
         or a local database of breached passwords.
         """
+        # TODO: Integrate with HaveIBeenPwned or similar API for real password breach checks.
         # Example implementation - replace with real breach checking logic
         return password.lower() in COMMON_PASSWORDS
     
@@ -122,6 +125,7 @@ class PasswordBreachDetector:
         2 = Medium severity (found in several breaches)
         3 = High severity (found in major breaches)
         """
+        # TODO: Integrate with HaveIBeenPwned or similar API for real password breach checks.
         # Example implementation - replace with real breach checking logic
         if password.lower() in COMMON_PASSWORDS:
             return 3

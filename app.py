@@ -1,8 +1,10 @@
+# ...existing imports...
 import os
 import logging
 from logging.handlers import RotatingFileHandler
 from datetime import datetime, timezone
 from dotenv import load_dotenv
+import uuid
 
 from flask import Flask, render_template, request, g, session, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
@@ -26,26 +28,41 @@ if not os.path.exists("logs"):
 for handler in logging.root.handlers[:]:
     logging.root.removeHandler(handler)
 
+# Enhance logging: add request ID and user context to all logs
+class RequestFormatter(logging.Formatter):
+    def format(self, record):
+        from flask import g, has_request_context
+        if has_request_context():
+            record.request_id = getattr(g, 'request_id', '-')
+            record.user_id = getattr(g, 'user_id', '-')
+            record.username = getattr(g, 'username', '-')
+        else:
+            record.request_id = '-'
+            record.user_id = '-'
+            record.username = '-'
+        return super().format(record)
+
 # Console handler
 console_handler = logging.StreamHandler()
 console_handler.setLevel(LOG_LEVEL)
-console_handler.setFormatter(logging.Formatter(
-    "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+console_handler.setFormatter(RequestFormatter(
+    "[%(asctime)s] %(levelname)s [%(request_id)s] [user:%(user_id)s|%(username)s] %(name)s: %(message)s"
 ))
 
 # Rotating file handler
 file_handler = RotatingFileHandler(
-    "logs/app.log", maxBytes=2 * 1024 * 1024, backupCount=5, encoding="utf-8"
+    "logs/app.log", maxBytes=10 * 1024 * 1024, backupCount=10, encoding="utf-8"
 )
 file_handler.setLevel(LOG_LEVEL)
-file_handler.setFormatter(logging.Formatter(
-    "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+file_handler.setFormatter(RequestFormatter(
+    "[%(asctime)s] %(levelname)s [%(request_id)s] [user:%(user_id)s|%(username)s] %(name)s: %(message)s"
 ))
 
 logging.basicConfig(
     level=LOG_LEVEL,
     handlers=[console_handler, file_handler]
 )
+logger = logging.getLogger(__name__)
 # --- End Improved Logging Setup ---
 
 # Init extensions
@@ -74,10 +91,10 @@ app.secret_key = os.getenv("SESSION_SECRET")
 if not app.secret_key:
     if app.debug:
         import secrets
-        logging.warning("No SESSION_SECRET environment variable set. Using randomly generated key for development.")
+        logger.warning("No SESSION_SECRET environment variable set. Using randomly generated key for development.")
         app.secret_key = secrets.token_hex(32)
     else:
-        logging.critical("No SESSION_SECRET environment variable set in production mode.")
+        logger.critical("No SESSION_SECRET environment variable set in production mode.")
         raise ValueError("SESSION_SECRET must be set in production mode")
 
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
@@ -87,10 +104,10 @@ if not app.config['SECRET_KEY']:
         app.config['SECRET_KEY'] = app.secret_key
     elif app.debug:
         import secrets
-        logging.warning("No SECRET_KEY environment variable set. Using randomly generated key for development.")
+        logger.warning("No SECRET_KEY environment variable set. Using randomly generated key for development.")
         app.config['SECRET_KEY'] = secrets.token_hex(32)
     else:
-        logging.critical("No SECRET_KEY environment variable set in production mode.")
+        logger.critical("No SECRET_KEY environment variable set in production mode.")
         raise ValueError("SECRET_KEY must be set in production mode")
 
 #Upload folder
@@ -100,11 +117,8 @@ upload_folder = os.path.join(current_dir, "uploads")
 # Check if the folder exists, if not, create it
 if not os.path.exists(upload_folder):
     os.makedirs(upload_folder, exist_ok=True)
-else:
-    pass
 
 # Security configurations
-# Set secure cookies based on environment
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['PERMANENT_SESSION_LIFETIME'] = 1800  # 30 minutes
@@ -142,8 +156,8 @@ csrf.init_app(app)
 migrate = Migrate(app, db)
 
 # Import security middleware
-from security.security import add_security_headers, security_checks
-from security.honeypot import check_honeypot_path, check_honeypot_fields, create_honeypot_routes
+from security.security import security_checks
+from security.honeypot import create_honeypot_routes, check_honeypot_path, check_honeypot_fields
 from security.ids import analyze_request
 from core.ip_logging import log_ip_activity, get_client_ip
 from security.session_security import init_session_security
@@ -159,12 +173,7 @@ init_security(app)
 try:
     create_honeypot_routes(app)
 except Exception as e:
-    logging.error("Failed to create honeypot routes: %s", str(e))
-
-# Apply security headers to all responses
-@app.after_request
-def apply_security_headers(response):
-    return add_security_headers(response)
+    logger.error("Failed to create honeypot routes: %s", str(e))
 
 # Create log directories
 def setup_logging_directories():
@@ -176,9 +185,9 @@ def setup_logging_directories():
 # Run setup
 setup_logging_directories()
 
-# Combine security and session update logic in a single before_request
+# Combine security, session update, and year context logic in a single before_request
 @app.before_request
-def combined_before_request():
+def before_request_all():
     # Always update session timestamp and user info
     session.permanent = True
     session['last_active'] = sanitize_timestamp(datetime.now(timezone.utc).timestamp())
@@ -188,9 +197,11 @@ def combined_before_request():
     else:
         g.user_id = None
         g.username = 'anonymous'
+    # Pass the current year to all templates
+    g.year = datetime.now().year
 
     # Log for debugging session/CSRF issues
-    logging.debug(f"[BeforeRequest] Path: {request.path}, Method: {request.method}, Session Keys: {list(session.keys())}")
+    logger.debug(f"[BeforeRequest] Path: {request.path}, Method: {request.method}, Session Keys: {list(session.keys())}")
 
     # Skip custom security checks for static files and authentication routes
     if request.path.startswith('/static/') or request.path in ['/login', '/register', '/verify-otp', '/logout']:
@@ -201,23 +212,28 @@ def combined_before_request():
 
     # Check if path is a honeypot
     if check_honeypot_path():
-        logging.warning(f"Honeypot triggered for path {request.path} from {get_client_ip()}")
+        logger.warning(f"Honeypot triggered for path {request.path} from {get_client_ip()}")
         return render_template('honeypot/fake_login.html'), 200
 
     # Check form for honeypot fields
     if request.method == 'POST' and check_honeypot_fields(request.form):
-        logging.warning(f"Honeypot form field triggered from {get_client_ip()}")
+        logger.warning(f"Honeypot form field triggered from {get_client_ip()}")
         return redirect(url_for('main.index')), 302
 
     # Run IDS analysis
     alerts = analyze_request()
     if alerts and len(alerts) > 0:
-        logging.warning(f"IDS alerts triggered: {len(alerts)} for {request.path} from {get_client_ip()}")
+        logger.warning(f"IDS alerts triggered: {len(alerts)} for {request.path} from {get_client_ip()}")
 
     # Run security checks
     if not security_checks():
-        logging.warning(f"Security check failed for {request.path} from {get_client_ip()}")
+        logger.warning(f"Security check failed for {request.path} from {get_client_ip()}")
         return render_template('errors/403.html'), 403
+
+@app.before_request
+def assign_request_id_and_user():
+    g.request_id = str(uuid.uuid4())
+    # user_id and username are set in before_request_all
 
 # Flask-Login config
 login_manager = LoginManager()
@@ -240,10 +256,7 @@ def utility_processor():
 @app.context_processor
 def route_existence_processor():
     # Check if certain routes exist to prevent template errors
-    # Import Flask related functionality here to avoid circular imports
     from flask import current_app
-    
-    # Create a dictionary of route existence flags
     route_exists = {
         'host_create_competition_exists': 'host.create_competition' in current_app.view_functions,
         'host_stats_exists': 'host.stats' in current_app.view_functions,
@@ -252,18 +265,11 @@ def route_existence_processor():
         'teams_join_team_exists': 'teams.join_team' in current_app.view_functions,
         'teams_create_team_exists': 'teams.create_team' in current_app.view_functions,
     }
-    
     return route_exists
 
 # Add static URL optimization
 from core.static_optimization import add_static_url_processor
 add_static_url_processor(app)
-
-@app.before_request
-def add_year_to_context():
-    # Pass the current year to all templates
-    from flask import g
-    g.year = datetime.now().year
 
 @app.route("/contact")
 def contact():
@@ -280,6 +286,7 @@ def csp_violation_report():
     except Exception as e:
         app.logger.warning(f'CSP Violation: Failed to parse report. Error: {e}')
     return '', 204  # No Content
+csrf.exempt(csp_violation_report)
 
 # Register routes & update competition status
 with app.app_context():
@@ -304,8 +311,6 @@ with app.app_context():
     app.register_blueprint(teams_bp)
 
     # --- Periodic Cleanup for Unverified Users ---
-    # To keep your database clean, periodically delete users who have not verified their email within 10 minutes of registration.
-    # You can call this function at startup, or schedule it using a background thread, cron job, or external scheduler.
     from core.utils import delete_expired_unverified_users
     delete_expired_unverified_users()  # Run once at startup (optional)
     

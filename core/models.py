@@ -6,6 +6,8 @@ from sqlalchemy import case, func, cast
 from sqlalchemy.ext.hybrid import hybrid_property
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.dialects.postgresql import ENUM as PGEnum
+from sqlalchemy.dialects.postgresql import JSONB
+
 
 # User Roles Enum
 class UserRole(enum.Enum):
@@ -479,3 +481,40 @@ class PromotionalItem(db.Model):
     
     # Relationships
     container = db.relationship('PromotionalContainer', back_populates='promotional_items')
+
+class UserSession(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    session_id = db.Column(db.String(128), nullable=False, unique=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class BannedIP(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    ip = db.Column(db.String(64), unique=True, nullable=False)
+    reason = db.Column(db.String(256))
+    banned_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class IDSAlert(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    ip = db.Column(db.String(64), nullable=False)
+    endpoint = db.Column(db.String(256))
+    alert_type = db.Column(db.String(128))
+    details = db.Column(db.Text)
+    detected_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class RateLimit(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    ip = db.Column(db.String(64), nullable=False)
+    endpoint = db.Column(db.String(256))
+    count = db.Column(db.Integer, default=1)
+    window_start = db.Column(db.DateTime, default=datetime.utcnow)
+
+class IDSState(db.Model):
+    __tablename__ = 'ids_state'
+    id = db.Column(db.Integer, primary_key=True)
+    attack_counters = db.Column(db.JSON, default=dict)
+    ip_request_stats = db.Column(db.JSON, default=dict)
+    failed_logins = db.Column(db.JSON, default=dict)
+    anomaly_scores = db.Column(db.JSON, default=dict)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

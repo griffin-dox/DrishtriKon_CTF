@@ -6,7 +6,6 @@ from functools import wraps
 import secrets
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Security headers configuration
@@ -18,25 +17,12 @@ SECURITY_HEADERS = {
     'X-XSS-Protection': '1; mode=block',
     'Content-Security-Policy': (
         "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval' "
-            "https://cdn.jsdelivr.net "
-            "https://code.jquery.com "
-            "https://cdnjs.cloudflare.com "
-            "https://pagead2.googlesyndication.com "
-            "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js "
-            "https://kit.fontawesome.com; "
-        "style-src 'self' 'unsafe-inline' "
-            "https://fonts.googleapis.com "
-            "https://cdn.jsdelivr.net "
-            "https://cdnjs.cloudflare.com "
-            "https://use.fontawesome.com "
-            "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css; "
-        "img-src 'self' data: https:; "
-        "font-src 'self' data: "
-            "https://fonts.gstatic.com "
-            "https://cdn.jsdelivr.net "
-            "https://cdnjs.cloudflare.com "
+        "script-src 'self' https://code.jquery.com https://cdnjs.cloudflare.com "
+            "https://pagead2.googlesyndication.com https://kit.fontawesome.com; "
+        "style-src 'self' https://fonts.googleapis.com https://cdnjs.cloudflare.com "
             "https://use.fontawesome.com; "
+        "img-src 'self' data: https:; "
+        "font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com https://use.fontawesome.com; "
         "connect-src *; "
         "report-uri /csp-violation-report-endpoint/;"
     ),
@@ -66,18 +52,6 @@ def init_security(app):
             response.headers[header] = value
         return response
 
-def require_csrf(f):
-    """Decorator to require CSRF token for POST requests"""
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if request.method == 'POST':
-            token = request.form.get('csrf_token')
-            if not token or token != session.get('csrf_token'):
-                logger.warning(f"CSRF token validation failed for {request.path}")
-                return 'Invalid CSRF token', 403
-        return f(*args, **kwargs)
-    return decorated_function
-
 def sanitize_timestamp(timestamp):
     """Sanitize timestamp to prevent XSS"""
     if isinstance(timestamp, (int, float)):
@@ -87,24 +61,19 @@ def sanitize_timestamp(timestamp):
     except (ValueError, TypeError):
         return 0.0
 
-def generate_csrf_token():
-    """Generate a new CSRF token"""
-    if 'csrf_token' not in session:
-        session['csrf_token'] = secrets.token_hex(32)
-    return session['csrf_token']
+# The following functions are not used in this file. Move to utils or comment out if not needed.
+# def check_secure_connection():
+#     """Check if the connection is secure"""
+#     if not request.is_secure and os.getenv('FLASK_ENV') == 'production':
+#         logger.warning(f"Insecure connection attempt to {request.path}")
+#         return False
+#     return True
 
-def check_secure_connection():
-    """Check if the connection is secure"""
-    if not request.is_secure and os.getenv('FLASK_ENV') == 'production':
-        logger.warning(f"Insecure connection attempt to {request.path}")
-        return False
-    return True
-
-def validate_origin():
-    """Validate request origin"""
-    if request.method == 'POST':
-        origin = request.headers.get('Origin')
-        if origin and origin != request.host_url.rstrip('/'):
-            logger.warning(f"Invalid origin: {origin}")
-            return False
-    return True 
+# def validate_origin():
+#     """Validate request origin"""
+#     if request.method == 'POST':
+#         origin = request.headers.get('Origin')
+#         if origin and origin != request.host_url.rstrip('/'):
+#             logger.warning(f"Invalid origin: {origin}")
+#             return False
+#     return True
