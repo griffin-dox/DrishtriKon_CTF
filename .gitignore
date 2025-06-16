@@ -1,6 +1,66 @@
-*.env
-migrations/
+# Python
+*.pyc
+*.pyo
+*.pyd
 __pycache__/
-Ignores/
+*.so
+
+# Environment
+.env
+.venv/
 venv/
+ENV/
+env.bak/
+
+# Flask
+instance/
+.webassets-cache
+
+# Migrations
+migrations/
+
+# Logs
 logs/
+*.log
+
+# IDEs
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test & Coverage
+.coverage
+htmlcov/
+.tox/
+.nox/
+.pytest_cache/
+
+# Database
+*.sqlite3
+*.db
+*.sqlite
+
+# Custom
+Ignores/
+
+# Build
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Backup
+*~
+*.bak
+
+# Others
+*.swp
+*.tmp
