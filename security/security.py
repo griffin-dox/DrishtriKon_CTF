@@ -1,4 +1,5 @@
 import re
+import os
 import time
 import logging
 import random
@@ -100,17 +101,16 @@ def sanitize_html(html_content):
     return sanitized
 
 def require_tls():
-    """Ensure connection is over HTTPS"""
-    # In development mode, allow HTTP
+    """Ensure connection is over HTTPS for sensitive routes in production only"""
     from flask import current_app
-    if current_app.debug:
+    # Only enforce HTTPS in production
+    env = getattr(current_app, 'env', None) or current_app.config.get('ENV', None) or os.getenv('FLASK_ENV')
+    if env != 'production':
         return True
-        
     # In production, require HTTPS
     if not request.is_secure and request.headers.get('X-Forwarded-Proto') != 'https':
         logger.warning(f"Insecure connection attempt to {request.path} from {request.remote_addr}")
         return False
-    
     return True
     
 def check_referrer():
