@@ -211,7 +211,9 @@
                         {% for user_badge in user_badges %}
                         <div class="col-6 mb-3">
                             <div class="badge-icon">
-                                {% if user_badge.badge.icon %}
+                                {% if user_badge.badge.image_url %}
+                                <img src="{{ user_badge.badge.image_url }}" alt="Badge Image" style="height:32px;max-width:32px;object-fit:contain;">
+                                {% elif user_badge.badge.icon %}
                                 <i class="{{ user_badge.badge.icon }}"></i>
                                 {% else %}
                                 <i class="fas fa-medal"></i>

@@ -3,13 +3,16 @@ from flask_login import login_required, current_user
 from functools import wraps
 from app import db
 import os
-from datetime import datetime
 from core.models import Competition, Challenge, CompetitionChallenge, User, UserCompetition, CompetitionHost, Submission, CompetitionStatus, ChallengeVisibilityScope
 from forms import CompetitionForm, ChallengeForm, CompetitionManualStatusForm
 from sqlalchemy import desc
 from sqlalchemy.sql import func
 from core.utils import save_file
 from werkzeug.utils import secure_filename
+from core.models import Badge, UserBadge
+from core.models import User
+from core.utils import auto_assign_badges
+from forms import BadgeForm
 
 # Define the upload folder
 UPLOAD_FOLDER = 'uploads/'
@@ -346,3 +349,64 @@ def competition_stats(competition_id):
                            top_scores=top_scores,
                            total_participants=len(submissions),
                            title=f"{competition.title} - Stats")
+
+@host_bp.route('/badges')
+@login_required
+@host_required
+def badges():
+    badges = Badge.query.order_by(Badge.created_at.desc()).all()
+    return render_template('host/badges.html', badges=badges, title='Manage Badges')
+
+@host_bp.route('/badges/create', methods=['GET', 'POST'])
+@login_required
+@host_required
+def create_badge():
+    form = BadgeForm()
+    if form.validate_on_submit():
+        badge = Badge(
+            name=form.name.data,
+            description=form.description.data,
+            icon=form.icon.data,
+            criteria=form.criteria.data,
+            image_url=form.image_url.data
+        )
+        db.session.add(badge)
+        db.session.commit()
+        flash('Badge created successfully!', 'success')
+        return redirect(url_for('host.badges'))
+    return render_template('host/create_badge.html', form=form, title='Create Badge')
+
+@host_bp.route('/badges/assign', methods=['GET', 'POST'])
+@login_required
+@host_required
+def assign_badge():
+    users = User.query.all()
+    badges = Badge.query.all()
+    if request.method == 'POST':
+        user_id = request.form.get('user_id')
+        badge_id = request.form.get('badge_id')
+        if not user_id or not badge_id:
+            flash('Please select both user and badge.', 'danger')
+            return redirect(url_for('host.assign_badge'))
+        user = User.query.get(user_id)
+        badge = Badge.query.get(badge_id)
+        if not user or not badge:
+            flash('Invalid user or badge.', 'danger')
+            return redirect(url_for('host.assign_badge'))
+        if any(ub.badge_id == badge.id for ub in user.badges):
+            flash('User already has this badge.', 'info')
+            return redirect(url_for('host.assign_badge'))
+        user_badge = UserBadge(user_id=user.id, badge_id=badge.id)
+        db.session.add(user_badge)
+        db.session.commit()
+        flash('Badge assigned successfully!', 'success')
+        return redirect(url_for('host.assign_badge'))
+    return render_template('host/assign_badge.html', users=users, badges=badges, title='Assign Badge')
+
+@host_bp.route('/badges/auto_assign', methods=['POST'])
+@login_required
+@host_required
+def auto_assign_badges_route():
+    auto_assign_badges()
+    flash('Auto-assignment of badges completed!', 'success')
+    return redirect(url_for('host.badges'))

@@ -1,0 +1,31 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+            <div class="card bg-dark shadow">
+                <div class="card-header">
+                    <h3 class="mb-0"><i class="fas fa-medal me-2"></i>Assign Badge</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('admin.assign_badge') }}">
+                        {{ form.hidden_tag() }}
+                        <div class="mb-3">
+                            <label for="user_id" class="form-label">{{ form.user_id.label }}</label>
+                            {{ form.user_id(class="form-select") }}
+                        </div>
+                        <div class="mb-3">
+                            <label for="badge_id" class="form-label">{{ form.badge_id.label }}</label>
+                            {{ form.badge_id(class="form-select") }}
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('admin.badges') }}" class="btn btn-secondary">Cancel</a>
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

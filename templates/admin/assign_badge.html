@@ -1,0 +1,56 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <div class="card bg-dark shadow">
+                <div class="card-header">
+                    <h3 class="mb-0"><i class="fas fa-medal me-2"></i>Assign Badge</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('admin.assign_badge') }}">
+                        {{ form.hidden_tag() }}
+                        <!-- User Search Bar -->
+                        <div class="mb-3">
+                            <input type="text" id="userSearch" class="form-control" placeholder="Search users by username or email...">
+                        </div>
+                        <!-- User Multi-Select List -->
+                        <div class="mb-3" style="max-height: 250px; overflow-y: auto;">
+                            <label class="form-label">Select Users</label>
+                            <div id="userList">
+                                {% for user in form.user_id.choices %}
+                                <div class="form-check">
+                                    <input class="form-check-input user-checkbox" type="checkbox" name="user_ids" value="{{ user[0] }}" id="user{{ user[0] }}">
+                                    <label class="form-check-label" for="user{{ user[0] }}">
+                                        {{ user[1] }}
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <!-- Badge Select -->
+                        <div class="mb-3">
+                            <label for="badge_id" class="form-label">{{ form.badge_id.label }}</label>
+                            {{ form.badge_id(class="form-select") }}
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('admin.badges') }}" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Assign Badge</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- User Search Script -->
+<script>
+document.getElementById('userSearch').addEventListener('input', function() {
+    let filter = this.value.toLowerCase();
+    document.querySelectorAll('#userList .form-check').forEach(function(row) {
+        let label = row.querySelector('label').textContent.toLowerCase();
+        row.style.display = label.includes(filter) ? '' : 'none';
+    });
+});
+</script>
+{% endblock %}

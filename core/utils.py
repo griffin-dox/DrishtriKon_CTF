@@ -9,6 +9,7 @@ import string
 import time
 from app import db, mail
 from core.models import Competition, CompetitionStatus, Challenge, CompetitionChallenge
+from core.models import Badge, User, UserBadge
 from werkzeug.utils import secure_filename
 from flask import current_app, render_template
 from flask_mail import Message
@@ -209,3 +210,19 @@ def delete_expired_unverified_users():
     except Exception as e:
         db.session.rollback()
         logger.error(f"Error deleting unverified users: {str(e)}")
+
+def auto_assign_badges():
+    badges = Badge.query.all()
+    users = User.query.all()
+    for badge in badges:
+        if not badge.criteria:
+            continue
+        for user in users:
+            try:
+                if eval(badge.criteria, {}, {'user': user}):
+                    if not any(ub.badge_id == badge.id for ub in user.badges):
+                        user_badge = UserBadge(user_id=user.id, badge_id=badge.id)
+                        db.session.add(user_badge)
+            except Exception:
+                continue
+    db.session.commit()

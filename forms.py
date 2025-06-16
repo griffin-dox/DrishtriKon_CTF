@@ -129,6 +129,7 @@ class BadgeForm(FlaskForm):
     description = TextAreaField('Description', validators=[Optional()])
     icon = StringField('Icon Class', validators=[Optional()])
     criteria = TextAreaField('Award Criteria', validators=[Optional()])
+    image = FileField('Badge Image', validators=[Optional()])
     submit = SubmitField('Save Badge')
 
 class CompetitionChallengeForm(FlaskForm):
@@ -247,3 +248,8 @@ class TeamKickMemberForm(FlaskForm):
 class TeamCompetitionRegisterForm(FlaskForm):
     team_id = SelectField('Team', coerce=int, validators=[DataRequired()])
     submit = SubmitField('Register Team')
+
+class AssignBadgeForm(FlaskForm):
+    user_id = SelectField('User', coerce=int, validators=[DataRequired()])
+    badge_id = SelectField('Badge', coerce=int, validators=[DataRequired()])
+    submit = SubmitField('Assign Badge')

@@ -255,10 +255,22 @@ class Badge(db.Model):
     description = db.Column(db.Text, nullable=True)
     icon = db.Column(db.String(255), nullable=True)
     criteria = db.Column(db.Text, nullable=True)
+    image_url = db.Column(db.String(255), nullable=True)  # Path to custom badge image in static/badges/
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relationships
     users = db.relationship('UserBadge', back_populates='badge', lazy=True)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'description': self.description,
+            'icon': self.icon,
+            'image_url': self.image_url,
+            'criteria': self.criteria,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
 
 # User-Badge Association Model
 class UserBadge(db.Model):

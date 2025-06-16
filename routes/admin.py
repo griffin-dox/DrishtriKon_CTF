@@ -4,14 +4,14 @@ from flask_wtf import FlaskForm
 from wtforms import SelectField, BooleanField, SubmitField
 from wtforms.validators import Optional
 from functools import wraps
-from app import db, csrf
-from core.models import User, UserRole, Challenge, Competition, Badge, UserStatus, CompetitionHost, ChallengeVisibilityScope, CompetitionChallenge
+from app import db
+from core.models import Badge, UserBadge, ChallengeVisibilityScope, CompetitionChallenge
+from core.models import User, UserRole, Challenge, Competition,  UserStatus, CompetitionHost
 from forms import UserCreateForm, UserEditForm, ChallengeForm, CompetitionForm, BadgeForm, CompetitionHostForm, UserSearchForm
 from sqlalchemy import desc
 from core.utils import save_file
 from werkzeug.utils import secure_filename
-from core.cache_utils import cached_query, invalidate_cache
-from sqlalchemy import func
+from core.cache_utils import cached_query
 from core.models import Submission
 import os
 import logging
@@ -49,8 +49,10 @@ def dashboard():
                            total_users=dashboard_data['total_users'],
                            total_challenges=dashboard_data['total_challenges'],
                            total_competitions=dashboard_data['total_competitions'],
+                           total_badges=dashboard_data['total_badges'],
                            recent_users=dashboard_data['recent_users'],
                            recent_competitions=dashboard_data['recent_competitions'],
+                           recent_badges=dashboard_data['recent_badges'],
                            title='Admin Dashboard')
 
 @cached_query(ttl=300)  # Cache for 5 minutes
@@ -60,6 +62,7 @@ def get_admin_dashboard_data():
     total_users = User.query.count()
     total_challenges = Challenge.query.count()
     total_competitions = Competition.query.count()
+    total_badges = Badge.query.count()
     
     # Get recent users
     recent_users = User.query.order_by(desc(User.created_at)).limit(5).all()
@@ -67,12 +70,19 @@ def get_admin_dashboard_data():
     # Get recent competitions
     recent_competitions = Competition.query.order_by(desc(Competition.created_at)).limit(5).all()
     
+    # Get recent badges
+    recent_badges = Badge.query.order_by(desc(Badge.created_at)).limit(5).all()
+    recent_badge_activity = UserBadge.query.order_by(desc(UserBadge.awarded_at)).limit(10).all()
+    
     return {
         'total_users': total_users,
         'total_challenges': total_challenges,
         'total_competitions': total_competitions,
+        'total_badges': total_badges,
         'recent_users': recent_users,
-        'recent_competitions': recent_competitions
+        'recent_competitions': recent_competitions,
+        'recent_badges': recent_badges,
+        'recent_badge_activity': recent_badge_activity
     }
 
 @admin_bp.route('/stats')
@@ -548,13 +558,20 @@ def badges():
 @admin_required
 def create_badge():
     form = BadgeForm()
-    
     if form.validate_on_submit():
+        image_url = None
+        if form.image.data:
+            file = form.image.data
+            filename = secure_filename(file.filename)
+            image_path = os.path.join('static', 'badges', filename)
+            file.save(os.path.join(current_app.root_path, image_path))
+            image_url = f'/static/badges/{filename}'
         badge = Badge(
             name=form.name.data,
             description=form.description.data,
             icon=form.icon.data,
-            criteria=form.criteria.data
+            criteria=form.criteria.data,
+            image_url=image_url
         )
         
         try:
@@ -681,3 +698,56 @@ def move_challenge(challenge_id):
                           competitions=competitions,
                           form=form,
                           title='Move Challenge')
+
+@admin_bp.route('/assign_badge', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def assign_badge():
+    from forms import AssignBadgeForm
+    form = AssignBadgeForm()
+    # Populate user and badge choices
+    form.user_id.choices = [(u.id, f"{u.username} (ID: {u.id})") for u in User.query.order_by(User.username).all()]
+    form.badge_id.choices = [(b.id, b.name) for b in Badge.query.order_by(Badge.name).all()]
+    if form.validate_on_submit():
+        user_id = form.user_id.data
+        badge_id = form.badge_id.data
+        # Prevent duplicate assignment
+        from core.models import UserBadge
+        if UserBadge.query.filter_by(user_id=user_id, badge_id=badge_id).first():
+            flash('User already has this badge.', 'warning')
+        else:
+            user_badge = UserBadge(user_id=user_id, badge_id=badge_id)
+            db.session.add(user_badge)
+            db.session.commit()
+            flash('Badge assigned successfully!', 'success')
+        return redirect(url_for('admin.assign_badge'))
+    return render_template('admin/assign_badge.html', form=form, title='Assign Badge')
+
+@admin_bp.route('/badges/evaluate', methods=['POST'])
+@login_required
+@admin_required
+def evaluate_badges():
+    from core.models import User, Badge, UserBadge
+    assigned = 0
+    users = User.query.all()
+    badges = Badge.query.all()
+    for user in users:
+        user_context = {
+            'user': user,
+            'points': getattr(user, 'points', 0),
+            'challenges_solved': getattr(user, 'challenges_solved', 0),
+            # Add more user stats as needed
+        }
+        for badge in badges:
+            if badge.criteria:
+                try:
+                    if eval(badge.criteria, {}, user_context):
+                        if not UserBadge.query.filter_by(user_id=user.id, badge_id=badge.id).first():
+                            user_badge = UserBadge(user_id=user.id, badge_id=badge.id)
+                            db.session.add(user_badge)
+                            assigned += 1
+                except Exception as e:
+                    logger.warning(f"Error evaluating badge {badge.id} for user {user.id}: {e}")
+    db.session.commit()
+    flash(f'Automatic badge assignment complete. {assigned} badges assigned.', 'success')
+    return redirect(url_for('admin.badges'))

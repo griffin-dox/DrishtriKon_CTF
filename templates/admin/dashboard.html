@@ -8,7 +8,7 @@
 
     <!-- Stats Cards -->
     <div class="row mb-4">
-        <div class="col-md-4 mb-3">
+        <div class="col-md-3 mb-3">
             <div class="card stats-card bg-dark text-white">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
@@ -28,7 +28,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-4 mb-3">
+        <div class="col-md-3 mb-3">
             <div class="card stats-card bg-dark text-white">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
@@ -48,7 +48,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-4 mb-3">
+        <div class="col-md-3 mb-3">
             <div class="card stats-card bg-dark text-white">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
@@ -64,6 +64,26 @@
                 <div class="card-footer bg-transparent border-top">
                     <a href="{{ url_for('admin.competitions') }}" class="text-decoration-none">
                         <small>View All Competitions <i class="fas fa-arrow-right ms-1"></i></small>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card bg-dark text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="stats-number">{{ total_badges }}</div>
+                            <div class="stats-title">Total Badges</div>
+                        </div>
+                        <div class="stats-icon">
+                            <i class="fas fa-medal"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-top">
+                    <a href="{{ url_for('admin.badges') }}" class="text-decoration-none">
+                        <small>View All Badges <i class="fas fa-arrow-right ms-1"></i></small>
                     </a>
                 </div>
             </div>
@@ -88,8 +108,8 @@
                         <a href="{{ url_for('admin.create_competition') }}" class="btn btn-outline-primary">
                             <i class="fas fa-trophy me-2"></i>Create Competition
                         </a>
-                        <a href="{{ url_for('admin.create_badge') }}" class="btn btn-outline-primary">
-                            <i class="fas fa-medal me-2"></i>Create Badge
+                        <a href="{{ url_for('admin.badges') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-award me-1"></i>Manage Badges
                         </a>
                         <a href="{{ url_for('admin.global_stats') }}" class="btn btn-outline-info">
                             <i class="fas fa-chart-bar me-2"></i>Platform Analytics
@@ -182,6 +202,71 @@
         </div>
         <div class="card-footer bg-transparent">
             <a href="{{ url_for('admin.competitions') }}" class="text-decoration-none">View All Competitions</a>
+        </div>
+    </div>
+
+    <!-- Recent Badges -->
+    <div class="card bg-dark mb-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-medal me-2"></i>Recent Badges</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="list-group list-group-flush">
+                {% for badge in recent_badges %}
+                <div class="list-group-item bg-dark d-flex align-items-center">
+                    {% if badge.image_url %}
+                    <img src="{{ badge.image_url }}" alt="Badge Image" style="height:32px;width:32px;object-fit:contain;margin-right:12px;">
+                    {% elif badge.icon %}
+                    <i class="{{ badge.icon }} fa-lg me-2"></i>
+                    {% else %}
+                    <i class="fas fa-medal fa-lg me-2"></i>
+                    {% endif %}
+                    <div>
+                        <strong>{{ badge.name }}</strong><br>
+                        <small class="text-muted">{{ badge.description|truncate(40) }}</small>
+                    </div>
+                </div>
+                {% else %}
+                <div class="list-group-item bg-dark text-center">
+                    <p class="mb-0">No badges found</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="card-footer bg-transparent">
+            <a href="{{ url_for('admin.badges') }}" class="text-decoration-none">View All Badges</a>
+        </div>
+    </div>
+
+    <div class="card bg-dark mb-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-user-check me-2"></i>Recent Badge Assignments</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Badge</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for activity in recent_badge_activity %}
+                        <tr>
+                            <td>{{ activity.user.username }}</td>
+                            <td>{{ activity.badge.name }}</td>
+                            <td>{{ activity.awarded_at.strftime('%Y-%m-%d %H:%M') if activity.awarded_at else '' }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="3" class="text-center">No badge assignments found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>

@@ -16,7 +16,9 @@
             <div class="card bg-dark h-100">
                 <div class="card-body text-center">
                     <div class="badge-icon mb-3">
-                        {% if user_badge.badge.icon %}
+                        {% if user_badge.badge.image_url %}
+                        <img src="{{ user_badge.badge.image_url }}" alt="Badge Image" style="height:48px;max-width:48px;object-fit:contain;">
+                        {% elif user_badge.badge.icon %}
                         <i class="{{ user_badge.badge.icon }}"></i>
                         {% else %}
                         <i class="fas fa-medal"></i>

@@ -307,6 +307,8 @@ with app.app_context():
     from routes.competitions import competitions_bp
     from routes.ads import ads_bp
     from routes.teams import teams_bp
+    from routes.badge import badge_bp
+
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
@@ -317,6 +319,7 @@ with app.app_context():
     app.register_blueprint(competitions_bp)
     app.register_blueprint(ads_bp)
     app.register_blueprint(teams_bp)
+    app.register_blueprint(badge_bp)
 
     # --- Periodic Cleanup for Unverified Users ---
     from core.utils import delete_expired_unverified_users
