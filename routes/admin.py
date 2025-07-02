@@ -221,10 +221,13 @@ def edit_user(user_id):
                     f"User status changed for {user.username}: {old_status} -> {user.status.name} by admin: {current_user.username}",
                     extra={"user": user.username, "event": "status_changed", "old_status": old_status, "new_status": user.status.name, "by": current_user.username, "by_ip": request.remote_addr}
                 )
+                from core.email_service import send_status_change_email, send_status_restored_email
                 # Send email if status is restricted, suspended, or banned
-                from core.email_service import send_status_change_email
                 if user.status.name in ["RESTRICTED", "SUSPENDED", "BANNED"]:
                     send_status_change_email(user.email, user.username, user.status.name)
+                # Send restored email if status is changed from restricted/suspended/banned to ACTIVE
+                if old_status in ["RESTRICTED", "SUSPENDED", "BANNED"] and user.status.name == "ACTIVE":
+                    send_status_restored_email(user.email, user.username)
             return redirect(url_for('admin.users'))
         except Exception as e:
             db.session.rollback()

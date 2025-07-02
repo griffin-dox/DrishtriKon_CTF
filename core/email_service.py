@@ -178,3 +178,38 @@ def send_status_change_email(recipient_email, username, new_status):
     except Exception as e:
         logger.error(f"Error sending status change email to {recipient_email}: {str(e)}")
         return {"success": False, "error": str(e)}
+                
+
+def send_status_restored_email(recipient_email, username):
+    """Send an email to the user when their account status is restored to ACTIVE from a restricted state."""
+    try:
+        logger.info(f"Attempting to send status restored email to {recipient_email}")
+        subject = 'Your CTF Account Has Been Restored'
+        body = f"""
+        <p>Dear <strong>{username}</strong>,</p>
+        <p>We are pleased to inform you that your account status has been restored to <b>ACTIVE</b>. You now have full access to the platform again. Welcome back!</p>
+        <p>If you have any questions or need assistance, feel free to contact our support team.</p>
+        """
+        html_content = f"""
+        <!DOCTYPE html>
+        <html><head><meta charset='utf-8'><title>Account Status Restored</title></head><body>
+        <div style='max-width:600px;margin:40px auto;background:#fff;border:1px solid #ddd;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.05);padding:30px;'>
+        <div style='text-align:center;border-bottom:1px solid #e0e0e0;margin-bottom:20px;'><h1>CTF Platform Notification</h1></div>
+        {body}
+        <div style='font-size:12px;text-align:center;color:#999;border-top:1px solid #e0e0e0;margin-top:30px;padding-top:15px;'>&copy; {str(time.localtime().tm_year)} CTF Platform. All rights reserved.</div>
+        </div></body></html>
+        """
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+            server.starttls()
+            server.login(MAIL_USERNAME, MAIL_PASSWORD)
+            msg = MIMEMultipart()
+            msg['From'] = f"ctflogin <{MAIL_DEFAULT_SENDER}>"
+            msg['To'] = recipient_email
+            msg['Subject'] = subject
+            msg.attach(MIMEText(html_content, 'html'))
+            server.sendmail(MAIL_DEFAULT_SENDER, recipient_email, msg.as_string())
+        logger.info(f"Status restored email sent successfully to {recipient_email}")
+        return {"success": True, "message": "Status restored email sent successfully"}
+    except Exception as e:
+        logger.error(f"Error sending status restored email to {recipient_email}: {str(e)}")
+        return {"success": False, "error": str(e)}

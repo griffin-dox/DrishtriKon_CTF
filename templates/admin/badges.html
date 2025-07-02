@@ -12,6 +12,7 @@
                 <i class="fas fa-user-plus me-1"></i> Assign Badge
             </a>
             <form method="POST" action="{{ url_for('admin.evaluate_badges') }}" class="d-inline">
+                {{ form.hidden_tag() }}
                 <button type="submit" class="btn btn-outline-warning ms-2">
                     <i class="fas fa-magic me-1"></i> Auto-Assign Badges
                 </button>
