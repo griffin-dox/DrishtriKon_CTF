@@ -156,7 +156,7 @@ class IPActivityTracker:
         """Check for suspicious patterns in IP activity"""
         if ip not in self.ip_activity:
             return
-        
+
         recent_activity = [a for a in self.ip_activity[ip] 
                          if datetime.fromisoformat(a['timestamp']) > 
                          datetime.utcnow() - timedelta(minutes=5)]
@@ -170,10 +170,18 @@ class IPActivityTracker:
         if any(agent in ip_info['user_agent'].lower() for agent in suspicious_agents):
             self.flag_suspicious_ip(ip, "Suspicious user agent", severity=3)
         
-        # Check for suspicious paths
+        # Check for suspicious paths (admin, sensitive endpoints)
         suspicious_paths = ['/admin', '/wp-admin', '/phpmyadmin', '/.env', '/config']
         if any(path in ip_info['path'].lower() for path in suspicious_paths):
-            self.flag_suspicious_ip(ip, "Suspicious path access", severity=2)
+            # Check if user is authorized (basic check: user_id or username not anonymous)
+            user_id = ip_info.get('user_id')
+            username = ip_info.get('username', 'anonymous')
+            if not user_id or username == 'anonymous':
+                # Unauthorized attempt: raise security alert/warning
+                self.flag_suspicious_ip(ip, f"Unauthorized access attempt to {ip_info['path']}", severity=2)
+            else:
+                # Authorized access: log as info only
+                ip_logger.info(f"Authorized access to {ip_info['path']} by user: {username} (IP: {ip})")
     
     def flag_suspicious_ip(self, ip, reason, severity=1):
         """Flag an IP as suspicious"""
@@ -200,8 +208,12 @@ class IPActivityTracker:
         
         self._save_suspicious_ips()
         
-        # Log suspicious activity
-        ip_logger.warning(f"Suspicious IP flagged: {ip} - Reason: {reason} - Severity: {severity}")
+        # Log suspicious activity with username if available
+        username = (
+            self.ip_activity[ip][-1].get('username', 'anonymous')
+            if ip in self.ip_activity and self.ip_activity[ip] else 'anonymous'
+        )
+        ip_logger.warning(f"Suspicious IP flagged: {ip} (user: {username}) - Reason: {reason} - Severity: {severity}")
     
     def is_ip_suspicious(self, ip):
         """Check if an IP is suspicious"""
