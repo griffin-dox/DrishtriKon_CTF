@@ -4,7 +4,7 @@ from flask import request, jsonify
 from datetime import datetime, timedelta
 from core.models import RateLimit, db
 
-rate_logger = logging.getLogger('rate_limiter')
+rate_logger = logging.getLogger('security')
 rate_logger.setLevel(logging.INFO)
 
 def is_rate_limited(key_type, identifier, max_requests, window):
@@ -57,10 +57,17 @@ def rate_limit(key_type, max_requests, window, identifier_func=None):
                 # Get remaining time
                 reset_time = get_reset_time(key_type, identifier, window)
 
-                # Log rate limit hit
+                # Log rate limit hit as a security event
                 rate_logger.warning(
-                    f"Rate limit exceeded: {key_type}:{identifier} "
-                    f"on {request.path} from {request.remote_addr}"
+                    f"Rate limit exceeded: {key_type}:{identifier} on {request.path} from {request.remote_addr}",
+                    extra={
+                        'event': 'RateLimitExceeded',
+                        'source_ip': request.remote_addr,
+                        'user': getattr(request, 'user', None),
+                        'endpoint': request.path,
+                        'key_type': key_type,
+                        'identifier': identifier
+                    }
                 )
 
                 # Return rate limit response

@@ -46,7 +46,7 @@ def assign_badge_api():
     })
 
 # You must implement this utility in core/badge_utils.py
-from core.utils import auto_assign_badges
+from utils.utils import auto_assign_badges
 
 @badge_bp.route('/api/auto_assign_badges', methods=['POST'])
 @login_required

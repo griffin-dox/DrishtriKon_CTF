@@ -7,11 +7,11 @@ from core.models import Competition, Challenge, CompetitionChallenge, User, User
 from forms import CompetitionForm, ChallengeForm, CompetitionManualStatusForm
 from sqlalchemy import desc
 from sqlalchemy.sql import func
-from core.utils import save_file
+from utils.utils import save_file
 from werkzeug.utils import secure_filename
 from core.models import Badge, UserBadge
 from core.models import User
-from core.utils import auto_assign_badges
+from utils.utils import auto_assign_badges
 from forms import BadgeForm
 
 # Define the upload folder

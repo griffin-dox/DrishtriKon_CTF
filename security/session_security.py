@@ -7,7 +7,7 @@ from functools import wraps
 from werkzeug.security import generate_password_hash
 
 # Configure logging
-session_logger = logging.getLogger('session_security')
+session_logger = logging.getLogger('security')
 session_logger.setLevel(logging.INFO)
 
 # Session security constants
@@ -48,7 +48,12 @@ def generate_session_id():
 def invalidate_session():
     """Invalidate the current session"""
     session.clear()
-    session_logger.info(f"Session invalidated for IP: {request.remote_addr}")
+    session_logger.warning(f"Session invalidated for IP: {request.remote_addr}", extra={
+        'event': 'SessionInvalidated',
+        'source_ip': request.remote_addr,
+        'user': session.get('user_id', None),
+        'reason': 'Session invalidated due to security policy.'
+    })
 
 def is_sensitive_operation():
     """Check if current operation is sensitive"""
@@ -108,7 +113,12 @@ def enforce_session_limit(user_id):
         # Remove oldest sessions to enforce limit
         sessions_to_remove = active_sessions[:len(active_sessions) - MAX_SESSIONS_PER_USER + 1]
         for s in sessions_to_remove:
-            session_logger.info(f"Removing old session {s.session_id} for user {user_id}")
+            session_logger.warning(f"Removing old session {s.session_id} for user {user_id}", extra={
+                'event': 'SessionLimitEnforced',
+                'user': user_id,
+                'session_id': s.session_id,
+                'reason': 'Exceeded max sessions per user.'
+            })
             db.session.delete(s)
         db.session.commit()
         return False  # Limit was exceeded, sessions removed

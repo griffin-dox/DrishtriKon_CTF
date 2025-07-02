@@ -16,9 +16,6 @@ env.bak/
 instance/
 .webassets-cache
 
-# Migrations
-migrations/
-
 # Logs
 logs/
 *.log

@@ -14,6 +14,8 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_migrate import Migrate
 from flask_mail import Mail
 
+from utils.discord_alerts import setup_logging as setup_discord_security_logging
+
 # Load environment variables early
 load_dotenv()
 
@@ -341,7 +343,7 @@ with app.app_context():
     app.register_blueprint(badge_bp)
 
     # --- Periodic Cleanup for Unverified Users ---
-    from core.utils import delete_expired_unverified_users
+    from utils.utils import delete_expired_unverified_users
     delete_expired_unverified_users()  # Run once at startup (optional)
     
     # Setup error handlers

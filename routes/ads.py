@@ -8,7 +8,7 @@ from app import db
 from core.models import User, UserRole, AdImage, AdPlacement, AdConfiguration, AdLocation
 from forms import AdConfigurationForm, AdImageForm, AdPlacementForm
 from routes.admin import admin_required
-from core.utils import save_file
+from utils.utils import save_file
 
 ads_bp = Blueprint('ads', __name__)
 

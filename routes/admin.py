@@ -9,7 +9,7 @@ from core.models import Badge, UserBadge, ChallengeVisibilityScope, CompetitionC
 from core.models import User, UserRole, Challenge, Competition,  UserStatus, CompetitionHost
 from forms import UserCreateForm, UserEditForm, ChallengeForm, CompetitionForm, BadgeForm, CompetitionHostForm, UserSearchForm
 from sqlalchemy import desc
-from core.utils import save_file
+from utils.utils import save_file
 from werkzeug.utils import secure_filename
 from core.cache_utils import cached_query
 from core.models import Submission
@@ -18,6 +18,7 @@ import logging
 
 # Define a module logger
 logger = logging.getLogger(__name__)
+security_logger = logging.getLogger('security')
 
 # Use a set for efficient lookup
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'zip'}  # Added zip
@@ -173,11 +174,15 @@ def create_user():
             role=UserRole[form.role.data]
         )
         user.set_password(form.password.data)
-        
         try:
             db.session.add(user)
             db.session.commit()
             flash('User has been created successfully', 'success')
+            # Log user creation
+            security_logger.info(
+                f"User created: {user.username} ({user.email}), role: {user.role.name}, by admin: {current_user.username}",
+                extra={"user": user.username, "email": user.email, "event": "user_created", "role": user.role.name, "by": current_user.username, "by_ip": request.remote_addr}
+            )
             return redirect(url_for('admin.users'))
         except Exception as e:
             db.session.rollback()
@@ -196,14 +201,30 @@ def edit_user(user_id):
         form = UserEditForm(obj=user)
         
     if form.validate_on_submit():
+        old_role = user.role.name
+        old_status = user.status.name
         user.username = form.username.data
         user.email = form.email.data
         user.role = UserRole[form.role.data]
         user.status = UserStatus[form.status.data]
-        
         try:
             db.session.commit()
             flash('User has been updated successfully', 'success')
+            # Log privilege/status changes
+            if old_role != user.role.name:
+                security_logger.warning(
+                    f"User role changed for {user.username}: {old_role} -> {user.role.name} by admin: {current_user.username}",
+                    extra={"user": user.username, "event": "role_changed", "old_role": old_role, "new_role": user.role.name, "by": current_user.username, "by_ip": request.remote_addr}
+                )
+            if old_status != user.status.name:
+                security_logger.warning(
+                    f"User status changed for {user.username}: {old_status} -> {user.status.name} by admin: {current_user.username}",
+                    extra={"user": user.username, "event": "status_changed", "old_status": old_status, "new_status": user.status.name, "by": current_user.username, "by_ip": request.remote_addr}
+                )
+                # Send email if status is restricted, suspended, or banned
+                from core.email_service import send_status_change_email
+                if user.status.name in ["RESTRICTED", "SUSPENDED", "BANNED"]:
+                    send_status_change_email(user.email, user.username, user.status.name)
             return redirect(url_for('admin.users'))
         except Exception as e:
             db.session.rollback()
@@ -230,6 +251,11 @@ def delete_user(user_id):
         db.session.delete(user)
         db.session.commit()
         flash('User has been deleted successfully', 'success')
+        # Log user deletion
+        security_logger.warning(
+            f"User deleted: {user.username} ({user.email}) by admin: {current_user.username}",
+            extra={"user": user.username, "email": user.email, "event": "user_deleted", "by": current_user.username, "by_ip": request.remote_addr}
+        )
     except Exception as e:
         db.session.rollback()
         flash(f'Error deleting user: {str(e)}', 'danger')
@@ -495,23 +521,25 @@ def manage_competition_hosts(competition_id):
     
     if form.validate_on_submit() and potential_hosts:
         host_id = form.host_id.data
-        
         # Check if this user is already a host for this competition
         existing = CompetitionHost.query.filter_by(
             competition_id=competition.id,
             host_id=host_id
         ).first()
-        
         if not existing:
             host_assignment = CompetitionHost(
                 competition_id=competition.id,
                 host_id=host_id
             )
-            
             try:
                 db.session.add(host_assignment)
                 db.session.commit()
                 flash('Host assigned to competition successfully', 'success')
+                # Log host assignment
+                security_logger.info(
+                    f"Host assigned: user_id={host_id} to competition_id={competition.id} by admin: {current_user.username}",
+                    extra={"host_id": host_id, "competition_id": competition.id, "event": "host_assigned", "by": current_user.username, "by_ip": request.remote_addr}
+                )
                 return redirect(url_for('admin.manage_competition_hosts', competition_id=competition.id))
             except Exception as e:
                 db.session.rollback()
@@ -538,6 +566,11 @@ def remove_competition_host(competition_id, host_id):
         db.session.delete(host_assignment)
         db.session.commit()
         flash('Host removed from competition successfully', 'success')
+        # Log host removal
+        security_logger.warning(
+            f"Host removed: user_id={host_id} from competition_id={competition_id} by admin: {current_user.username}",
+            extra={"host_id": host_id, "competition_id": competition_id, "event": "host_removed", "by": current_user.username, "by_ip": request.remote_addr}
+        )
     except Exception as e:
         db.session.rollback()
         flash(f'Error removing host: {str(e)}', 'danger')
