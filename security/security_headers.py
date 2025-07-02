@@ -21,7 +21,7 @@ SECURITY_HEADERS = {
         "script-src 'self' 'unsafe-inline' https://code.jquery.com https://cdnjs.cloudflare.com "
         "https://pagead2.googlesyndication.com https://kit.fontawesome.com "
         "https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/ "
-        "https://googleads.g.doubleclick.net https://ep2.adtrafficquality.google; "
+        "https://googleads.g.doubleclick.net https://ep2.adtrafficquality.google https://www.googletagmanager.com; "
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com "
         "https://use.fontawesome.com; "
         "img-src 'self' data: https:; "
