@@ -6,6 +6,7 @@ from functools import wraps
 import secrets
 
 # Configure logging
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Security headers configuration
@@ -17,12 +18,15 @@ SECURITY_HEADERS = {
     'X-XSS-Protection': '1; mode=block',
     'Content-Security-Policy': (
         "default-src 'self'; "
-        "script-src 'self' https://code.jquery.com https://cdnjs.cloudflare.com "
-            "https://pagead2.googlesyndication.com https://kit.fontawesome.com; "
-        "style-src 'self' https://fonts.googleapis.com https://cdnjs.cloudflare.com "
-            "https://use.fontawesome.com; "
+        "script-src 'self' 'unsafe-inline' https://code.jquery.com https://cdnjs.cloudflare.com "
+        "https://pagead2.googlesyndication.com https://kit.fontawesome.com "
+        "https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/ "
+        "https://googleads.g.doubleclick.net https://ep2.adtrafficquality.google; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com "
+        "https://use.fontawesome.com; "
         "img-src 'self' data: https:; "
-        "font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com https://use.fontawesome.com; "
+        "font-src 'self' data: https://fonts.gstatic.com https://fonts.googleapis.com https://cdnjs.cloudflare.com https://use.fontawesome.com; "
+        "frame-src https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/ https://googleads.g.doubleclick.net https://ep2.adtrafficquality.google; "
         "connect-src *; "
         "report-uri /csp-violation-report-endpoint/;"
     ),
@@ -61,19 +65,18 @@ def sanitize_timestamp(timestamp):
     except (ValueError, TypeError):
         return 0.0
 
-# The following functions are not used in this file. Move to utils or comment out if not needed.
-# def check_secure_connection():
-#     """Check if the connection is secure"""
-#     if not request.is_secure and os.getenv('FLASK_ENV') == 'production':
-#         logger.warning(f"Insecure connection attempt to {request.path}")
-#         return False
-#     return True
+def check_secure_connection():
+    """Check if the connection is secure"""
+    if not request.is_secure and os.getenv('FLASK_ENV') == 'production':
+        logger.warning(f"Insecure connection attempt to {request.path}")
+        return False
+    return True
 
-# def validate_origin():
-#     """Validate request origin"""
-#     if request.method == 'POST':
-#         origin = request.headers.get('Origin')
-#         if origin and origin != request.host_url.rstrip('/'):
-#             logger.warning(f"Invalid origin: {origin}")
-#             return False
-#     return True
+def validate_origin():
+    """Validate request origin"""
+    if request.method == 'POST':
+        origin = request.headers.get('Origin')
+        if origin and origin != request.host_url.rstrip('/'):
+            logger.warning(f"Invalid origin: {origin}")
+            return False
+    return True

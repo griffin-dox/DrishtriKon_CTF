@@ -1,5 +1,13 @@
 {% extends 'layout.html' %}
 
+{% block head_scripts %}
+    <script src="https://www.google.com/recaptcha/api.js?render={{ recaptcha_site_key }}" async defer></script>
+    <script>
+        window.RECAPTCHA_SITE_KEY = '{{ recaptcha_site_key }}';
+    </script>
+    <script src="{{ url_for('static', filename='js/recaptcha-helper.js') }}"></script>
+{% endblock %}
+
 {% block content %}
 <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -15,8 +23,11 @@
                 <div class="card-body">
                     <p class="mb-4">Have questions, feedback, or need assistance? We'd love to hear from you! Fill out the form below and we'll get back to you as soon as possible.</p>
                     
-                    <form action="{{ form_action }}" method="post">
+                    <form action="{{ form_action }}" method="post" id="contactForm">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <!-- Hidden field for reCAPTCHA token -->
+                        <input type="hidden" name="recaptcha_token" id="recaptchaToken" value="">
+                        
                         <div class="mb-3">
                             <label for="name" class="form-label">Your Name</label>
                             <input type="text" class="form-control" id="name" name="name" placeholder="Enter your name">
@@ -45,7 +56,7 @@
                             <textarea class="form-control" id="message" name="message" rows="5" placeholder="Enter your message"></textarea>
                         </div>
                     
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary" id="contactSubmit">
                             <i class="fas fa-paper-plane me-1"></i> Send Message
                         </button>
                     </form>
@@ -122,3 +133,5 @@
     </div>
 </div>
 {% endblock %}
+
+<script src="{{ url_for('static', filename='js/contact-form.js') }}"></script>

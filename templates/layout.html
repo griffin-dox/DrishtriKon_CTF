@@ -29,6 +29,7 @@
     
     <!-- Page-specific head scripts -->
     {% block head_scripts %}{% endblock %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/inline-moved.css') }}">
 </head>
 <body>
     <!-- Navigation -->
@@ -321,8 +322,8 @@
                     <h5><i class="fas fa-flag-checkered me-2"></i>Drishti कोण</h5>
                     <p class="text-muted">A comprehensive platform for Capture The Flag competitions and cybersecurity challenges.</p>
                     <div class="code-block mt-3">
-                        <span style="color: var(--primary-color)">$</span> ./ctf-platform --version<br>
-                        <span style="color: var(--primary-color)">></span> Drishti कोण v2.5.7
+                        <span class="primary-color">$</span> ./ctf-platform --version<br>
+                        <span class="primary-color">></span> Drishti कोण v2.5.7
                     </div>
                 </div>
                 <div class="col-lg-2 col-md-6 mb-4 mb-lg-0">
@@ -359,7 +360,7 @@
             </div>
             <hr>
             <div class="d-flex justify-content-between flex-wrap">
-                <p class="text-muted">&copy; {{ g.year }} Drishti कोण. All rights reserved. <span class="ms-2 small" style="color: var(--primary-color)">// Hack The Planet</span></p>
+                <p class="text-muted">&copy; {{ g.year }} Drishti कोण. All rights reserved. <span class="ms-2 small primary-color">// Hack The Planet</span></p>
                 <div>
                     <a href="{{ url_for('main.privacy') }}" class="me-3">Privacy Policy</a>
                     <a href="{{ url_for('main.terms') }}">Terms of Service</a>

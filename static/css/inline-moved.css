@@ -1,0 +1,31 @@
+.primary-color {
+    color: var(--primary-color) !important;
+}
+
+/* Modal z-index and pointer-events classes */
+.modal-dialog-z2001 {
+    z-index: 2001 !important;
+    pointer-events: all !important;
+}
+.modal-content-z2002 {
+    position: relative !important;
+    z-index: 2002 !important;
+    pointer-events: all !important;
+}
+.btn-close-z2500 {
+    z-index: 2500 !important;
+    position: relative !important;
+}
+.btn-cancel-z2099 {
+    position: relative !important;
+    z-index: 2099 !important;
+}
+.form-inline-z2100 {
+    position: relative !important;
+    z-index: 2100 !important;
+    display: inline-block !important;
+}
+.btn-delete-z2500 {
+    position: relative !important;
+    z-index: 2500 !important;
+}

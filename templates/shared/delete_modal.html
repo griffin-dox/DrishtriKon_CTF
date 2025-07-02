@@ -12,12 +12,11 @@ Parameters:
 <div class="modal fade delete-confirmation-modal" id="{{ modal_id }}" tabindex="-1" 
      aria-labelledby="{{ modal_id }}Label" aria-hidden="true" 
      data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog modal-dialog-centered" style="z-index: 2001; pointer-events: all;">
-        <div class="modal-content bg-dark" style="position: relative; z-index: 2002; pointer-events: all;">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-z2001">
+        <div class="modal-content bg-dark modal-content-z2002">
             <div class="modal-header">
                 <h5 class="modal-title" id="{{ modal_id }}Label">Confirm Deletion</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" 
-                        style="z-index: 2500; position: relative;"></button>
+                <button type="button" class="btn-close btn-close-white btn-close-z2500" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <p class="mb-3">
@@ -32,17 +31,14 @@ Parameters:
                 {% endif %}
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" 
-                        style="position: relative; z-index: 2099;">Cancel</button>
-                <form action="{{ delete_url }}" method="POST" 
-                      style="position: relative; z-index: 2100; display: inline-block;">
+                <button type="button" class="btn btn-secondary btn-cancel-z2099" data-bs-dismiss="modal">Cancel</button>
+                <form action="{{ delete_url }}" method="POST" class="form-inline-z2100">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     {% if challenge_action_required %}
                     <input type="hidden" name="challenge_action" value="delete" id="hidden{{ modal_id }}Action">
                     {% endif %}
                     {{ additional_hidden_fields|safe if additional_hidden_fields }}
-                    <button type="submit" class="btn btn-danger delete-confirm-btn" 
-                            style="position: relative; z-index: 2500;">Delete</button>
+                    <button type="submit" class="btn btn-danger delete-confirm-btn btn-delete-z2500">Delete</button>
                 </form>
             </div>
         </div>

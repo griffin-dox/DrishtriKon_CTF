@@ -52,11 +52,31 @@ DrishtriKon_CTF/
    flask run
    ```
 
-## Security Notes
+## Post-Integration Cleanup
+- All `__pycache__` folders and Python cache files have been removed before commit.
+- Temporary or backup files (e.g., `.bak`, test scripts in `Ignores/`) are not tracked in version control.
+- Only production-ready code and assets are included in the repository.
+
+## Security Notes (Updated)
+- Google reCAPTCHA v3 is integrated for login, registration, and contact forms only. Scripts and badge are loaded only on those pages.
+- Content Security Policy (CSP) is hardened to allow only required domains for Google reCAPTCHA, Google Fonts, Google Ads, and related services. If you see new CSP violations, add only trusted domains as needed.
+- Inline scripts/styles are allowed only where required for reCAPTCHA v3 compatibility.
 - All security features use module-specific loggers with request/user context.
 - Bans, IDS alerts, and rate limiting are database-backed for production safety.
 - Session security enforces max sessions per user.
 - Password breach checks and full DB migration for honeypot/IDS patterns are recommended for production.
+
+## Documentation
+- See `FEATURES.md` for a comprehensive list of platform features.
+- See `SECURITY.md` for a detailed overview of security features and best practices.
+
+## Notable Features (Summary)
+- Role-based access (Admin, Host, Player)
+- 2FA, email verification, and secure session management
+- Challenge, competition, and team management
+- Leaderboards, badges, and stats
+- Modular logging and API endpoints
+- Security: reCAPTCHA v3, CSP, rate limiting, honeypot, IDS, file upload security
 
 ## API Documentation
 

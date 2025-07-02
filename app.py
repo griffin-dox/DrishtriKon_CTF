@@ -149,6 +149,17 @@ app.config["MAIL_MAX_EMAILS"] = 5
 app.config["MAIL_ASCII_ATTACHMENTS"] = False
 app.config["MAIL_DEBUG"] = True
 
+# reCAPTCHA Config
+app.config["RECAPTCHA_SITE_KEY"] = os.getenv("RECAPTCHA_SITE_KEY")
+app.config["RECAPTCHA_SECRET_KEY"] = os.getenv("RECAPTCHA_SECRET_KEY")
+app.config["RECAPTCHA_ENABLED"] = bool(app.config["RECAPTCHA_SITE_KEY"] and app.config["RECAPTCHA_SECRET_KEY"])
+
+# Log reCAPTCHA configuration status
+if app.config["RECAPTCHA_ENABLED"]:
+    logger.info("reCAPTCHA v3 is enabled")
+else:
+    logger.warning("reCAPTCHA v3 is disabled - missing RECAPTCHA_SITE_KEY or RECAPTCHA_SECRET_KEY")
+
 # Init extensions with app
 db.init_app(app)
 mail.init_app(app)
@@ -252,6 +263,14 @@ def load_user(user_id):
 @app.context_processor
 def utility_processor():
     return dict(year=lambda: datetime.now().year)
+
+@app.context_processor
+def recaptcha_processor():
+    """Make reCAPTCHA configuration available in templates"""
+    return dict(
+        recaptcha_enabled=app.config.get("RECAPTCHA_ENABLED", False),
+        recaptcha_site_key=app.config.get("RECAPTCHA_SITE_KEY", "")
+    )
 
 @app.context_processor
 def route_existence_processor():

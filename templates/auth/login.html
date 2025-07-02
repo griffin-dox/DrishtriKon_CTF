@@ -1,5 +1,13 @@
 {% extends 'layout.html' %}
 
+{% block head_scripts %}
+    <script src="https://www.google.com/recaptcha/api.js?render={{ recaptcha_site_key }}" async defer></script>
+    <script>
+        window.RECAPTCHA_SITE_KEY = '{{ recaptcha_site_key }}';
+    </script>
+    <script src="{{ url_for('static', filename='js/recaptcha-helper.js') }}"></script>
+{% endblock %}
+
 {% block content %}
 <div class="container">
     <div class="row justify-content-center">
@@ -9,8 +17,11 @@
                     <h3><i class="fas fa-sign-in-alt me-2"></i>Login</h3>
                 </div>
                 <div class="card-body px-4 py-4">
-                    <form method="POST" action="{{ url_for('auth.login') }}">
+                    <form method="POST" action="{{ url_for('auth.login') }}" id="loginForm">
                         {{ form.hidden_tag() }}
+                        
+                        <!-- Hidden field for reCAPTCHA token -->
+                        <input type="hidden" name="recaptcha_token" id="recaptchaToken" value="">
                         
                         <div class="mb-3">
                             <label for="username" class="form-label">{{ form.username.label }}</label>
@@ -37,7 +48,9 @@
                         </div>
                         
                         <div class="d-grid">
-                            {{ form.submit(class="btn btn-primary btn-lg") }}
+                            <button type="submit" class="btn btn-primary btn-lg" id="loginSubmit">
+                                <i class="fas fa-sign-in-alt me-2"></i>Login
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -48,5 +61,7 @@
         </div>
     </div>
 </div>
-<script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+
+<script src="{{ url_for('static', filename='js/login-form.js') }}"></script>
+
 {% endblock %}

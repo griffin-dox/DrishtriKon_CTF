@@ -6,6 +6,7 @@ from app import db, login_manager
 from core.models import User
 from forms import LoginForm, RegistrationForm, ChangePasswordForm, OTPForm
 from core.utils import set_user_otp, send_otp_email, verify_otp as verify_otp_code
+from core.recaptcha import verify_recaptcha_token
 from security.session_security import generate_session_id
 from flask_wtf.csrf import generate_csrf
 import random
@@ -34,6 +35,12 @@ def login():
     
     form = LoginForm()
     if form.validate_on_submit():
+        # Verify reCAPTCHA if enabled
+        recaptcha_token = request.form.get('recaptcha_token')
+        if not verify_recaptcha_token(recaptcha_token, 'login'):
+            flash('reCAPTCHA verification failed. Please try again.', 'danger')
+            return render_template('auth/login.html', form=form, title='Login')
+        
         username = form.username.data
         
         # Check if this username is rate limited
@@ -110,6 +117,12 @@ def register():
         return redirect(url_for('main.index'))
     form = RegistrationForm()
     if form.validate_on_submit():
+        # Verify reCAPTCHA if enabled
+        recaptcha_token = request.form.get('recaptcha_token')
+        if not verify_recaptcha_token(recaptcha_token, 'register'):
+            flash('reCAPTCHA verification failed. Please try again.', 'danger')
+            return render_template('auth/register.html', form=form, title='Register')
+        
         user = User(
             username=form.username.data,
             email=form.email.data
