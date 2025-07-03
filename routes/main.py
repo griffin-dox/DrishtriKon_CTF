@@ -3,7 +3,7 @@ from core.models import Competition, Challenge, User, CompetitionStatus, UserRol
 from sqlalchemy import func, desc
 from datetime import datetime
 from app import db
-from core.cache_utils import cached_query, invalidate_cache
+from core.production_cache import cache_db_query
 
 main_bp = Blueprint('main', __name__)
 
@@ -28,21 +28,21 @@ def index():
                            top_players=top_players,
                            title='Drishti कोण - Home')
 
-@cached_query(ttl=300)  # Cache for 5 minutes
+@cache_db_query(timeout=300)
 def get_home_active_competitions():
     """Get active competitions for homepage with caching"""
     return Competition.query.filter_by(
         status=CompetitionStatus.ACTIVE
     ).order_by(Competition.start_time).limit(5).all()
 
-@cached_query(ttl=300)  # Cache for 5 minutes
+@cache_db_query(timeout=300)
 def get_home_upcoming_competitions():
     """Get upcoming competitions for homepage with caching"""
     return Competition.query.filter_by(
         status=CompetitionStatus.UPCOMING
     ).order_by(Competition.start_time).limit(3).all()
 
-@cached_query(ttl=600)  # Cache for 10 minutes
+@cache_db_query(timeout=600)
 def get_platform_stats():
     """Get platform statistics with caching"""
     total_users = db.session.query(func.count(User.id)).scalar()
@@ -55,7 +55,7 @@ def get_platform_stats():
         'total_competitions': total_competitions
     }
 
-@cached_query(ttl=300)  # Cache for 5 minutes
+@cache_db_query(timeout=300)
 def get_top_players(limit=10):
     """Get top players with caching"""
     return (

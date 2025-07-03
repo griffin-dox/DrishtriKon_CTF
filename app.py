@@ -13,6 +13,7 @@ from flask_wtf.csrf import CSRFProtect
 from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_migrate import Migrate
 from flask_mail import Mail
+from flask_caching import Cache
 
 from utils.discord_alerts import setup_logging as setup_discord_security_logging
 
@@ -136,8 +137,29 @@ app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_recycle": 300,
     "pool_pre_ping": True,
+    "pool_size": 20,
+    "max_overflow": 30,
+    "pool_timeout": 30,
+    "echo": False,  # Disable SQL logging in production
 }
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+# Cache Configuration - Simple and reliable
+cache_type = os.getenv('CACHE_TYPE', 'simple')
+if cache_type == 'filesystem':
+    app.config['CACHE_TYPE'] = 'filesystem'
+    app.config['CACHE_DIR'] = os.getenv('CACHE_DIR', 'cache_data')
+    app.config['CACHE_DEFAULT_TIMEOUT'] = 300
+    app.config['CACHE_THRESHOLD'] = 1000  # Max number of items in cache
+    # Create cache directory if it doesn't exist
+    cache_dir = app.config['CACHE_DIR']
+    if not os.path.exists(cache_dir):
+        os.makedirs(cache_dir, exist_ok=True)
+    logger.info(f"Using filesystem cache in directory: {cache_dir}")
+else:
+    app.config['CACHE_TYPE'] = 'simple'
+    app.config['CACHE_DEFAULT_TIMEOUT'] = 300
+    logger.info("Using simple in-memory cache")
 
 # Email Config
 app.config["MAIL_SERVER"] = os.getenv("MAIL_SERVER", "smtp.gmail.com")
@@ -198,55 +220,61 @@ def setup_logging_directories():
 # Run setup
 setup_logging_directories()
 
-# Combine security, session update, and year context logic in a single before_request
+# Optimized before_request with reduced security overhead for static files
 @app.before_request
 def before_request_all():
-    # Always update session timestamp and user info
+    # Assign request ID first for logging
+    g.request_id = str(uuid.uuid4())
+    
+    # Skip ALL processing for static files to improve performance
+    if request.path.startswith('/static/') or request.path.startswith('/favicon'):
+        return None
+    
+    # Always update session timestamp and user info for non-static requests
     session.permanent = True
     session['last_active'] = sanitize_timestamp(datetime.now(timezone.utc).timestamp())
+    
     if current_user.is_authenticated:
         g.user_id = current_user.id
         g.username = current_user.username
     else:
         g.user_id = None
         g.username = 'anonymous'
+    
     # Pass the current year to all templates
     g.year = datetime.now().year
 
-    # Log for debugging session/CSRF issues
-    logger.debug(f"[BeforeRequest] Path: {request.path}, Method: {request.method}, Session Keys: {list(session.keys())}")
-
-    # Skip custom security checks for static files and authentication routes
-    if request.path.startswith('/static/') or request.path in ['/login', '/register', '/verify-otp', '/logout']:
+    # Skip intensive security checks for authentication routes and health checks
+    if request.path in ['/login', '/register', '/verify-otp', '/logout', '/healthz', '/maintenance']:
         return None
 
-    # Log the request
+    # Log the request (only for non-static, non-auth routes)
     log_ip_activity('request')
 
-    # Check if path is a honeypot
-    if check_honeypot_path():
-        logger.warning(f"Honeypot triggered for path {request.path} from {get_client_ip()}")
-        return render_template('honeypot/fake_login.html'), 200
+    # Only run heavy security checks for sensitive routes
+    sensitive_routes = ['/admin', '/host', '/player', '/challenges', '/competitions']
+    is_sensitive = any(request.path.startswith(route) for route in sensitive_routes)
+    
+    if is_sensitive or request.method == 'POST':
+        # Check if path is a honeypot
+        if check_honeypot_path():
+            logger.warning(f"Honeypot triggered for path {request.path} from {get_client_ip()}")
+            return render_template('honeypot/fake_login.html'), 200
 
-    # Check form for honeypot fields
-    if request.method == 'POST' and check_honeypot_fields(request.form):
-        logger.warning(f"Honeypot form field triggered from {get_client_ip()}")
-        return redirect(url_for('main.index')), 302
+        # Check form for honeypot fields
+        if request.method == 'POST' and check_honeypot_fields(request.form):
+            logger.warning(f"Honeypot form field triggered from {get_client_ip()}")
+            return redirect(url_for('main.index')), 302
 
-    # Run IDS analysis
-    alerts = analyze_request()
-    if alerts and len(alerts) > 0:
-        logger.warning(f"IDS alerts triggered: {len(alerts)} for {request.path} from {get_client_ip()}")
+        # Run IDS analysis only for sensitive routes
+        alerts = analyze_request()
+        if alerts and len(alerts) > 0:
+            logger.warning(f"IDS alerts triggered: {len(alerts)} for {request.path} from {get_client_ip()}")
 
-    # Run security checks
-    if not security_checks():
-        logger.warning(f"Security check failed for {request.path} from {get_client_ip()}")
-        return render_template('errors/403.html'), 403
-
-@app.before_request
-def assign_request_id_and_user():
-    g.request_id = str(uuid.uuid4())
-    # user_id and username are set in before_request_all
+        # Run security checks
+        if not security_checks():
+            logger.warning(f"Security check failed for {request.path} from {get_client_ip()}")
+            return render_template('errors/403.html'), 403
 
 # Flask-Login config
 login_manager = LoginManager()
@@ -329,7 +357,7 @@ with app.app_context():
     from routes.ads import ads_bp
     from routes.teams import teams_bp
     from routes.badge import badge_bp
-
+    from routes.performance import performance_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
@@ -341,10 +369,15 @@ with app.app_context():
     app.register_blueprint(ads_bp)
     app.register_blueprint(teams_bp)
     app.register_blueprint(badge_bp)
+    app.register_blueprint(performance_bp)
 
     # --- Periodic Cleanup for Unverified Users ---
     from utils.utils import delete_expired_unverified_users
     delete_expired_unverified_users()  # Run once at startup (optional)
+    
+    # --- Warm up critical caches ---
+    from core.performance_cache import warm_critical_caches
+    warm_critical_caches()  # Pre-populate frequently accessed data
     
     # Setup error handlers
     @app.errorhandler(404)

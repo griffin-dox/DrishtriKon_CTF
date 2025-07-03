@@ -61,3 +61,8 @@ dist/
 # Others
 *.swp
 *.tmp
+.tests/
+tests/
+tests/
+*.cache
+cache_data/

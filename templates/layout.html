@@ -8,7 +8,26 @@
     <title>{% if title %}{{ title }} - {% endif %} Drishti कोण</title>
     
     <!-- Favicon -->
-    <link rel="icon" href="{{ static_url('img/favicon.svg') }}" type="image/svg+xml">
+    <link rel="icon" href="{{ url_for('static', filename='img/favicon.svg') }}" type="image/svg+xml">
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" as="style">
+    <link rel="preload" href="{{ url_for('static', filename='css/modern_ctf.css') }}" as="style">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" as="style">
+    
+    <!-- DNS prefetch for external resources -->
+    <link rel="dns-prefetch" href="//fonts.googleapis.com">
+    <link rel="dns-prefetch" href="//fonts.gstatic.com">
+    <link rel="dns-prefetch" href="//cdnjs.cloudflare.com">
+    <link rel="dns-prefetch" href="//www.googletagmanager.com">
+    
+    <!-- Critical CSS (inline for faster rendering) -->
+    <style>
+        /* Critical above-the-fold styles */
+        body { font-family: 'JetBrains Mono', monospace; margin: 0; background: #0a0a0a; color: #fff; }
+        .navbar { background: rgba(0,0,0,0.95) !important; }
+        .loading { display: none; }
+    </style>
     
     <!-- Google Fonts - JetBrains Mono for CTF theme -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,27 +37,25 @@
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Font Awesome - defer non-critical icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></noscript>
     
     <!-- Modern CTF CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/modern_ctf.css') }}">
-    
-    <!-- Chart.js -->
-    <script src="{{ url_for('static', filename='js/npm-chart.js') }}"></script>
     
     <!-- Page-specific head scripts -->
     {% block head_scripts %}{% endblock %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/inline-moved.css') }}">
 
-    <!-- Google Analytics (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VC8P94TFGV"></script>
+    <!-- Google Analytics (gtag.js) - Load asynchronously -->
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
       gtag('config', 'G-VC8P94TFGV');
     </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VC8P94TFGV"></script>
 </head>
 <body>
     <!-- Navigation -->
@@ -378,14 +395,35 @@
         </div>
     </footer>
 
-    <!-- Bootstrap JS Bundle -->
-<script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>    
-    <!-- Custom JS -->
-    <script src="{{ static_url('js/main.js') }}"></script>
-    <script src="{{ static_url('js/custom-modal.js') }}"></script>
-    <script src="{{ static_url('js/ads.js') }}"></script>
+    <!-- Load critical JavaScript first -->
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
     
-    <!-- Google Ads Script -->
+    <!-- Defer non-critical JavaScript -->
+    <script>
+        // Load non-critical scripts asynchronously
+        function loadScript(src) {
+            const script = document.createElement('script');
+            script.src = src;
+            script.async = true;
+            document.body.appendChild(script);
+        }
+        
+        // Load Chart.js only when needed
+        window.loadChartJS = function() {
+            if (!window.Chart) {
+                loadScript("{{ url_for('static', filename='js/npm-chart.js') }}");
+            }
+        };
+        
+        // Load scripts after page load
+        window.addEventListener('load', function() {
+            loadScript("{{ url_for('static', filename='js/main.js') }}");
+            loadScript("{{ url_for('static', filename='js/custom-modal.js') }}");
+            loadScript("{{ url_for('static', filename='js/ads.js') }}");
+        });
+    </script>
+    
+    <!-- Google Ads Script - defer -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4151615559408811"
      crossorigin="anonymous"></script>
     
