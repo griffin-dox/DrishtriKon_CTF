@@ -1,0 +1,19 @@
+# Include production requirements
+-r requirements.txt
+
+# Development and testing tools
+pytest>=7.0.0
+pytest-flask>=1.2.0
+pytest-cov>=4.0.0
+
+# Code formatting and linting
+black>=23.0.0
+flake8>=6.0.0
+mypy>=1.0.0
+
+# Development utilities
+flask-debugtoolbar>=0.13.1
+pre-commit>=3.0.0
+
+# Test data factories
+factory-boy>=3.3.0
