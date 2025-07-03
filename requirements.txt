@@ -20,6 +20,7 @@ email-validator>=2.2.0
 python-dotenv>=1.1.0
 pyotp>=2.9.0
 markupsafe>=2.1.0
+user-agents>=2.2.0
 
 # HTTP and external requests
 requests>=2.31.0
