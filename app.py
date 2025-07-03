@@ -375,6 +375,10 @@ with app.app_context():
     from utils.utils import delete_expired_unverified_users
     delete_expired_unverified_users()  # Run once at startup (optional)
     
+    # --- Initialize cache manager and start maintenance ---
+    from core.cache_management import schedule_cache_maintenance
+    schedule_cache_maintenance()  # Setup automatic cache cleanup and optimization
+
     # --- Warm up critical caches ---
     from core.performance_cache import warm_critical_caches
     warm_critical_caches()  # Pre-populate frequently accessed data

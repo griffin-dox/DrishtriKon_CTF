@@ -8,6 +8,9 @@ flask-mail>=0.10.0
 flask-cors>=4.0.0
 flask-caching>=2.1.0
 
+# Task scheduling for cache maintenance
+schedule>=1.2.0
+
 # Database and ORM
 sqlalchemy>=2.0.40
 psycopg2-binary>=2.9.10

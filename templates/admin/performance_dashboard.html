@@ -91,21 +91,72 @@
         </div>
     </div>
 
+    <!-- Cache Storage Statistics -->
+    <div class="row">
+        <div class="col-md-4">
+            <div class="perf-card">
+                <div class="metric-label">Cache Storage</div>
+                <div class="metric-value" id="cache-storage-size">--</div>
+                <div class="progress mt-2">
+                    <div class="progress-bar" id="cache-storage-progress" style="width: 0%"></div>
+                </div>
+                <div class="small text-muted" id="cache-storage-details">--</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="perf-card">
+                <div class="metric-label">Cache Files</div>
+                <div class="metric-value" id="cache-file-count">--</div>
+                <div class="small text-muted">Total cached items</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="perf-card">
+                <div class="metric-label">Disk Space</div>
+                <div class="metric-value" id="system-disk-usage">--</div>
+                <div class="progress mt-2">
+                    <div class="progress-bar" id="disk-usage-progress" style="width: 0%"></div>
+                </div>
+                <div class="small text-muted" id="disk-usage-details">--</div>
+            </div>
+        </div>
+    </div>
+
     <!-- Actions -->
     <div class="row">
         <div class="col-12">
             <div class="perf-card">
                 <h4>Cache Management</h4>
-                <div class="btn-group" role="group">
-                    <button type="button" class="btn btn-warning" onclick="clearCache()">
-                        <i class="fas fa-trash"></i> Clear Cache
-                    </button>
-                    <button type="button" class="btn btn-success" onclick="warmCache()">
-                        <i class="fas fa-fire"></i> Warm Cache
-                    </button>
-                    <button type="button" class="btn btn-info" onclick="refreshData()">
-                        <i class="fas fa-sync"></i> Refresh Data
-                    </button>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Basic Operations</h6>
+                        <div class="btn-group-vertical d-grid gap-2" role="group">
+                            <button type="button" class="btn btn-warning" onclick="clearCache()">
+                                <i class="fas fa-trash"></i> Clear Expired Cache
+                            </button>
+                            <button type="button" class="btn btn-success" onclick="warmCache()">
+                                <i class="fas fa-fire"></i> Warm Cache
+                            </button>
+                            <button type="button" class="btn btn-info" onclick="refreshData()">
+                                <i class="fas fa-sync"></i> Refresh Data
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Advanced Operations</h6>
+                        <div class="btn-group-vertical d-grid gap-2" role="group">
+                            <button type="button" class="btn btn-warning" onclick="cleanupCacheStorage()">
+                                <i class="fas fa-broom"></i> Cleanup Storage
+                            </button>
+                            <button type="button" class="btn btn-primary" onclick="optimizeCacheStructure()">
+                                <i class="fas fa-cogs"></i> Optimize Structure
+                            </button>
+                            <button type="button" class="btn btn-danger" onclick="emergencyCleanup()" 
+                                    data-bs-toggle="tooltip" title="Removes ALL cache files - use only in emergencies">
+                                <i class="fas fa-exclamation-triangle"></i> Emergency Clear
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 <div id="action-status" class="mt-3"></div>
             </div>
@@ -206,17 +257,19 @@ function initializeChart() {
 async function refreshData() {
     try {
         // Fetch all data in parallel
-        const [systemStats, dbStats, cacheStats, responseTest] = await Promise.all([
+        const [systemStats, dbStats, cacheStats, responseTest, storageStats] = await Promise.all([
             fetch('/admin/performance/api/system-stats').then(r => r.json()),
             fetch('/admin/performance/api/database-stats').then(r => r.json()),
             fetch('/admin/performance/api/cache-stats').then(r => r.json()),
-            fetch('/admin/performance/api/response-time-test').then(r => r.json())
+            fetch('/admin/performance/api/response-time-test').then(r => r.json()),
+            fetch('/admin/performance/api/cache-storage-stats').then(r => r.json())
         ]);
 
         updateSystemMetrics(systemStats);
         updateDatabaseMetrics(dbStats);
         updateCacheMetrics(cacheStats);
         updateResponseTimeChart(responseTest);
+        updateCacheStorageMetrics(storageStats);
         
     } catch (error) {
         console.error('Error refreshing data:', error);
@@ -231,11 +284,14 @@ function updateSystemMetrics(data) {
     const memory = data.system.memory_percent;
     
     document.getElementById('cpu-usage').textContent = cpu.toFixed(1) + '%';
-    document.getElementById('cpu-progress').style.width = cpu + '%';
-    document.getElementById('cpu-progress').className = `progress-bar ${cpu > 80 ? 'bg-danger' : cpu > 60 ? 'bg-warning' : 'bg-success'}`;
-    
     document.getElementById('memory-usage').textContent = memory.toFixed(1) + '%';
+    
+    // Update progress bars
+    document.getElementById('cpu-progress').style.width = cpu + '%';
     document.getElementById('memory-progress').style.width = memory + '%';
+    
+    // Update colors based on usage
+    document.getElementById('cpu-progress').className = `progress-bar ${cpu > 80 ? 'bg-danger' : cpu > 60 ? 'bg-warning' : 'bg-success'}`;
     document.getElementById('memory-progress').className = `progress-bar ${memory > 80 ? 'bg-danger' : memory > 60 ? 'bg-warning' : 'bg-info'}`;
     
     // Update detailed stats
@@ -275,24 +331,54 @@ function updateCacheMetrics(data) {
     document.getElementById('cache-type').textContent = data.cache_health.type || data.cache_type;
 }
 
+function updateCacheStorageMetrics(data) {
+    if (data.error) return;
+    
+    const cacheStorage = data.cache_storage;
+    const systemStorage = data.system_storage;
+    
+    // Update cache storage metrics
+    const usagePercent = cacheStorage.usage_percent || 0;
+    document.getElementById('cache-storage-size').textContent = `${cacheStorage.current_size_mb || 0}MB`;
+    document.getElementById('cache-storage-progress').style.width = usagePercent + '%';
+    
+    // Color based on usage and status
+    let storageColor = 'bg-success';
+    if (cacheStorage.status === 'critical') storageColor = 'bg-danger';
+    else if (cacheStorage.status === 'warning') storageColor = 'bg-warning';
+    document.getElementById('cache-storage-progress').className = `progress-bar ${storageColor}`;
+    
+    document.getElementById('cache-storage-details').textContent = 
+        `${usagePercent.toFixed(1)}% of ${cacheStorage.max_size_mb || 0}MB limit`;
+    
+    // Update file count
+    document.getElementById('cache-file-count').textContent = cacheStorage.file_count || 0;
+    
+    // Update system disk usage
+    if (systemStorage.disk) {
+        const diskUsage = systemStorage.disk.usage_percent;
+        document.getElementById('system-disk-usage').textContent = `${diskUsage.toFixed(1)}%`;
+        document.getElementById('disk-usage-progress').style.width = diskUsage + '%';
+        document.getElementById('disk-usage-progress').className = 
+            `progress-bar ${diskUsage > 90 ? 'bg-danger' : diskUsage > 75 ? 'bg-warning' : 'bg-info'}`;
+        document.getElementById('disk-usage-details').textContent = 
+            `${systemStorage.disk.free_gb.toFixed(1)}GB free of ${systemStorage.disk.total_gb.toFixed(1)}GB`;
+    }
+}
+
 function updateResponseTimeChart(data) {
     if (data.error) return;
     
-    const timestamp = new Date().toLocaleTimeString();
-    const times = data.response_times_ms;
+    const labels = data.map(item => item.timestamp);
+    const dbQueryData = data.map(item => item.db_query_time);
+    const cacheOpData = data.map(item => item.cache_operation_time);
+    const templateRenderData = data.map(item => item.template_render_time);
     
-    // Add new data point
-    if (responseTimeChart.data.labels.length >= 20) {
-        responseTimeChart.data.labels.shift();
-        responseTimeChart.data.datasets.forEach(dataset => dataset.data.shift());
-    }
-    
-    responseTimeChart.data.labels.push(timestamp);
-    responseTimeChart.data.datasets[0].data.push(times.database_query || 0);
-    responseTimeChart.data.datasets[1].data.push(times.cache_operation || 0);
-    responseTimeChart.data.datasets[2].data.push(times.template_render || 0);
-    
-    responseTimeChart.update('none');
+    responseTimeChart.data.labels = labels;
+    responseTimeChart.data.datasets[0].data = dbQueryData;
+    responseTimeChart.data.datasets[1].data = cacheOpData;
+    responseTimeChart.data.datasets[2].data = templateRenderData;
+    responseTimeChart.update();
 }
 
 async function clearCache() {
@@ -300,6 +386,7 @@ async function clearCache() {
         const response = await fetch('/admin/performance/api/clear-cache', { method: 'POST' });
         const data = await response.json();
         showStatus(data.message || 'Cache cleared', 'success');
+        refreshData(); // Refresh stats after clearing
     } catch (error) {
         showStatus('Error clearing cache: ' + error.message, 'danger');
     }
@@ -310,8 +397,53 @@ async function warmCache() {
         const response = await fetch('/admin/performance/api/warm-cache', { method: 'POST' });
         const data = await response.json();
         showStatus(data.message || 'Cache warmed up', 'success');
+        refreshData(); // Refresh stats after warming
     } catch (error) {
         showStatus('Error warming cache: ' + error.message, 'danger');
+    }
+}
+
+async function cleanupCacheStorage() {
+    try {
+        showStatus('Cleaning up cache storage...', 'info');
+        const response = await fetch('/admin/performance/api/cleanup-cache', { 
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ force: false })
+        });
+        const data = await response.json();
+        showStatus(data.message || 'Cache storage cleaned up', 'success');
+        refreshData(); // Refresh stats after cleanup
+    } catch (error) {
+        showStatus('Error cleaning cache storage: ' + error.message, 'danger');
+    }
+}
+
+async function optimizeCacheStructure() {
+    try {
+        showStatus('Optimizing cache structure...', 'info');
+        const response = await fetch('/admin/performance/api/optimize-cache-structure', { method: 'POST' });
+        const data = await response.json();
+        showStatus(data.message || 'Cache structure optimized', 'success');
+        refreshData(); // Refresh stats after optimization
+    } catch (error) {
+        showStatus('Error optimizing cache structure: ' + error.message, 'danger');
+    }
+}
+
+async function emergencyCleanup() {
+    if (!confirm('⚠️ EMERGENCY CLEANUP ⚠️\n\nThis will remove ALL cache files, including unexpired ones. This should only be used in emergencies when cache storage is critically full.\n\nAre you sure you want to proceed?')) {
+        return;
+    }
+    
+    try {
+        showStatus('Running emergency cleanup...', 'warning');
+        const response = await fetch('/admin/performance/api/emergency-clear-cache', { method: 'POST' });
+        const data = await response.json();
+        showStatus(data.message || 'Emergency cleanup completed', 'warning');
+        refreshData(); // Refresh stats after emergency cleanup
+    } catch (error) {
+        showStatus('Error during emergency cleanup: ' + error.message, 'danger');
     }
 }
 

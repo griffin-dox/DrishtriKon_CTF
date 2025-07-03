@@ -7,6 +7,7 @@ from flask_login import login_required, current_user
 from core.models import UserRole
 from core.performance_cache import cache_health_check, warm_critical_caches
 from core.db_optimization import get_database_stats, monitor_connection_pool, analyze_query_performance
+from core.cache_management import get_cache_manager, cleanup_cache, get_cache_storage_stats, emergency_clear_cache
 from functools import wraps
 import time
 import psutil
@@ -185,3 +186,71 @@ def performance_metrics():
             "error": str(e),
             "timestamp": time.time()
         }), 500
+
+@performance_bp.route('/api/cache-storage-stats')
+@login_required
+@admin_required
+def cache_storage_stats():
+    """Get detailed cache storage statistics"""
+    try:
+        cache_manager = get_cache_manager()
+        storage_stats = cache_manager.get_storage_stats()
+        system_info = cache_manager.get_system_storage_info()
+        
+        return jsonify({
+            "status": "success",
+            "cache_storage": storage_stats,
+            "system_storage": system_info
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+@performance_bp.route('/api/cleanup-cache', methods=['POST'])
+@login_required
+@admin_required
+def cleanup_cache_endpoint():
+    """Run cache cleanup"""
+    try:
+        force = request.json.get('force', False) if request.is_json else False
+        result = cleanup_cache(force=force)
+        
+        return jsonify({
+            "status": "success",
+            "message": f"Cache cleanup completed: {result['files_removed']} files removed, {result['space_freed_mb']}MB freed",
+            "cleanup_result": result
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+@performance_bp.route('/api/emergency-clear-cache', methods=['POST'])
+@login_required
+@admin_required
+def emergency_clear_cache_endpoint():
+    """Emergency cache clearing"""
+    try:
+        result = emergency_clear_cache()
+        
+        return jsonify({
+            "status": "success",
+            "message": f"Emergency cleanup completed: {result['files_removed']} files removed, {result['space_freed_mb']}MB freed",
+            "cleanup_result": result
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+@performance_bp.route('/api/optimize-cache-structure', methods=['POST'])
+@login_required
+@admin_required
+def optimize_cache_structure():
+    """Optimize cache directory structure"""
+    try:
+        cache_manager = get_cache_manager()
+        result = cache_manager.optimize_cache_structure()
+        
+        return jsonify({
+            "status": "success",
+            "message": f"Cache structure optimized: {result['moved_files']} files organized",
+            "optimization_result": result
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
