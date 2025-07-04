@@ -2,10 +2,6 @@
 
 {% block head_scripts %}
     <script src="https://www.google.com/recaptcha/api.js?render={{ recaptcha_site_key }}" async defer></script>
-    <script>
-        window.RECAPTCHA_SITE_KEY = '{{ recaptcha_site_key }}';
-    </script>
-    <script src="{{ url_for('static', filename='js/recaptcha-helper.js') }}"></script>
 {% endblock %}
 
 {% block content %}
@@ -23,10 +19,8 @@
                 <div class="card-body">
                     <p class="mb-4">Have questions, feedback, or need assistance? We'd love to hear from you! Fill out the form below and we'll get back to you as soon as possible.</p>
                     
-                    <form action="{{ form_action }}" method="post" id="contactForm">
+                    <form action="{{ form_action }}" method="post" id="contactForm" data-recaptcha="contact" data-contact-form>
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <!-- Hidden field for reCAPTCHA token -->
-                        <input type="hidden" name="recaptcha_token" id="recaptchaToken" value="">
                         
                         <div class="mb-3">
                             <label for="name" class="form-label">Your Name</label>

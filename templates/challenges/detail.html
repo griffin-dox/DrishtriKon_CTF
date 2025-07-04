@@ -65,7 +65,7 @@
                     {% else %}
                     <div class="mt-4">
                         <h6>Submit Flag:</h6>
-                        <form method="POST" action="{{ url_for('challenges.view_challenge', challenge_id=challenge.id) }}" class="flag-form">
+                        <form method="POST" action="{{ url_for('challenges.view_challenge', challenge_id=challenge.id) }}" class="flag-form" data-flag-form data-recaptcha="flag_submit">
                             {{ form.hidden_tag() }}
                             <div class="input-group">
                                 {{ form.flag(class="form-control flag-input", placeholder="Enter flag here (e.g. flag{...})") }}

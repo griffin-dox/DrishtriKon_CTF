@@ -58,6 +58,35 @@
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-VC8P94TFGV"></script>
 </head>
 <body>
+    <script>
+        // Add page identification classes for module loading
+        (function() {
+            const path = window.location.pathname;
+            const body = document.body;
+            
+            // Add general page type classes
+            if (path.startsWith('/admin')) {
+                body.classList.add('admin-page');
+                body.setAttribute('data-page', 'admin');
+            } else if (path === '/' || path === '/index') {
+                body.classList.add('home-page');
+                body.setAttribute('data-page', 'home');
+            } else if (path.includes('/auth/') || path.includes('/login')) {
+                body.classList.add('auth-page');
+                body.setAttribute('data-page', 'auth');
+            } else if (path.includes('/challenges/')) {
+                body.classList.add('challenges-page');
+                body.setAttribute('data-page', 'challenges');
+            } else if (path.includes('/contact')) {
+                body.classList.add('contact-page');
+                body.setAttribute('data-page', 'contact');
+            } else if (path.includes('/competitions/')) {
+                body.classList.add('competitions-page');
+                body.setAttribute('data-page', 'competitions');
+            }
+        })();
+    </script>
+    
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
         <div class="container">
@@ -398,29 +427,24 @@
     <!-- Load critical JavaScript first -->
     <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
     
-    <!-- Defer non-critical JavaScript -->
+    <!-- reCAPTCHA Site Key for global access -->
     <script>
-        // Load non-critical scripts asynchronously
-        function loadScript(src) {
-            const script = document.createElement('script');
-            script.src = src;
-            script.async = true;
-            document.body.appendChild(script);
-        }
-        
-        // Load Chart.js only when needed
+        window.RECAPTCHA_SITE_KEY = '{{ config.RECAPTCHA_SITE_KEY }}';
+    </script>
+    
+    <!-- Load new modular JavaScript system -->
+    <script src="{{ url_for('static', filename='js/app-config.js') }}"></script>
+    
+    <!-- Load Chart.js only when needed -->
+    <script>
         window.loadChartJS = function() {
             if (!window.Chart) {
-                loadScript("{{ url_for('static', filename='js/npm-chart.js') }}");
+                const script = document.createElement('script');
+                script.src = "{{ url_for('static', filename='js/npm-chart.js') }}";
+                script.async = true;
+                document.body.appendChild(script);
             }
         };
-        
-        // Load scripts after page load
-        window.addEventListener('load', function() {
-            loadScript("{{ url_for('static', filename='js/main.js') }}");
-            loadScript("{{ url_for('static', filename='js/custom-modal.js') }}");
-            loadScript("{{ url_for('static', filename='js/ads.js') }}");
-        });
     </script>
     
     <!-- Google Ads Script - defer -->
