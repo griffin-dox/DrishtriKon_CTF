@@ -16,7 +16,7 @@ class RecaptchaError(Exception):
 
 def verify_recaptcha(token, action=None, min_score=0.5):
     """
-    Verify reCAPTCHA v3 token with Google's API.
+    Dummy reCAPTCHA: Always return success for development/demo mode.
     
     Args:
         token (str): The reCAPTCHA token from the client
@@ -26,84 +26,13 @@ def verify_recaptcha(token, action=None, min_score=0.5):
     Returns:
         dict: Verification result with success, score, and details
     """
-    if not token:
-        return {
-            'success': False,
-            'score': 0.0,
-            'error': 'No reCAPTCHA token provided'
-        }
-    
-    secret_key = current_app.config.get('RECAPTCHA_SECRET_KEY')
-    if not secret_key:
-        logger.error("reCAPTCHA secret key not configured")
-        return {
-            'success': False,
-            'score': 0.0,
-            'error': 'reCAPTCHA not configured'
-        }
-    
-    # Prepare verification request
-    verify_url = 'https://www.google.com/recaptcha/api/siteverify'
-    data = {
-        'secret': secret_key,
-        'response': token,
-        'remoteip': request.remote_addr
+    logger.info("Dummy reCAPTCHA mode: always returning success.")
+    return {
+        'success': True,
+        'score': 1.0,
+        'error': None,
+        'error_codes': []
     }
-    
-    try:
-        # Make request to Google's verification API
-        response = requests.post(verify_url, data=data, timeout=10)
-        response.raise_for_status()
-        result = response.json()
-        
-        success = result.get('success', False)
-        score = result.get('score', 0.0)
-        
-        # Check action if specified
-        if action and result.get('action') != action:
-            logger.warning(f"reCAPTCHA action mismatch. Expected: {action}, Got: {result.get('action')}")
-            return {
-                'success': False,
-                'score': score,
-                'error': 'Action mismatch'
-            }
-        
-        # Check score threshold
-        if success and score < min_score:
-            logger.warning(f"reCAPTCHA score too low: {score} < {min_score}")
-            return {
-                'success': False,
-                'score': score,
-                'error': f'Score too low: {score}'
-            }
-        
-        # Log the result
-        if success:
-            logger.info(f"reCAPTCHA verification successful. Score: {score}, Action: {result.get('action')}")
-        else:
-            logger.warning(f"reCAPTCHA verification failed: {result.get('error-codes', [])}")
-        
-        return {
-            'success': success,
-            'score': score,
-            'error': None if success else 'Verification failed',
-            'error_codes': result.get('error-codes', [])
-        }
-        
-    except requests.RequestException as e:
-        logger.error(f"reCAPTCHA verification request failed: {str(e)}")
-        return {
-            'success': False,
-            'score': 0.0,
-            'error': 'Verification service unavailable'
-        }
-    except Exception as e:
-        logger.error(f"Unexpected error during reCAPTCHA verification: {str(e)}")
-        return {
-            'success': False,
-            'score': 0.0,
-            'error': 'Verification error'
-        }
 
 def require_recaptcha(action=None, min_score=0.5, json_response=False):
     """
@@ -174,7 +103,6 @@ def get_recaptcha_site_key():
 
 def verify_recaptcha_token(token, action=None, min_score=0.5):
     """
-    Compatibility wrapper for legacy imports. Returns True if verification passes, else False.
+    Compatibility wrapper for legacy imports. Always returns True in dummy mode.
     """
-    result = verify_recaptcha(token, action, min_score)
-    return result.get('success', False)
+    return True
