@@ -13,6 +13,7 @@ from core.models import Badge, UserBadge
 from core.models import User
 from utils.utils import auto_assign_badges
 from forms import BadgeForm
+from pytz import timezone
 
 # Define the upload folder
 UPLOAD_FOLDER = 'uploads/'
@@ -35,6 +36,8 @@ def is_host_of_competition(competition_id):
         Competition.query.filter_by(id=competition_id, host_id=current_user.id).first() or
         CompetitionHost.query.filter_by(competition_id=competition_id, host_id=current_user.id).first()
     )
+
+IST = timezone('Asia/Kolkata')
 
 @host_bp.route('/')
 @login_required
@@ -136,28 +139,15 @@ def manage_competition(competition_id):
     competition_challenges = CompetitionChallenge.query.filter_by(competition_id=competition_id).all()
     participants = UserCompetition.query.filter_by(competition_id=competition_id).all()
 
-    # ✅ Host Stats
-    total_participants = len(participants)
-    total_submissions = db.session.query(func.count()).select_from(Submission).filter_by(competition_id=competition_id).scalar()
-    correct_submissions = db.session.query(func.count()).select_from(Submission).filter_by(competition_id=competition_id, is_correct=True).scalar()
-    avg_score = db.session.query(func.avg(UserCompetition.score)).filter_by(competition_id=competition_id).scalar() or 0
-    challenge_solve_distribution = db.session.query(
-        Challenge.title, func.count(Submission.id)
-    ).join(CompetitionChallenge, CompetitionChallenge.challenge_id == Challenge.id)\
-     .join(Submission, Submission.challenge_id == Challenge.id)\
-     .filter(CompetitionChallenge.competition_id == competition_id, Submission.is_correct == True)\
-     .group_by(Challenge.title).all()
+    # Convert UTC times to IST
+    competition.start_time = competition.start_time.astimezone(IST)
+    competition.end_time = competition.end_time.astimezone(IST)
 
     return render_template(
         'host/competition_management.html',
         competition=competition,
         competition_challenges=competition_challenges,
         participants=participants,
-        total_participants=total_participants,
-        total_submissions=total_submissions,
-        correct_submissions=correct_submissions,
-        avg_score=round(avg_score, 2),
-        challenge_solve_distribution=challenge_solve_distribution,
         status_form=status_form, 
         title=f'Manage {competition.title}'
     )

@@ -15,6 +15,7 @@ from core.cache_utils import cached_query
 from core.models import Submission
 import os
 import logging
+from pytz import timezone
 
 # Define a module logger
 logger = logging.getLogger(__name__)
@@ -505,6 +506,11 @@ def delete_competition(competition_id):
 def manage_competition_hosts(competition_id):
     competition = Competition.query.get_or_404(competition_id)
     
+    # Convert UTC times to IST
+    IST = timezone('Asia/Kolkata')
+    competition.start_time = competition.start_time.astimezone(IST)
+    competition.end_time = competition.end_time.astimezone(IST)
+
     # Get current hosts
     current_hosts = [ch.host for ch in CompetitionHost.query.filter_by(competition_id=competition.id).all()]
     
