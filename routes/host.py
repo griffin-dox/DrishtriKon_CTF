@@ -313,13 +313,18 @@ def delete_challenge(challenge_id):
     for cc in allowed_links:
         db.session.delete(cc)
 
+    # Delete related submissions
+    related_submissions = Submission.query.filter_by(challenge_id=challenge_id).all()
+    for submission in related_submissions:
+        db.session.delete(submission)
+
     # Only delete the challenge if it's not linked to any other competition
     still_linked = CompetitionChallenge.query.filter_by(challenge_id=challenge_id).count()
     if still_linked == 0:
         db.session.delete(challenge)
 
     db.session.commit()
-    flash("Challenge deleted or unlinked from your competitions.", "success")
+    flash("Challenge and related submissions deleted successfully.", "success")
     return redirect(url_for('host.challenges'))
 
 @host_bp.route('/competitions/<int:competition_id>/stats')

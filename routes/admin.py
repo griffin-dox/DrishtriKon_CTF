@@ -383,15 +383,20 @@ def edit_challenge(challenge_id):
 @admin_required
 def delete_challenge(challenge_id):
     challenge = Challenge.query.get_or_404(challenge_id)
-    
+
     try:
+        # Delete related submissions
+        related_submissions = Submission.query.filter_by(challenge_id=challenge_id).all()
+        for submission in related_submissions:
+            db.session.delete(submission)
+
         db.session.delete(challenge)
         db.session.commit()
-        flash('Challenge has been deleted successfully', 'success')
+        flash('Challenge and related submissions deleted successfully', 'success')
     except Exception as e:
         db.session.rollback()
         flash(f'Error deleting challenge: {str(e)}', 'danger')
-    
+
     return redirect(url_for('admin.challenges'))
 
 # Competition Management
