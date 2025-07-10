@@ -114,7 +114,7 @@ def manage_competition(competition_id):
     if request.method == 'POST':
         if 'submit' in request.form:  # manual status update form
             if status_form.validate_on_submit():
-                competition.status = CompetitionStatus[status_form.status.data]
+                competition.manual_status_override = CompetitionStatus[status_form.status.data]
                 try:
                     db.session.commit()
                     flash("Competition status manually updated.", "success")

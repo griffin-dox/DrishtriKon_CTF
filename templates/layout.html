@@ -11,7 +11,7 @@
     <link rel="icon" href="{{ url_for('static', filename='img/favicon.svg') }}" type="image/svg+xml">
     
     <!-- Preload critical resources -->
-    <link rel="preload" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" as="style">
+    <link rel="preload" href="{{ url_for('static', filename='css/bootstrap_min.css') }}" as="style">
     <link rel="preload" href="{{ url_for('static', filename='css/modern_ctf.css') }}" as="style">
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" as="style">
     
@@ -35,7 +35,7 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap_min.css') }}">
     
     <!-- Font Awesome - defer non-critical icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="print" onload="this.media='all'">
@@ -425,7 +425,7 @@
     </footer>
 
     <!-- Load critical JavaScript first -->
-    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap_bundle_min.js') }}"></script>
     
     <!-- reCAPTCHA Site Key for global access -->
     <script>
