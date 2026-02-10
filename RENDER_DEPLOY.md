@@ -18,19 +18,18 @@ gunicorn wsgi:app -c gunicorn.conf.py
 
 ## What Changed
 
-**Old Approach** (Broken):
+**Problem:**
 
-- Migrations ran inside `wsgi.py` during module import
-- Gunicorn worker timeout (30s) killed long-running migrations
-- App would exit with status 1 after migrations started
+- `flask-migrate upgrade()` hangs indefinitely when called from Gunicorn hooks
+- Database migrations never complete, causing deployment timeouts
+- Worker processes killed after port scan timeout (5-10 minutes)
 
-**New Approach** (Fixed):
+**Solution:**
 
-- Migrations run in Gunicorn's `on_starting()` server hook
-- Runs once before workers fork (not per-worker)
-- No worker timeout interference
-- Uses `app/startup.py` initialization logic
-- Pure Python, no bash scripts needed
+- Run migrations in a **subprocess** with timeout protection
+- Uses `subprocess.run()` to execute `flask db upgrade` independently
+- 3-minute timeout prevents infinite hanging
+- Clean error reporting if migrations fail
 
 ## How It Works
 
@@ -39,9 +38,13 @@ gunicorn wsgi:app -c gunicorn.conf.py
 The Gunicorn config file defines server hooks:
 
 1. **`on_starting(server)`** - Runs ONCE when master process initializes
-   - Creates Flask app
-   - Runs `initialize_application()` (migrations + verification)
-   - Raises error if initialization fails (prevents bad deployment)
+   - Step 1: Quick database connectivity check
+   - Step 2: Run migrations via subprocess
+     - Executes: `python -m flask db upgrade`
+     - 180 second timeout (3 minutes)
+     - Captures stdout/stderr for debugging
+     - Raises RuntimeError if fails
+   - Prevents bad deployments if migrations fail
 
 2. **`when_ready(server)`** - Called after workers start
    - Logs server is ready to accept requests
@@ -56,15 +59,15 @@ Gunicorn starts
   ↓
 on_starting() hook runs
   ↓
-Create Flask app (production mode)
+Step 1: Check DB connectivity (quick SQLAlchemy inspector check)
   ↓
-initialize_application(app):
-  Step 1: Check DB connectivity
-  Step 2: Run migrations (flask-migrate upgrade)
-  Step 3: Verify schema (raw SQL queries)
+Step 2: Run migrations in subprocess
+  - subprocess.run(["python", "-m", "flask", "db", "upgrade"])
+  - 180 second timeout
+  - Captures output
   ↓
-Success? → Fork workers → Accept requests
-Failure? → Raise RuntimeError → Exit with error
+Success? → Fork workers → Bind to port → Accept requests
+Failure? → Raise RuntimeError → Exit code 1 → Render shows error
 ```
 
 ## Gunicorn Settings
@@ -119,41 +122,55 @@ Then redeploy to apply the downgrade in production.
 ### Successful Deployment Logs
 
 ```
+[INFO] ============================================================
 [INFO] Gunicorn server starting - Running initialization...
-[INFO] 🚀 Initializing application (Production environment)
-[INFO] Step 1/3: Checking database connectivity...
+[INFO] ============================================================
+[INFO] Step 1/2: Checking database connectivity...
 [INFO] ✓ Database connected (23 tables found)
-[INFO] Step 1/3: ✓ Database connectivity check passed
-[INFO] Step 2/3: Running database migrations...
-[INFO] Entering run_database_migrations...
-[INFO] Inside app context, about to run upgrade()...
-INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
-INFO  [alembic.runtime.migration] Will assume transactional DDL.
-[INFO] upgrade() completed successfully
+[INFO] Step 2/2: Running database migrations...
+[INFO] Running migrations via subprocess (prevents hanging)...
+[INFO] Migration subprocess output:
+[INFO]   INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+[INFO]   INFO  [alembic.runtime.migration] Will assume transactional DDL.
 [INFO] ✓ Migrations complete
-[INFO] Exiting run_database_migrations...
-[INFO] Step 2/3: ✓ Database migrations completed
-[INFO] Step 3/3: Verifying database schema...
-[INFO] ✓ Database schema verified
-[INFO]   - Users: X
-[INFO]   - Challenges: Y
-[INFO]   - Competitions: Z
-[INFO] Step 3/3: ✓ Database schema verified
-[INFO] ✓ Application initialization complete. Ready to serve requests.
+[INFO] ============================================================
 [INFO] Initialization complete - Server will now start workers
+[INFO] ============================================================
 [INFO] Starting gunicorn 25.0.3
-[INFO] Listening at: http://0.0.0.0:XXXXX
-[INFO] Gunicorn server ready - Listening on 0.0.0.0:XXXXX
+[INFO] Listening at: http://0.0.0.0:21048
+[INFO] Using worker: sync
+[INFO] Booting worker with pid: 40
+[INFO] ============================================================
+[INFO] Gunicorn server ready - Listening on 0.0.0.0:21048
+[INFO] Workers: 4, Threads: 2
+[INFO] ============================================================
 ```
 
 ### Failed Deployment Logs
 
-If initialization fails:
+If database connection fails:
 
 ```
-[ERROR] ✗ Migration failed with exception: ...
-[CRITICAL] INITIALIZATION FAILED - Cannot start server
-RuntimeError: Application initialization failed
+[CRITICAL] ✗ Database connection failed: ...
+RuntimeError: Database connection failed
+==> Exited with status 1
+```
+
+If migrations fail:
+
+```
+[ERROR] Migration failed with exit code 1
+[ERROR] STDOUT: ...
+[ERROR] STDERR: ...
+RuntimeError: Migration subprocess failed
+==> Exited with status 1
+```
+
+If migrations timeout (>3 minutes):
+
+```
+[CRITICAL] ✗ Migration timeout after 3 minutes - this should not happen
+RuntimeError: Migration subprocess timed out
 ==> Exited with status 1
 ```
 
