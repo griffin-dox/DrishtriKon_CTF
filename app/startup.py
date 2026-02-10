@@ -31,49 +31,46 @@ def check_database_connectivity(app: Flask) -> bool:
 def run_database_migrations(app: Flask) -> bool:
     """Run pending database migrations."""
     try:
-        from app.extensions import db
-        from alembic.script import ScriptDirectory
-        from alembic.config import Config
-        
+        logger.info("Entering run_database_migrations...")
         with app.app_context():
-            # Get migration config
-            migrations_dir = Path(__file__).parent.parent / 'migrations'
-            alembic_cfg = Config(str(migrations_dir / 'alembic.ini'))
-            alembic_cfg.set_main_option('script_location', str(migrations_dir))
+            logger.info("Inside app context, about to run upgrade()...")
             
-            # Get current revision from database
-            script = ScriptDirectory.from_config(alembic_cfg)
-            
-            # Run migrations
-            logger.info("Running database migrations...")
+            # Run migrations using Flask-Migrate
+            # This automatically configures Alembic and runs upgrade
             upgrade()
             
-            logger.info(f"✓ Migrations complete")
+            logger.info("upgrade() completed successfully")
+            logger.info("✓ Migrations complete")
             return True
+            
     except Exception as e:
-        logger.error(f"✗ Migration failed: {e}", exc_info=True)
+        logger.error(f"✗ Migration failed with exception: {e}", exc_info=True)
         logger.error("This is a critical error - app startup halted")
         return False
+    finally:
+        logger.info("Exiting run_database_migrations...")
 
 
 def verify_database_schema(app: Flask) -> bool:
-    """Verify critical tables are accessible."""
+    """Verify critical tables are accessible using raw SQL to avoid ORM issues."""
     try:
-        from app.models import User, Challenge, Competition
+        from app.extensions import db
+        from sqlalchemy import text
         
         with app.app_context():
-            # Test queries on critical tables
-            user_count = User.query.count()
-            challenge_count = Challenge.query.count()
-            competition_count = Competition.query.count()
+            # Use raw SQL queries to avoid triggering hybrid properties or ORM issues
+            user_count = db.session.execute(text("SELECT COUNT(*) FROM users")).scalar()
+            challenge_count = db.session.execute(text("SELECT COUNT(*) FROM challenges")).scalar()
+            competition_count = db.session.execute(text("SELECT COUNT(*) FROM competitions")).scalar()
             
-            logger.info(f"✓ Database schema verified")
+            logger.info("✓ Database schema verified")
             logger.info(f"  - Users: {user_count}")
             logger.info(f"  - Challenges: {challenge_count}")
             logger.info(f"  - Competitions: {competition_count}")
             return True
+            
     except Exception as e:
-        logger.error(f"✗ Schema verification failed: {e}")
+        logger.error(f"✗ Schema verification failed: {e}", exc_info=True)
         return False
 
 
@@ -92,18 +89,24 @@ def initialize_application(app: Flask) -> bool:
     if not check_database_connectivity(app):
         logger.error("Cannot connect to database. Check DATABASE_URL configuration.")
         return False
+    logger.info("Step 1/3: ✓ Database connectivity check passed")
     
     # Step 2: Run migrations
     logger.info("Step 2/3: Running database migrations...")
     if not run_database_migrations(app):
         logger.error("Database migration failed. App cannot start safely.")
         return False
+    logger.info("Step 2/3: ✓ Database migrations completed")
     
     # Step 3: Verify schema
     logger.info("Step 3/3: Verifying database schema...")
     if not verify_database_schema(app):
         logger.error("Database schema verification failed. Check migrations.")
         return False
+    logger.info("Step 3/3: ✓ Database schema verified")
     
+    logger.info("=" * 60)
     logger.info("✓ Application initialization complete. Ready to serve requests.")
+    logger.info("=" * 60)
+    return True
     return True
