@@ -1,130 +1,395 @@
-# DrishtriKon CTF Platform
+# 🚀 DrishtriKon CTF Platform
 
-A modern, secure, and extensible Capture The Flag (CTF) platform built with Flask and SQLAlchemy.
+<div align="center">
 
-## Features
-- User authentication with 2FA and email verification
-- Admin, host, and player roles
-- Challenge and competition management
-- Rate limiting, honeypot, and IDS security features
-- Modular logging with request/user context
-- File upload security and static optimization
-- Database-backed bans, IDS alerts, and rate limiting
-- Session security and max session enforcement
+**A production-grade Capture The Flag (CTF) platform built with Flask**
 
-## Project Structure
+[![CI/CD](https://github.com/your-username/DrishtriKon_CTF/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/your-username/DrishtriKon_CTF/actions)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![Docker](https://img.shields.io/badge/docker-ready-brightgreen.svg)](https://www.docker.com/)
+
+[Features](#-features) • [Quick Start](#-quick-start) • [Documentation](#-documentation) • [Deployment](#-deployment) • [Security](#-security)
+
+</div>
+
+---
+
+## 📋 Table of Contents
+
+- [Features](#-features)
+- [Architecture](#-architecture)
+- [Quick Start](#-quick-start)
+- [Installation](#-installation)
+- [Configuration](#-configuration)
+- [Development](#-development)
+- [Deployment](#-deployment)
+- [Testing](#-testing)
+- [Security](#-security)
+- [Documentation](#-documentation)
+- [Contributing](#-contributing)
+- [License](#-license)
+
+---
+
+## ✨ Features
+
+### 🎯 Core Functionality
+
+- **Multi-Role System**: Owner (Admin), Host, and Player roles with granular permissions
+- **Competition Management**: Create, schedule, and manage CTF competitions
+- **Challenge System**: Multiple challenge types with flag validation and scoring
+- **Team Collaboration**: Team creation, invitations, and collaborative participation
+- **Badge & Achievement System**: Automated badge assignment based on achievements
+- **Real-time Leaderboards**: Dynamic scoring with performance caching
+
+### 🔒 Security Features
+
+- **Comprehensive Rate Limiting**: Endpoint-specific limits with user/IP tracking
+- **Intrusion Detection System (IDS)**: Pattern-based attack detection
+- **Honeypot System**: Fake routes and form fields to trap attackers
+- **Session Security**: Strong session management with rotation
+- **File Upload Validation**: Size and type restrictions
+- **2FA via Email OTP**: Time-limited one-time passwords
+- **reCAPTCHA v3**: Bot protection on sensitive endpoints
+- **Security Headers**: CSP, HSTS, X-Frame-Options, and more
+
+### ⚡ Performance & Scalability
+
+- **Multi-tier Caching**: In-memory, filesystem, and Redis support
+- **Database Optimization**: Connection pooling and query optimization
+- **Static Asset Optimization**: Versioning and compression
+- **Background Tasks**: Async execution for cleanup
+- **Storage Management**: Automatic cache cleanup
+
+### ☁️ Cloud Storage
+
+- **AWS S3 / IDrive e2 Integration**: Secure file storage with encryption
+- **Multi-layer File Validation**: Extension, MIME type, magic bytes verification
+- **Presigned URLs**: Time-limited secure access to files
+- **Automatic File Cleanup**: Old files deleted on updates
+- **CORS Configuration**: Secure cross-origin resource sharing
+
+---
+
+## 🏗️ Architecture
+
 ```
 DrishtriKon_CTF/
-├── app.py                # Main Flask app entry point
-├── core/                 # Core utilities, models, logging
-├── forms.py              # WTForms definitions
-├── honeypot_data/        # Honeypot pattern data
-├── ids_data/             # IDS state and rules
-├── logs/                 # Log files and IP logs
-├── migrations/           # Alembic migrations
-├── requirements.txt      # Python dependencies
-├── routes/               # Flask Blueprints (admin, auth, player, etc.)
-├── security/             # Security modules (rate limiting, IDS, honeypot, etc.)
-├── static/               # Static files (CSS, JS, images)
-├── templates/            # Jinja2 templates
-├── uploads/              # User-uploaded files
-└── ...
+├── app/
+│   ├── __init__.py              # Application factory (create_app)
+│   ├── extensions.py            # Flask extensions (db, cache, login_manager)
+│   ├── models/                  # SQLAlchemy ORM models
+│   ├── routes/                  # Blueprint modules (auth, admin, host, player, etc.)
+│   ├── security/                # Security layers (rate limiting, IDS, honeypot)
+│   ├── services/                # Business logic
+│   │   ├── s3_service.py       # AWS S3/IDrive e2 file uploads
+│   │   ├── file_upload.py      # High-level upload helpers
+│   │   └── cache/              # Caching strategies
+│   ├── validators/              # Custom validators (file validation, etc.)
+│   ├── templates/               # Jinja2 HTML templates
+│   └── static/                  # CSS, JavaScript, images
+├── docs/                        # Documentation
+│   ├── DEPLOYMENT.md
+│   ├── S3_FILE_STORAGE.md
+│   ├── IDRIVE_E2_CORS_SETUP.md
+│   └── ...
+├── config.py                    # Configuration classes
+├── wsgi.py                      # Production WSGI entry point (Gunicorn)
+├── run.py                       # Development server entry point
+├── requirements.txt             # Python dependencies
+├── docker-compose.yml           # Docker orchestration
+├── Dockerfile                   # Container definition
+└── migrations/                  # Database migrations (Alembic)
 ```
 
-## Setup
-1. **Clone the repository:**
-   ```sh
-   git clone <repo-url>
-   cd DrishtriKon_CTF
-   ```
-2. **Create a virtual environment and install dependencies:**
-   ```sh
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   pip install -r requirements.txt
-   ```
-3. **Set up the database:**
-   ```sh
-   flask db upgrade
-   ```
-4. **Run the application:**
-   ```sh
-   flask run
-   ```
+**Tech Stack**:
 
-## Post-Integration Cleanup
-- All `__pycache__` folders and Python cache files have been removed before commit.
-- Temporary or backup files (e.g., `.bak`, test scripts in `Ignores/`) are not tracked in version control.
-- Only production-ready code and assets are included in the repository.
+- **Framework**: Flask 3.1+
+- **ORM**: SQLAlchemy 2.0
+- **Database**: PostgreSQL 15+
+- **Caching**: Flask-Caching (simple, filesystem, Redis)
+- **Storage**: AWS S3 / IDrive e2 with boto3
+- **WSGI Server**: Gunicorn (production)
+- **Container**: Docker + Docker Compose
+- **Reverse Proxy**: Nginx (recommended for production)
 
-## Security Notes (Updated)
-- Google reCAPTCHA v3 is integrated for login, registration, and contact forms only. Scripts and badge are loaded only on those pages.
-- Content Security Policy (CSP) is hardened to allow only required domains for Google reCAPTCHA, Google Fonts, Google Ads, and related services. If you see new CSP violations, add only trusted domains as needed.
-- Inline scripts/styles are allowed only where required for reCAPTCHA v3 compatibility.
-- All security features use module-specific loggers with request/user context.
-- Bans, IDS alerts, and rate limiting are database-backed for production safety.
-- Session security enforces max sessions per user.
-- Password breach checks and full DB migration for honeypot/IDS patterns are recommended for production.
+---
 
-## Documentation
-- See `FEATURES.md` for a comprehensive list of platform features.
-- See `SECURITY.md` for a detailed overview of security features and best practices.
+## 🚀 Quick Start
 
-## Notable Features (Summary)
-- Role-based access (Admin, Host, Player)
-- 2FA, email verification, and secure session management
-- Challenge, competition, and team management
-- Leaderboards, badges, and stats
-- Modular logging and API endpoints
-- Security: reCAPTCHA v3, CSP, rate limiting, honeypot, IDS, file upload security
+### Prerequisites
 
-## API Documentation
+- Python 3.11+
+- PostgreSQL 15+
+- Git
+- (Optional) AWS S3 or IDrive e2 account for file storage
 
-### Authentication
-- Most endpoints require authentication via session or token.
-- Admin and host endpoints require elevated roles.
+### Local Development
 
-### Example Endpoints
+```bash
+# Clone repository
+git clone https://github.com/your-username/DrishtriKon_CTF.git
+cd DrishtriKon_CTF
 
-#### User
-- `POST /auth/login` — User login
-- `POST /auth/register` — User registration
-- `GET /auth/logout` — Logout
-- `GET /player/profile` — Get current user profile
+# Setup virtual environment
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
 
-#### Challenges
-- `GET /challenges` — List all challenges
-- `GET /challenges/<id>` — Get challenge details
-- `POST /challenges/submit` — Submit a flag (authenticated)
+# Configure environment
+cp .env.example .env
+# Edit .env with your settings (at minimum: SECRET_KEY, DATABASE_URL)
 
-#### Admin
-- `GET /admin/users` — List users (admin only)
-- `POST /admin/users/edit/<user_id>` — Edit user (admin only)
-- `POST /admin/challenges/create` — Create challenge (admin/host)
+# Initialize database
+flask db upgrade
 
-#### Health & Maintenance
-- `GET /healthz` — Health check endpoint (returns 200 OK if running)
-- `GET /maintenance` — Maintenance page (shows maintenance message)
-
-### Response Format
-All API responses are JSON unless serving HTML pages.
-
+# Run development server
+python run.py
 ```
-{
-  "status": "success" | "error",
-  "message": "...",
-  "data": { ... }
+
+Visit: http://localhost:5000
+
+### 🐳 Docker Quick Start
+
+```bash
+# Configure environment
+cp .env.example .env
+# Edit .env if needed
+
+# Start all services
+docker-compose up -d
+
+# Run migrations
+docker-compose exec web flask db upgrade
+
+# View logs
+docker-compose logs -f
+```
+
+Visit: http://localhost:5000
+
+---
+
+## ⚙️ Configuration
+
+### Required Environment Variables
+
+```bash
+# Flask & Security
+SECRET_KEY=your-secret-key-min-32-chars
+SESSION_SECRET=your-session-secret-min-32-chars
+
+# Database
+DATABASE_URL=postgresql://user:password@localhost:5432/drishtrikon_ctf
+
+# Email (Gmail)
+MAIL_USERNAME=your-email@gmail.com
+MAIL_PASSWORD=your-app-password
+MAIL_DEFAULT_SENDER=your-email@gmail.com
+
+# reCAPTCHA
+RECAPTCHA_SITE_KEY=your-site-key
+RECAPTCHA_SECRET_KEY=your-secret-key
+
+# AWS S3 / IDrive e2
+AWS_ACCESS_KEY_ID=your-access-key
+AWS_SECRET_ACCESS_KEY=your-secret-key
+AWS_REGION=us-east-1
+AWS_PROFILE_BUCKET=drishtrikon-profiles
+AWS_CHALLENGE_BUCKET=drishtrikon-challenges
+```
+
+See [.env.example](.env.example) for complete configuration.
+
+---
+
+## 🚢 Deployment
+
+### Development
+
+```bash
+# Start development server with auto-reload
+python run.py
+
+# Or use Flask CLI
+flask run
+```
+
+Access at: http://localhost:5000
+
+### Production with Gunicorn
+
+```bash
+# Basic command
+gunicorn wsgi:app --bind 0.0.0.0:${PORT}
+
+# Recommended production settings
+gunicorn wsgi:app \
+  --bind 0.0.0.0:${PORT} \
+  --workers 4 \
+  --worker-class sync \
+  --max-requests 1000 \
+  --timeout 60 \
+  --access-logfile - \
+  --error-logfile - \
+  --log-level info
+```
+
+### Production with Docker
+
+```bash
+# Configure environment
+cp .env.example .env
+# Edit .env with production settings
+
+# Build and run
+docker-compose -f docker-compose.yml up -d
+
+# Run migrations
+docker-compose exec web flask db upgrade
+
+# Check logs
+docker-compose logs -f web
+```
+
+### Production with Nginx Reverse Proxy
+
+```nginx
+upstream gunicorn {
+    server 127.0.0.1:8000;
+}
+
+server {
+    listen 80;
+    server_name yourdomain.com;
+    client_max_body_size 16M;
+
+    location / {
+        proxy_pass http://gunicorn;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /static/ {
+        alias /path/to/app/static/;
+        expires 30d;
+    }
 }
 ```
 
-### Error Handling
-- 401 Unauthorized: Not logged in
-- 403 Forbidden: Insufficient permissions
-- 404 Not Found: Resource does not exist
-- 429 Too Many Requests: Rate limited
+### Important Notes
 
-## Contributing
-Pull requests and issues are welcome! Please follow best practices for security and code style.
+⚠️ **Always use `wsgi:app`** - not `app:app` (uses application factory pattern)  
+⚠️ **Set `FLASK_ENV=production`** in environment  
+⚠️ **Enable HTTPS** with SSL certificate  
+⚠️ **Configure all required env vars** before starting  
+⚠️ **Run migrations** after deployment
 
-## License
-MIT License
+---
+
+## 📁 File Storage (S3/IDrive e2)
+
+This platform includes secure cloud file storage integration:
+
+- **Profile Pictures**: Stored in S3/IDrive e2 profiles bucket
+- **Challenge Files**: PDFs, ZIPs stored in challenges bucket
+- **Validation**: Multi-layer security (extension, MIME, magic bytes)
+- **CORS**: Secure cross-origin access for your domain
+
+### Setup S3/IDrive e2
+
+1. Create buckets: `drishtrikon-profiles` and `drishtrikon-challenges`
+2. Set environment variables (see Configuration section)
+3. Configure CORS for your domain (see docs)
+
+**Documentation**:
+
+- [S3 File Storage Setup](docs/S3_FILE_STORAGE.md)
+- [S3 Implementation Summary](docs/S3_IMPLEMENTATION_SUMMARY.md)
+- [S3 Quick Reference](docs/S3_QUICK_REFERENCE.md)
+- [IDrive e2 CORS Setup](docs/IDRIVE_E2_CORS_SETUP.md)
+- [IDrive e2 CORS Testing](docs/IDRIVE_E2_CORS_TESTING.md)
+
+---
+
+## 🔐 Security
+
+**Key Features**:
+
+- Rate limiting on all endpoints
+- Real-time intrusion detection
+- Honeypot traps for attackers
+- Strong session management
+- CSRF protection
+- Input validation and sanitization
+
+**Best Practices**:
+
+- Change all default secrets
+- Enable HTTPS in production
+- Monitor logs regularly
+- Keep dependencies updated
+
+---
+
+## 📚 Documentation
+
+Core Documentation:
+
+- [Features Overview](docs/FEATURES.md)
+- [Security Details](docs/SECURITY.md)
+- [Database Resilience](docs/DATABASE_RESILIENCE.md)
+- [Cache Management](docs/CACHE_MANAGEMENT.md)
+- [Deployment Guide](docs/DEPLOYMENT.md)
+
+Cloud Storage & S3:
+
+- [S3 File Storage Setup](docs/S3_FILE_STORAGE.md) - Complete AWS S3 integration guide
+- [S3 Implementation Summary](docs/S3_IMPLEMENTATION_SUMMARY.md) - Technical details
+- [S3 Quick Reference](docs/S3_QUICK_REFERENCE.md) - Developer quick start
+
+IDrive e2 CORS Configuration:
+
+- [CORS Setup Guide](docs/IDRIVE_E2_CORS_SETUP.md) - Complete setup instructions
+- [CORS Quick Paste](docs/IDRIVE_E2_CORS_QUICK_PASTE.md) - Copy-paste ready configs
+- [CORS Testing & Troubleshooting](docs/IDRIVE_E2_CORS_TESTING.md) - Testing procedures
+
+Docker & Deployment:
+
+- [Docker Guide](docs/DOCKER_GUIDE.md)
+- [Docker Compose Configuration](docker-compose.yml)
+
+---
+
+## 🤝 Contributing
+
+Contributions welcome! Please:
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push and open a Pull Request
+
+---
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file.
+
+---
+
+## 📞 Support
+
+- **Issues**: [GitHub Issues](https://github.com/your-username/DrishtriKon_CTF/issues)
+- **Email**: support@your-domain.com
+
+---
+
+<div align="center">
+
+**Made with ❤️ for the CTF community**
+
+</div>

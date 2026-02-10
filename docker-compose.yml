@@ -1,0 +1,117 @@
+# Docker Compose for DrishtriKon CTF Platform
+# Production-ready multi-container setup
+
+version: "3.8"
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: drishtrikon_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-drishtrikon_ctf}
+      POSTGRES_USER: ${POSTGRES_USER:-ctf_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Database password required}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ctf_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ctf_network
+
+  # Redis Cache (if enabled)
+  redis:
+    image: redis:7-alpine
+    container_name: drishtrikon_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-}
+    volumes:
+      - redis_data:/data
+    ports:
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ctf_network
+    profiles:
+      - with-redis
+
+  # Flask Application
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: drishtrikon_web
+    restart: unless-stopped
+    environment:
+      FLASK_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-ctf_user}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-drishtrikon_ctf}
+      SECRET_KEY: ${SECRET_KEY:?Secret key required}
+      SESSION_SECRET: ${SESSION_SECRET:?Session secret required}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      MAIL_SERVER: ${MAIL_SERVER:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_DEFAULT_SENDER: ${MAIL_DEFAULT_SENDER}
+      RECAPTCHA_SITE_KEY: ${RECAPTCHA_SITE_KEY}
+      RECAPTCHA_SECRET_KEY: ${RECAPTCHA_SECRET_KEY}
+      FORMCARRY_ENDPOINT: ${FORMCARRY_ENDPOINT}
+      DISCORD_SECURITY_WEBHOOK_URL: ${DISCORD_SECURITY_WEBHOOK_URL}
+      CACHE_TYPE: ${CACHE_TYPE:-filesystem}
+      CACHE_DIR: /app/var/cache
+    volumes:
+      - ./var/uploads:/app/var/uploads
+      - ./var/logs:/app/var/logs
+      - ./var/cache:/app/var/cache
+    ports:
+      - "${WEB_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - ctf_network
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: drishtrikon_nginx
+    restart: unless-stopped
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./app/static:/var/www/static:ro
+    depends_on:
+      - web
+    networks:
+      - ctf_network
+    profiles:
+      - with-nginx
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  ctf_network:
+    driver: bridge

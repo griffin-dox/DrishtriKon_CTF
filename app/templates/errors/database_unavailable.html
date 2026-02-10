@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Unavailable - DrishtriKon CTF</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            padding: 50px 40px;
+            text-align: center;
+        }
+        
+        .icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 30px;
+            background: #ffeaa7;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+        }
+        
+        h1 {
+            color: #2d3436;
+            font-size: 28px;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+        
+        .status-code {
+            display: inline-block;
+            background: #e84393;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        
+        p {
+            color: #636e72;
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        
+        .info-box {
+            background: #f0f3ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 25px 0;
+            text-align: left;
+        }
+        
+        .info-box strong {
+            color: #667eea;
+            display: block;
+            margin-bottom: 8px;
+        }
+        
+        .info-box p {
+            color: #555;
+            font-size: 14px;
+            margin: 0;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        a, button {
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #e8e8e8;
+            color: #2d3436;
+            border: 1px solid #ddd;
+        }
+        
+        .btn-secondary:hover {
+            background: #f0f0f0;
+            border-color: #999;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #667eea;
+            margin: 0 2px;
+            animation: bounce 1.4s infinite;
+        }
+        
+        .loading:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .loading:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes bounce {
+            0%, 80%, 100% {
+                opacity: 0.3;
+                transform: scale(0.8);
+            }
+            40% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        .retry-hint {
+            color: #95a5a6;
+            font-size: 13px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">⏳</div>
+        
+        <div class="status-code">Status 503</div>
+        
+        <h1>Database Temporarily Unavailable</h1>
+        
+        <p>{{ message }}</p>
+        
+        <div class="info-box">
+            <strong>💡 What's happening?</strong>
+            <p>
+                We're using a free database hosting service that puts the database to sleep 
+                after a period of inactivity. It may take 15-30 seconds for the database to wake up.
+            </p>
+        </div>
+        
+        <div class="info-box">
+            <strong>✓ What you can do:</strong>
+            <p>
+                You can still browse public pages like Home, About, FAQ, and Terms. 
+                Features requiring database access (login, challenges, competitions) 
+                will be available once the database wakes up.
+            </p>
+        </div>
+        
+        <div class="button-group">
+            <button onclick="window.location.reload()" class="btn-primary">
+                🔄 Try Again
+            </button>
+            <a href="/" class="btn-secondary">
+                🏠 Go Home
+            </a>
+        </div>
+        
+        <p class="retry-hint">
+            Will automatically retry in 5 seconds...
+        </p>
+    </div>
+    
+    <script>
+        // Auto-retry after 5 seconds
+        setTimeout(() => {
+            window.location.reload();
+        }, 5000);
+    </script>
+</body>
+</html>

@@ -32,6 +32,10 @@ urllib3>=2.0.0
 # File handling and security
 python-magic>=0.4.27
 
+# AWS S3 for file storage
+boto3>=1.35.0
+botocore>=1.35.0
+
 # Image processing for QR codes
 qrcode>=7.4.2
 pillow>=10.0.0

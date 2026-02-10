@@ -1,0 +1,39 @@
+# Lightweight Docker Compose for Development
+# Quick setup for local development and testing
+
+version: "3.8"
+
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: drishtrikon_dev
+      POSTGRES_USER: dev_user
+      POSTGRES_PASSWORD: dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - dev_db_data:/var/lib/postgresql/data
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      FLASK_ENV: development
+      FLASK_DEBUG: "1"
+      DATABASE_URL: postgresql://dev_user:dev_password@db:5432/drishtrikon_dev
+      SECRET_KEY: dev-secret-key-change-in-production
+      SESSION_SECRET: dev-session-secret-change-in-production
+    ports:
+      - "5000:8000"
+    volumes:
+      - .:/app
+      - /app/__pycache__
+      - /app/.venv
+    depends_on:
+      - db
+    command: flask run --host=0.0.0.0 --port=8000 --reload
+
+volumes:
+  dev_db_data:

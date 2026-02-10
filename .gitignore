@@ -16,9 +16,17 @@ env.bak/
 instance/
 .webassets-cache
 
-# Logs
+# Runtime data (moved to var/)
+var/
 logs/
 *.log
+cache_data/
+uploads/
+
+# Legacy paths (deprecated)
+honeypot_data/
+ids_data/
+security_events.log
 
 # IDEs
 .vscode/
@@ -66,3 +74,6 @@ tests/
 tests/
 *.cache
 cache_data/
+test_results.txt
+TEST_RUN_ANALYSIS.md
+.github\copilot-instructions.md
