@@ -1,18 +1,27 @@
 {% extends 'layout.html' %}
+
 {% block content %}
-<div class="container mt-5">
+<div class="container">
     <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0">Verify Your Email</h4>
+        <div class="col-lg-5 col-md-7">
+            <div class="card bg-dark shadow">
+                <div class="card-header text-center border-bottom-0 bg-transparent py-4">
+                    <h3><i class="fas fa-envelope me-2"></i>Verify Email</h3>
                 </div>
-                <div class="card-body">
-                    <form method="POST">
+                <div class="card-body px-4 py-4">
+                    {% if email %}
+                        <p class="text-muted text-center mb-4">
+                            We sent a verification code to<br>
+                            <strong class="text-info">{{ email }}</strong>
+                        </p>
+                    {% endif %}
+                    
+                    <form method="POST" action="">
                         {{ form.hidden_tag() }}
-                        <div class="mb-3">
-                            <label for="otp_code" class="form-label">Enter the OTP sent to your email</label>
-                            {{ form.otp_code(class="form-control", placeholder="6-digit code") }}
+                        
+                        <div class="mb-4">
+                            <label for="otp_code" class="form-label">{{ form.otp_code.label }}</label>
+                            {{ form.otp_code(class="form-control text-center", placeholder="Enter 6-digit code", maxlength="6") }}
                             {% if form.otp_code.errors %}
                                 <div class="alert alert-danger mt-2">
                                     {% for error in form.otp_code.errors %}
@@ -20,12 +29,32 @@
                                     {% endfor %}
                                 </div>
                             {% endif %}
+                            <div class="form-text text-muted">
+                                Check your email inbox (or spam folder).
+                            </div>
                         </div>
-                        <button type="submit" class="btn btn-primary">Verify Email</button>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-check me-2"></i>Verify Email
+                            </button>
+                        </div>
                     </form>
+                    
+                    <div class="mt-4 text-center border-top pt-3">
+                        <small class="text-muted">
+                            Didn't receive the code?<br>
+                            <a href="{{ url_for('auth.resend_email_verification') }}" class="text-decoration-none">Request a new one</a>
+                        </small>
+                    </div>
+                </div>
+                <div class="card-footer text-center bg-transparent py-3">
+                    <p class="mb-2">Already verified? <a href="{{ url_for('auth.login') }}">Login here</a></p>
+                    <p class="mb-0">Need help? <a href="{{ url_for('auth.forgot_password') }}">Reset password</a></p>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
 {% endblock %}

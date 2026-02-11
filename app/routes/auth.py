@@ -4,7 +4,7 @@ from urllib.parse import urlparse
 from datetime import datetime, timedelta
 from app.extensions import db, login_manager
 from app.models import User
-from app.forms import LoginForm, RegistrationForm, ChangePasswordForm, OTPForm
+from app.forms import LoginForm, RegistrationForm, ChangePasswordForm, OTPForm, ForgotPasswordForm, ResetPasswordForm
 from app.services.utils import set_user_otp, send_otp_email, verify_otp as verify_otp_code
 from app.services.recaptcha import verify_recaptcha_token
 from app.security.session_security import generate_session_id
@@ -14,6 +14,7 @@ from app.security.rate_limit_policies import rate_limit_route, user_or_ip_identi
 from app.services.health_checks import notify_health_check
 import random
 import logging
+import secrets
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -225,6 +226,63 @@ def logout():
     flash('You have been logged out', 'info')
     return redirect(url_for('main.index'))
 
+@auth_bp.route('/forgot-password', methods=['GET', 'POST'])
+@rate_limit_route(
+    "forgot_password",
+    5,
+    600,
+    identifier_func=user_or_ip_identifier,
+    message="Too many password reset attempts.",
+    methods={"POST"},
+)
+def forgot_password():
+    """Request password reset via email."""
+    if current_user.is_authenticated:
+        return redirect(url_for('main.index'))
+    
+    form = ForgotPasswordForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        
+        if user:
+            # Generate reset token
+            reset_token = secrets.token_urlsafe(32)
+            user.otp_secret = reset_token
+            user.otp_valid_until = datetime.utcnow() + timedelta(hours=1)
+            db.session.commit()
+            
+            # Send reset email (using existing email service)
+            try:
+                reset_url = url_for('auth.reset_password', token=reset_token, _external=True)
+                from app.services.email_service import send_email
+                send_email(
+                    to=user.email,
+                    subject="DrishtriKon CTF - Password Reset Request",
+                    html_body=f"""
+                    <h2>Password Reset Request</h2>
+                    <p>Hi {user.username},</p>
+                    <p>You requested to reset your password. Click the link below to proceed:</p>
+                    <p><a href="{reset_url}">Reset Password</a></p>
+                    <p>This link will expire in 1 hour.</p>
+                    <p>If you didn't request this, please ignore this email.</p>
+                    """
+                )
+                flash('If an account exists with that email, a password reset link has been sent.', 'info')
+                security_logger.info(
+                    f"Password reset requested for user '{user.username}'",
+                    extra={"user": user.username, "ip": request.remote_addr, "event": "password_reset_requested"}
+                )
+            except Exception as e:
+                flash('Error sending reset email. Please try again later.', 'danger')
+                logging.getLogger(__name__).error(f"Failed to send reset email: {e}")
+        else:
+            # Don't reveal if email exists (security best practice)
+            flash('If an account exists with that email, a password reset link has been sent.', 'info')
+        
+        return redirect(url_for('auth.login'))
+    
+    return render_template('auth/forgot_password.html', form=form, title='Forgot Password')
+
 @auth_bp.route('/register', methods=['GET', 'POST'])
 @rate_limit_route(
     "register",
@@ -281,32 +339,46 @@ def register():
 
 @auth_bp.route('/verify-email', methods=['GET', 'POST'])
 def verify_email():
-    if 'verify_email_user_id' not in session:
+    # Allow access if either:
+    # 1. User has an active verification session (from registration)
+    # 2. User provides email to verify (manual request)
+    
+    user = None
+    verify_email_user_id = session.get('verify_email_user_id')
+    
+    if verify_email_user_id:
+        # Check if came from registration flow
+        user = User.query.get(verify_email_user_id)
+    
+    form = OTPForm()
+    
+    # If accessing verify-email directly without session, check for email in request
+    if not user and request.method == 'GET':
+        email = request.args.get('email', '')
+        if email:
+            user = User.query.filter_by(email=email).first()
+            if user and user.email_verified:
+                flash('This email is already verified. Please log in.', 'info')
+                return redirect(url_for('auth.login'))
+    
+    if not user:
         security_logger.warning(
             f"Email verification attempt with no session from IP {request.remote_addr}",
             extra={"ip": request.remote_addr, "event": "verify_email_no_session"}
         )
-        flash('No verification in progress. Please register.', 'warning')
+        flash('Please enter your email to verify or complete registration.', 'warning')
         return redirect(url_for('auth.register'))
-    user = User.query.get(session['verify_email_user_id'])
-    if not user:
-        security_logger.warning(
-            f"Email verification attempt for missing user from IP {request.remote_addr}",
-            extra={"ip": request.remote_addr, "event": "verify_email_no_user"}
-        )
-        flash('User not found. Please register again.', 'danger')
-        return redirect(url_for('auth.register'))
+    
     if not user.otp_valid_until or user.otp_valid_until < datetime.utcnow():
-        db.session.delete(user)
-        db.session.commit()
-        session.pop('verify_email_user_id', None)
-        security_logger.warning(
-            f"Email verification code expired for user '{user.username}' from IP {request.remote_addr}",
-            extra={"user": user.username, "ip": request.remote_addr, "event": "verify_email_expired"}
-        )
-        flash('Verification code expired. Please register again.', 'warning')
-        return redirect(url_for('auth.register'))
-    form = OTPForm()
+        # OTP expired, allow user to request a new one
+        if request.method == 'GET':
+            flash('Your verification code has expired. Please request a new one.', 'warning')
+        return render_template('auth/verify_email.html', 
+                             form=form, 
+                             title='Verify Email', 
+                             email=user.email,
+                             expired=True)
+    
     if form.validate_on_submit():
         if user.otp_secret == form.otp_code.data:
             user.email_verified = True
@@ -326,7 +398,11 @@ def verify_email():
                 extra={"user": user.username, "ip": request.remote_addr, "event": "verify_email_invalid_otp"}
             )
             flash('Invalid verification code.', 'danger')
-    return render_template('auth/verify_email.html', form=form, title='Verify Email')
+    
+    return render_template('auth/verify_email.html', 
+                         form=form, 
+                         title='Verify Email',
+                         email=user.email if user else '')
 
 @auth_bp.route('/verify-otp', methods=['GET', 'POST'])
 def verify_otp():
@@ -442,6 +518,80 @@ def resend_otp():
     )
     flash('A new verification code has been sent to your email', 'info')
     return redirect(url_for('auth.verify_otp'))
+
+@auth_bp.route('/resend-email-verification')
+@rate_limit_route(
+    "email_verification_resend",
+    3,
+    600,
+    identifier_func=user_or_ip_identifier,
+    message="Email verification code limit reached.",
+    methods={"GET"},
+)
+def resend_email_verification():
+    """Resend email verification code."""
+    # Check if we have the user ID in session from registration
+    if 'verify_email_user_id' not in session:
+        flash('Please complete registration first.', 'warning')
+        return redirect(url_for('auth.register'))
+    
+    user_id = session['verify_email_user_id']
+    user = User.query.get(user_id)
+    
+    if not user:
+        flash('User not found. Please register again.', 'danger')
+        return redirect(url_for('auth.register'))
+    
+    # Generate new OTP
+    otp_code = str(random.randint(100000, 999999))
+    user.otp_secret = otp_code
+    user.otp_valid_until = datetime.utcnow() + timedelta(minutes=10)
+    db.session.commit()
+    
+    # Send OTP email
+    try:
+        from app.services.email_service import send_otp
+        send_otp(user.email, user.username, otp_code)
+        security_logger.info(
+            f"Email verification code resent for user '{user.username}' from IP {request.remote_addr}",
+            extra={"user": user.username, "ip": request.remote_addr, "event": "email_verification_resent"}
+        )
+        flash('A new verification code has been sent to your email', 'info')
+    except Exception as e:
+        logging.getLogger(__name__).error(f"Failed to send verification email: {e}")
+        flash('Error sending verification code. Please try again later.', 'danger')
+    
+    return redirect(url_for('auth.verify_email'))
+
+@auth_bp.route('/reset-password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    """Reset password using token from email."""
+    if current_user.is_authenticated:
+        return redirect(url_for('main.index'))
+    
+    # Find user with valid reset token
+    user = User.query.filter_by(otp_secret=token).first()
+    
+    if not user or not user.otp_valid_until or user.otp_valid_until < datetime.utcnow():
+        flash('Invalid or expired reset link. Please request a new one.', 'danger')
+        return redirect(url_for('auth.forgot_password'))
+    
+    form = ResetPasswordForm()
+    if form.validate_on_submit():
+        # Update password
+        user.set_password(form.new_password.data)
+        user.otp_secret = None  # Clear the reset token
+        user.otp_valid_until = None
+        db.session.commit()
+        
+        flash('Your password has been reset successfully. Please log in.', 'success')
+        security_logger.info(
+            f"Password reset completed for user '{user.username}' from IP {request.remote_addr}",
+            extra={"user": user.username, "ip": request.remote_addr, "event": "password_reset_completed"}
+        )
+        return redirect(url_for('auth.login'))
+    
+    return render_template('auth/reset_password.html', form=form, title='Reset Password')
 
 @auth_bp.route('/change-password', methods=['GET', 'POST'])
 @login_required
