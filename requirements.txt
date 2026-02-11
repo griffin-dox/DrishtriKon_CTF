@@ -29,6 +29,9 @@ user-agents>=2.2.0
 requests>=2.31.0
 urllib3>=2.0.0
 
+# Email service
+sendgrid>=6.11.0
+
 # File handling and security
 python-magic>=0.4.27
 

@@ -346,7 +346,7 @@ class S3FileUploadService:
             
             # 4. Save to temporary location for validation
             temp_filename = f"temp_{hashlib.md5(os.urandom(8)).hexdigest()}"
-            temp_file_path = f"/tmp/{temp_filename}" if os.name != 'nt' else f"{os.environ.get('TEMP', 'C:\\Temp')}\\{temp_filename}"
+            temp_file_path = f"/tmp/{temp_filename}" if os.name != 'nt' else os.path.join(os.environ.get('TEMP', 'C:\\Temp'), temp_filename)
             file.save(temp_file_path)
             
             # 5. Validate MIME type
