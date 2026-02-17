@@ -27,8 +27,11 @@ bind = f"0.0.0.0:{PORT}"
 
 # ============================================================
 # Gunicorn worker configuration
+# CRITICAL FOR FREE-TIER DATABASE:
+# - 4 workers × 3 pool_size = 12+ connections exceeds Aiven free limits (~10-15)
+# - Reduced to 2 workers × 3 pool_size = 6 base + 4 overflow = 10 max connections
 # ============================================================
-workers = 4
+workers = 2
 threads = 2
 timeout = 120
 worker_class = 'sync'

@@ -27,15 +27,15 @@ class Config:
     # Database
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL')
     SQLALCHEMY_ENGINE_OPTIONS = {
-        "pool_recycle": 180,  # Reduced from 300 to recycle connections faster
-        "pool_pre_ping": True,  # Test connection before using
-        "pool_size": 10,  # Reduced from 20 to use fewer connections
-        "max_overflow": 10,  # Reduced from 30 to limit connection spikes
-        "pool_timeout": 15,  # Reduced from 30 to fail faster if no conn available
+        "pool_recycle": 120,  # Recycle connections every 2 minutes to avoid stale connections
+        "pool_pre_ping": True,  # Test connection before using to detect stale ones
+        "pool_size": 3,  # CRITICAL: Free-tier Aiven allows ~10-15 total, must be very aggressive
+        "max_overflow": 2,  # Allow only 2 overflow to prevent exhaustion spikes
+        "pool_timeout": 8,  # Fail faster (8 sec) if no connection available
         "echo": False,
         "connect_args": {
-            "connect_timeout": 10,  # Connection timeout in seconds
-            "application_name": "drishtrikon_ctf",  # Identify connection in DB logs
+            "connect_timeout": 8,  # Connection timeout in seconds
+            "application_name": "drishtrikon_ctf",  # Identify in DB logs
         },
     }
     SQLALCHEMY_TRACK_MODIFICATIONS = False

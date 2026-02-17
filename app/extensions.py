@@ -37,5 +37,38 @@ def init_extensions(app):
     
     @login_manager.user_loader
     def load_user(user_id):
+        """Load user with connection error handling.
+        
+        If database is temporarily unavailable (connection pool exhausted),
+        return None to use AnonymousUser instead of crashing with 500 error.
+        """
         from app.models import User
-        return User.query.get(int(user_id))
+        import logging
+        from sqlalchemy.exc import OperationalError
+        from time import sleep
+        
+        logger = logging.getLogger(__name__)
+        max_retries = 2
+        
+        for attempt in range(max_retries):
+            try:
+                return User.query.get(int(user_id))
+            except OperationalError as e:
+                # Connection pool exhausted or database unavailable
+                if 'remaining connection slots are reserved' in str(e) or 'too many connections' in str(e):
+                    logger.warning(f"Database connection pool exhausted, attempt {attempt + 1}/{max_retries}")
+                    if attempt < max_retries - 1:
+                        sleep(0.5)  # Brief wait before retry
+                        continue
+                    else:
+                        # Last attempt failed - log and return None (AnonymousUser)
+                        logger.error(f"Failed to load user {user_id} after {max_retries} attempts")
+                        return None
+                else:
+                    # Other operational error
+                    logger.error(f"Operational error loading user {user_id}: {e}")
+                    return None
+            except Exception as e:
+                # Any other error - return None to use AnonymousUser
+                logger.error(f"Unexpected error loading user {user_id}: {e}")
+                return None
