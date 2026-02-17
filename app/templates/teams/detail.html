@@ -74,8 +74,8 @@
                     
                     <div class="mb-3">
                         <h6 class="text-primary">Status</h6>
-                        <span class="badge {% if team.status == 'active' %}bg-success{% else %}bg-secondary{% endif %}">
-                            {{ team.status.capitalize() }}
+                        <span class="badge {% if team.status.value == 'active' %}bg-success{% else %}bg-secondary{% endif %}">
+                            {% if team.status.value == 'active' %}Active{% elif team.status.value == 'pending' %}Pending{% elif team.status.value == 'inactive' %}Inactive{% else %}{{ team.status.value|capitalize }}{% endif %}
                         </span>
                     </div>
                     
@@ -197,8 +197,8 @@
                                     </td>
                                     <td>
                                         <span class="badge 
-                                            {% if competition.status == 'ACTIVE' %}bg-success{% elif competition.status == 'UPCOMING' %}bg-primary{% else %}bg-secondary{% endif %}">
-                                            {{ competition.status }}
+                                            {% if competition.status.value == 'ACTIVE' %}bg-success{% elif competition.status.value == 'UPCOMING' %}bg-primary{% else %}bg-secondary{% endif %}">
+                                            {% if competition.status.value == 'ACTIVE' %}Active{% elif competition.status.value == 'UPCOMING' %}Upcoming{% elif competition.status.value == 'ENDED' %}Ended{% else %}{{ competition.status.value }}{% endif %}
                                         </span>
                                     </td>
                                     <td>{{ competition.start_time.strftime('%Y-%m-%d') }}</td>

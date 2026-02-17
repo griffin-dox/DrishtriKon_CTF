@@ -14,8 +14,8 @@
                 <div class="card-header bg-dark">
                     <div class="d-flex justify-content-between align-items-center mb-1">
                         <h5 class="card-title mb-0">{{ competition.title }}</h5>
-                        <span class="badge bg-{{ 'success' if competition.status.value == 'active' else ('warning' if competition.status.value == 'upcoming' else 'secondary') }}">
-                            {{ competition.status.value|capitalize }}
+                        <span class="badge bg-{{ 'success' if competition.status.value == 'ACTIVE' else ('warning' if competition.status.value == 'UPCOMING' else 'secondary') }}">
+                            {% if competition.status.value == 'ACTIVE' %}Active{% elif competition.status.value == 'UPCOMING' %}Upcoming{% elif competition.status.value == 'ENDED' %}Ended{% else %}{{ competition.status.value }}{% endif %}
                         </span>
                     </div>
                     {% if competition.id in primary_hosted_ids %}

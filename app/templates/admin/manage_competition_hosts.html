@@ -18,8 +18,16 @@
             <p><strong>Description:</strong> {{ competition.description }}</p>
             <p>
                 <strong>Status:</strong>
-                <span class="badge bg-{{ 'success' if competition.status.value == 'active' else ('warning' if competition.status.value == 'upcoming' else 'secondary') }}">
-                    {{ competition.status.value }}
+                <span class="badge bg-{{ 'success' if competition.status.name == 'ACTIVE' else ('warning' if competition.status.name == 'UPCOMING' else 'secondary') }}">
+                    {% if competition.status.name == 'UPCOMING' %}
+                        Upcoming
+                    {% elif competition.status.name == 'ACTIVE' %}
+                        Active
+                    {% elif competition.status.name == 'ENDED' %}
+                        Ended
+                    {% else %}
+                        {{ competition.status.name }}
+                    {% endif %}
                 </span>
             </p>
             <p><strong>Start Time:</strong> {{ competition.start_time.strftime('%Y-%m-%d %H:%M') }}</p>

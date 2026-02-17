@@ -610,32 +610,41 @@ def manage_competition_hosts(competition_id):
     if not potential_hosts:
         form.host_id.choices = [(-1, 'No available hosts')]
     
-    if form.validate_on_submit() and potential_hosts:
-        host_id = form.host_id.data
-        # Check if this user is already a host for this competition
-        existing = CompetitionHost.query.filter_by(
-            competition_id=competition.id,
-            host_id=host_id
-        ).first()
-        if not existing:
-            host_assignment = CompetitionHost()
-            host_assignment.competition_id = competition.id
-            host_assignment.host_id = host_id
-            try:
-                db.session.add(host_assignment)
-                db.session.commit()
-                flash('Host assigned to competition successfully', 'success')
-                # Log host assignment
-                security_logger.info(
-                    f"Host assigned: user_id={host_id} to competition_id={competition.id} by admin: {current_user.username}",
-                    extra={"host_id": host_id, "competition_id": competition.id, "event": "host_assigned", "by": current_user.username, "by_ip": request.remote_addr}
-                )
-                return redirect(url_for('admin.manage_competition_hosts', competition_id=competition.id))
-            except Exception as e:
-                db.session.rollback()
-                flash(f'Error assigning host: {str(e)}', 'danger')
-        else:
-            flash('This user is already assigned as a host for this competition', 'warning')
+    if request.method == 'POST' and potential_hosts:
+        try:
+            host_id = request.form.get('host_id', type=int)
+            
+            # Check if valid host_id
+            if host_id not in [h.id for h in potential_hosts]:
+                flash('Invalid host selection', 'danger')
+            else:
+                # Check if this user is already a host for this competition
+                existing = CompetitionHost.query.filter_by(
+                    competition_id=competition.id,
+                    host_id=host_id
+                ).first()
+                
+                if existing:
+                    flash('This user is already assigned as a host for this competition', 'warning')
+                else:
+                    host_assignment = CompetitionHost(
+                        competition_id=competition.id,
+                        host_id=host_id
+                    )
+                    db.session.add(host_assignment)
+                    db.session.commit()
+                    flash('Host assigned to competition successfully', 'success')
+                    
+                    # Log host assignment
+                    security_logger.info(
+                        f"Host assigned: user_id={host_id} to competition_id={competition.id} by admin: {current_user.username}",
+                        extra={"host_id": host_id, "competition_id": competition.id, "event": "host_assigned", "by": current_user.username, "by_ip": request.remote_addr}
+                    )
+                    return redirect(url_for('admin.manage_competition_hosts', competition_id=competition.id))
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error assigning host: {str(e)}", exc_info=True)
+            flash(f'Error assigning host: {str(e)}', 'danger')
     
     return render_template('admin/manage_competition_hosts.html', 
                           competition=competition,

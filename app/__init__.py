@@ -290,17 +290,26 @@ def init_security(app):
 def init_services(app):
     """Initialize application services (cache, cleanup tasks, etc.)."""
     with app.app_context():
-        # Delete expired unverified users
-        from app.services.utils import delete_expired_unverified_users
-        delete_expired_unverified_users()
+        # Delete expired unverified users - wrap in try-except to not block startup
+        try:
+            from app.services.utils import delete_expired_unverified_users
+            delete_expired_unverified_users()
+        except Exception as e:
+            app.logger.warning(f"Error during cleanup startup task: {str(e)}")
         
         # Start cache maintenance scheduler
-        from app.services.cache.management import schedule_cache_maintenance
-        schedule_cache_maintenance()
+        try:
+            from app.services.cache.management import schedule_cache_maintenance
+            schedule_cache_maintenance()
+        except Exception as e:
+            app.logger.warning(f"Error scheduling cache maintenance: {str(e)}")
         
         # Warm up critical caches
-        from app.services.cache.performance import warm_critical_caches
-        warm_critical_caches()
+        try:
+            from app.services.cache.performance import warm_critical_caches
+            warm_critical_caches()
+        except Exception as e:
+            app.logger.warning(f"Error warming critical caches: {str(e)}")
 
 
 def register_cli_routes(app):

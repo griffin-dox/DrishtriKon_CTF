@@ -146,23 +146,34 @@ def send_otp_email(user, otp_code):
 def delete_expired_unverified_users():
     from app.models import User
     from datetime import datetime, timedelta
-    now = datetime.utcnow()
-    ten_minutes_ago = now - timedelta(minutes=10)
     try:
-        expired_users = User.query.filter(
-            (User.email_verified == False) &
-            (User.created_at < ten_minutes_ago)
-        ).all()
-        count = len(expired_users)
-        for user in expired_users:
-            logger.info(f"Deleting unverified user: {user.username} ({user.email})")
-            db.session.delete(user)
-        if count > 0:
+        now = datetime.utcnow()
+        ten_minutes_ago = now - timedelta(minutes=10)
+        
+        # Use batch delete to avoid long-held transactions
+        BATCH_SIZE = 50
+        
+        while True:
+            # Get a small batch of expired users
+            expired_users = User.query.filter(
+                (User.email_verified == False) &
+                (User.created_at < ten_minutes_ago)
+            ).limit(BATCH_SIZE).all()
+            
+            if not expired_users:
+                break
+            
+            count = len(expired_users)
+            user_ids = [user.id for user in expired_users]
+            
+            # Batch delete
+            User.query.filter(User.id.in_(user_ids)).delete(synchronize_session=False)
             db.session.commit()
-            logger.info(f"Deleted {count} unverified users.")
+            logger.info(f"Deleted batch of {count} expired unverified users")
+            
     except Exception as e:
         db.session.rollback()
-        logger.error(f"Error deleting unverified users: {str(e)}")
+        logger.error(f"Error deleting expired unverified users: {str(e)}")
 
 def auto_assign_badges():
     badges = Badge.query.all()

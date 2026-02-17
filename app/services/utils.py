@@ -202,26 +202,49 @@ def delete_expired_unverified_users():
     """
     Delete users who have not verified their email within 10 minutes of registration.
     Should be run periodically (e.g., via cron, scheduler, or background thread).
+    Uses batch delete to avoid connection exhaustion.
     """
     from app.models import User
     from datetime import datetime, timedelta
-    now = datetime.utcnow()
-    ten_minutes_ago = now - timedelta(minutes=10)
+    
     try:
-        expired_users = User.query.filter(
-            (User.email_verified == False) &
-            (User.created_at < ten_minutes_ago)
-        ).all()
-        count = len(expired_users)
-        for user in expired_users:
-            logger.info(f"Deleting unverified user: {user.username} ({user.email})")
-            db.session.delete(user)
-        if count > 0:
-            db.session.commit()
-            logger.info(f"Deleted {count} unverified users.")
+        now = datetime.utcnow()
+        ten_minutes_ago = now - timedelta(minutes=10)
+        
+        # Use a batch delete with chunking to avoid holding transaction too long
+        BATCH_SIZE = 50
+        
+        while True:
+            # Get a small batch of expired users
+            expired_users = User.query.filter(
+                (User.email_verified == False) &
+                (User.created_at < ten_minutes_ago)
+            ).limit(BATCH_SIZE).all()
+            
+            if not expired_users:
+                logger.info("No more expired unverified users to delete")
+                break
+            
+            count = len(expired_users)
+            user_ids = [user.id for user in expired_users]
+            
+            # Log before deletion
+            for user in expired_users:
+                logger.debug(f"Deleting unverified user: {user.username} ({user.email})")
+            
+            # Batch delete user_ids
+            try:
+                User.query.filter(User.id.in_(user_ids)).delete(synchronize_session=False)
+                db.session.commit()
+                logger.info(f"Deleted batch of {count} unverified users")
+            except Exception as batch_error:
+                db.session.rollback()
+                logger.error(f"Error deleting batch of unverified users: {str(batch_error)}")
+                break  # Exit loop if batch delete fails
+                
     except Exception as e:
         db.session.rollback()
-        logger.error(f"Error deleting unverified users: {str(e)}")
+        logger.error(f"Error in delete_expired_unverified_users: {str(e)}")
 
 def auto_assign_badges():
     badges = Badge.query.all()

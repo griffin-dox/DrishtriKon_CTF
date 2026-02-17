@@ -27,12 +27,16 @@ class Config:
     # Database
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL')
     SQLALCHEMY_ENGINE_OPTIONS = {
-        "pool_recycle": 300,
-        "pool_pre_ping": True,
-        "pool_size": 20,
-        "max_overflow": 30,
-        "pool_timeout": 30,
+        "pool_recycle": 180,  # Reduced from 300 to recycle connections faster
+        "pool_pre_ping": True,  # Test connection before using
+        "pool_size": 10,  # Reduced from 20 to use fewer connections
+        "max_overflow": 10,  # Reduced from 30 to limit connection spikes
+        "pool_timeout": 15,  # Reduced from 30 to fail faster if no conn available
         "echo": False,
+        "connect_args": {
+            "connect_timeout": 10,  # Connection timeout in seconds
+            "application_name": "drishtrikon_ctf",  # Identify connection in DB logs
+        },
     }
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
