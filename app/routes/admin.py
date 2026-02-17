@@ -558,11 +558,10 @@ def delete_competition(competition_id):
             else:
                 raise ValueError("Invalid challenge action selected.")
         
-        # Optional: Remove host assignment (not necessary if it's just a foreign key)
-        # If host is 1-to-1 enforced, remove reverse link:
-        competition.host_id = None
+        # Delete additional hosts (CompetitionHost entries)
+        CompetitionHost.query.filter_by(competition_id=competition_id).delete()
 
-        # Finally, delete the competition
+        # Finally, delete the competition (host_id is required, so it will be deleted with the competition)
         db.session.delete(competition)
         db.session.commit()
         flash('Competition and associated data handled successfully.', 'success')

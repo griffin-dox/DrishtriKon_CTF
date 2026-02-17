@@ -44,23 +44,41 @@ IST = timezone('Asia/Kolkata')
 @login_required
 @host_required
 def dashboard():
-    primary_hosted = Competition.query.filter_by(host_id=current_user.id).order_by(desc(Competition.created_at)).all()
-    additional_hosted_ids = db.session.query(CompetitionHost.competition_id).filter_by(host_id=current_user.id).all()
-    additional_hosted_ids = [ch[0] for ch in additional_hosted_ids]
-    additional_hosted = Competition.query.filter(Competition.id.in_(additional_hosted_ids)).order_by(desc(Competition.created_at)).all()
-    total_hosted = len(primary_hosted)
-    total_additional = len(additional_hosted)
-    total_participants = db.session.query(db.func.count(UserCompetition.id)).\
-        join(Competition, UserCompetition.competition_id == Competition.id).\
-        filter(Competition.host_id == current_user.id).scalar() or 0
+    try:
+        primary_hosted = Competition.query.filter_by(host_id=current_user.id).order_by(desc(Competition.created_at)).all()
+        
+        # Handle additional hosted competitions safely
+        try:
+            additional_hosted_ids = db.session.query(CompetitionHost.competition_id).filter_by(host_id=current_user.id).all()
+            additional_hosted_ids = [ch[0] for ch in additional_hosted_ids]
+            additional_hosted = Competition.query.filter(Competition.id.in_(additional_hosted_ids)).order_by(desc(Competition.created_at)).all() if additional_hosted_ids else []
+        except Exception as e:
+            current_app.logger.warning(f"Error fetching additional hosted competitions: {str(e)}")
+            additional_hosted = []
+            additional_hosted_ids = []
+        
+        total_hosted = len(primary_hosted)
+        total_additional = len(additional_hosted)
+        
+        try:
+            total_participants = db.session.query(db.func.count(UserCompetition.id)).\
+                join(Competition, UserCompetition.competition_id == Competition.id).\
+                filter(Competition.host_id == current_user.id).scalar() or 0
+        except Exception as e:
+            current_app.logger.warning(f"Error fetching participant count: {str(e)}")
+            total_participants = 0
 
-    return render_template('host/dashboard.html', 
-                          primary_hosted=primary_hosted,
-                          additional_hosted=additional_hosted,
-                          total_hosted=total_hosted,
-                          total_additional=total_additional,
-                          total_participants=total_participants,
-                          title='Host Dashboard')
+        return render_template('host/dashboard.html', 
+                              primary_hosted=primary_hosted,
+                              additional_hosted=additional_hosted,
+                              total_hosted=total_hosted,
+                              total_additional=total_additional,
+                              total_participants=total_participants,
+                              title='Host Dashboard')
+    except Exception as e:
+        current_app.logger.error(f"Error loading host dashboard: {str(e)}")
+        flash('Error loading dashboard. Please try again.', 'danger')
+        return redirect(url_for('main.index'))
 
 @host_bp.route('/competitions')
 @login_required
@@ -148,16 +166,35 @@ def manage_competition(competition_id):
     competition_challenges = CompetitionChallenge.query.filter_by(competition_id=competition_id).all()
     participants = UserCompetition.query.filter_by(competition_id=competition_id).all()
 
-    # Convert UTC times to IST
-    competition.start_time = competition.start_time.astimezone(IST)
-    competition.end_time = competition.end_time.astimezone(IST)
+    # Convert UTC times to IST - handle both naive and aware datetimes
+    try:
+        if competition.start_time.tzinfo is None:
+            # Naive datetime - assume UTC
+            from datetime import timezone as dt_timezone
+            competition.start_time = competition.start_time.replace(tzinfo=dt_timezone.utc).astimezone(IST)
+        else:
+            competition.start_time = competition.start_time.astimezone(IST)
+            
+        if competition.end_time.tzinfo is None:
+            # Naive datetime - assume UTC
+            from datetime import timezone as dt_timezone
+            competition.end_time = competition.end_time.replace(tzinfo=dt_timezone.utc).astimezone(IST)
+        else:
+            competition.end_time = competition.end_time.astimezone(IST)
+    except Exception as e:
+        current_app.logger.warning(f"Error converting competition times to IST: {str(e)}")
+        # Keep original times if conversion fails
+
+    # Determine if current user is the primary host
+    is_primary_host = competition.host_id == current_user.id
 
     return render_template(
         'host/competition_management.html',
         competition=competition,
         competition_challenges=competition_challenges,
         participants=participants,
-        status_form=status_form, 
+        status_form=status_form,
+        is_primary_host=is_primary_host,
         title=f'Manage {competition.title}'
     )
 

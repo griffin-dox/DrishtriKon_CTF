@@ -43,25 +43,35 @@ def update_competition_statuses(force=False):
     _last_status_update = current_time
     
     try:
-        # Use optimized query with single database call for better performance
-        competitions_to_update = Competition.query.filter(
-            ((Competition.status == CompetitionStatus.UPCOMING) & 
-             (Competition.start_time <= now)) |
-            ((Competition.status == CompetitionStatus.ACTIVE.value) & 
-             (Competition.end_time <= now))
-        ).all()
-        
-        # Process based on current status
+        # Query competitions and update manually instead of using hybrid properties in filter
+        competitions = Competition.query.all()
         upcoming_to_active = []
         active_to_ended = []
         
-        for comp in competitions_to_update:
+        for comp in competitions:
+            # Use hybrid property for status check
             if comp.status == CompetitionStatus.UPCOMING and comp.start_time <= now:
-                comp.status = CompetitionStatus.ACTIVE.value
+                comp.manual_status_override = CompetitionStatus.ACTIVE
                 upcoming_to_active.append(comp)
-            elif comp.status == CompetitionStatus.ACTIVE.value and comp.end_time <= now:
-                comp.status = CompetitionStatus.ENDED
+            elif comp.status == CompetitionStatus.ACTIVE and comp.end_time <= now:
+                comp.manual_status_override = CompetitionStatus.ENDED
                 active_to_ended.append(comp)
+        
+        # Only log if we have competitions to update
+        if upcoming_to_active:
+            logger.info(f"Updated {len(upcoming_to_active)} competitions to active status")
+            
+        if active_to_ended:
+            logger.info(f"Updated {len(active_to_ended)} competitions to ended status")
+        
+        # Commit changes if any were made
+        if upcoming_to_active or active_to_ended:
+            db.session.commit()
+            for comp in active_to_ended:
+                make_challenges_public(comp.id)
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error updating competition statuses: {str(e)}")
                 
         # Only log if we have competitions to update
         if upcoming_to_active:

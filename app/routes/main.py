@@ -38,9 +38,17 @@ def index():
 def get_home_active_competitions():
     """Get active competitions for homepage with caching"""
     try:
-        return Competition.query.filter_by(
-            status=CompetitionStatus.ACTIVE
+        from datetime import datetime
+        now = datetime.utcnow()
+        
+        # Query competitions that are currently active
+        # Either manually overridden to ACTIVE, or within start/end time
+        active_comps = Competition.query.filter(
+            (Competition.manual_status_override == CompetitionStatus.ACTIVE) |
+            ((Competition.start_time <= now) & (Competition.end_time > now))
         ).order_by(Competition.start_time).limit(5).all()
+        
+        return active_comps
     except Exception as e:
         logger.warning(f"Failed to fetch active competitions: {str(e)}")
         return []
@@ -49,9 +57,17 @@ def get_home_active_competitions():
 def get_home_upcoming_competitions():
     """Get upcoming competitions for homepage with caching"""
     try:
-        return Competition.query.filter_by(
-            status=CompetitionStatus.UPCOMING
+        from datetime import datetime
+        now = datetime.utcnow()
+        
+        # Query competitions that are upcoming
+        # Either manually overridden to UPCOMING, or start after now
+        upcoming_comps = Competition.query.filter(
+            (Competition.manual_status_override == CompetitionStatus.UPCOMING) |
+            (Competition.start_time > now)
         ).order_by(Competition.start_time).limit(3).all()
+        
+        return upcoming_comps
     except Exception as e:
         logger.warning(f"Failed to fetch upcoming competitions: {str(e)}")
         return []
